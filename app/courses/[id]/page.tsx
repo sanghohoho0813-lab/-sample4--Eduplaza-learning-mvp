@@ -77,7 +77,8 @@ export default function CourseDetailPage() {
     setOpenSections((s) => ({ ...s, [id]: !(s[id] ?? true) }));
 
   return (
-    <div className="animate-fade-up">
+    <>
+      <div className="animate-fade-up">
       <button
         onClick={() => router.back()}
         className="btn-press mb-4 inline-flex items-center gap-1 text-sm font-semibold text-forest-950/55 hover:text-forest-950"
@@ -374,12 +375,15 @@ export default function CourseDetailPage() {
             </ul>
           </section>
         </aside>
+        </div>
+        {/* 고정 CTA에 가려지지 않도록 여백 확보 */}
+        <div className="h-24 lg:hidden" />
       </div>
 
-      {/* 모바일 하단 고정 CTA */}
+      {/* 모바일 하단 고정 CTA — animate-fade-up의 transform 밖에 두어야 뷰포트 기준으로 고정된다 */}
       <div
-        className="fixed inset-x-0 bottom-[64px] z-30 border-t border-cream-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden"
-        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        className="fixed inset-x-0 z-50 border-t border-cream-200 bg-white/95 px-4 py-3 shadow-[0_-4px_16px_rgba(19,31,25,0.08)] backdrop-blur lg:hidden"
+        style={{ bottom: "calc(64px + env(safe-area-inset-bottom))" }}
       >
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <div className="min-w-0 flex-1">
@@ -418,8 +422,6 @@ export default function CourseDetailPage() {
           </button>
         </div>
       </div>
-      {/* 고정 CTA에 가려지지 않도록 여백 확보 */}
-      <div className="h-24 lg:hidden" />
-    </div>
+    </>
   );
 }

@@ -72,7 +72,7 @@ export default function HomePage() {
     <div className="animate-fade-up">
       <Header
         title={`${greeting()}, ${state.name}님`}
-        subtitle={`${BRAND.company} ${state.name}님, 오늘도 성장하는 하루 되세요.`}
+        subtitle="오늘도 성장하는 하루 되세요."
         serif
       />
 
@@ -96,16 +96,16 @@ export default function HomePage() {
 
       {/* 핵심 지표 */}
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        <div className="card flex flex-col items-start gap-3 p-4 sm:flex-row sm:items-center sm:gap-3.5 md:p-5">
-          <ProgressRing value={overallProgress()} size={68} stroke={7}>
-            <span className="text-[19px] font-bold text-forest-800">
+        <div className="card flex flex-col items-start gap-2.5 p-4 md:p-5">
+          <ProgressRing value={overallProgress()} size={56} stroke={6}>
+            <span className="text-[16px] font-bold text-forest-800">
               {overallProgress()}%
             </span>
           </ProgressRing>
           <div className="min-w-0">
             <p className="text-xs text-forest-950/50">전체 진행률</p>
-            <p className="mt-0.5 whitespace-nowrap text-sm font-bold text-forest-950">
-              순항 중이에요
+            <p className="mt-0.5 font-display text-lg font-semibold text-forest-950">
+              순항 중
             </p>
           </div>
         </div>

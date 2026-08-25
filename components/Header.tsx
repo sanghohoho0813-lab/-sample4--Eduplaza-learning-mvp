@@ -85,13 +85,14 @@ export function Header({
   };
 
   return (
-    <header className="mb-6 flex flex-wrap items-center gap-3 md:mb-8">
-      <div className="min-w-0 flex-1">
+    <header className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-4 md:mb-8">
+      {/* 모바일에서는 제목이 전체 폭을 쓰도록 액션 버튼을 윗줄로 보낸다 */}
+      <div className="order-2 w-full min-w-0 sm:order-1 sm:w-auto sm:flex-1">
         <h1
           className={
             serif
-              ? "font-display text-[30px] font-semibold leading-tight text-forest-950 md:text-3xl"
-              : "text-[26px] font-bold leading-tight text-forest-950 md:text-2xl"
+              ? "font-display text-[25px] font-semibold leading-tight text-forest-950 sm:text-[30px] md:text-3xl"
+              : "text-[23px] font-bold leading-tight text-forest-950 sm:text-[26px] md:text-2xl"
           }
         >
           {title}
@@ -103,7 +104,7 @@ export function Header({
         )}
       </div>
 
-      <div className="flex items-center gap-2.5">
+      <div className="order-1 ml-auto flex items-center gap-2.5 sm:order-2">
         <div ref={boxRef} className="relative hidden sm:block">
           <form onSubmit={submit}>
             <Search
@@ -119,7 +120,7 @@ export function Header({
               }}
               onFocus={() => q.trim() && setOpen(true)}
               onKeyDown={onKeyDown}
-              placeholder="강의·강사·키워드 검색"
+              placeholder="강의 검색"
               aria-label="강의 검색"
               aria-expanded={open && suggestions.length > 0}
               className="h-12 w-64 rounded-full border border-cream-300 bg-white pl-11 pr-10 text-sm text-forest-950 placeholder:text-forest-950/35 outline-none transition-all focus:w-80 focus:border-forest-400 focus:ring-2 focus:ring-forest-200"
