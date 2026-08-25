@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { CATEGORIES, COURSES, formatMinutes, formatPrice } from "@/lib/data";
 import { useStore } from "@/lib/store";
+import { BRAND } from "@/lib/brand";
 import { useToast } from "@/components/Toast";
 import { Header } from "@/components/Header";
 import { ListSkeleton } from "@/components/Skeletons";
@@ -52,7 +53,7 @@ export default function MyPage() {
 
   const resetDemo = () => {
     try {
-      localStorage.removeItem("eduplaza-state-v1");
+      localStorage.removeItem("eduplaza-state-v2");
     } catch {
       // ignore
     }
@@ -79,7 +80,7 @@ export default function MyPage() {
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="font-display text-xl font-semibold md:text-2xl">
-              {state.name}님
+              {BRAND.company} {state.name}님
             </h2>
             <p className="mt-1 text-sm text-cream-200/70">
               {state.streakDays}일 연속 학습 중이에요 🔥 오늘도 한 걸음

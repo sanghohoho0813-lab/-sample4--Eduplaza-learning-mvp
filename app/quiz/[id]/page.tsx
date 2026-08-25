@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import clsx from "clsx";
@@ -33,18 +33,17 @@ export default function QuizPlayPage() {
   const [answers, setAnswers] = useState<boolean[]>([]);
   const [finished, setFinished] = useState(false);
 
-  if (!quiz) return notFound();
-  const course = getCourse(quiz.courseId);
-  const question = quiz.questions[step];
+  const question = quiz?.questions[step];
   const correctCount = answers.filter(Boolean).length;
 
-  const checkAnswer = () => {
-    if (selected === null) return;
+  const checkAnswer = useCallback(() => {
+    if (selected === null || !question) return;
     setChecked(true);
     setAnswers((a) => [...a, selected === question.answerIndex]);
-  };
+  }, [selected, question]);
 
-  const nextQuestion = () => {
+  const nextQuestion = useCallback(() => {
+    if (!quiz) return;
     if (step + 1 >= quiz.questions.length) {
       const total = quiz.questions.length;
       const finalCorrect = answers.filter(Boolean).length;
@@ -60,7 +59,31 @@ export default function QuizPlayPage() {
       setSelected(null);
       setChecked(false);
     }
-  };
+  }, [quiz, step, answers, store, toast]);
+
+  // 키보드 단축키: 1~4로 보기 선택, Enter로 정답 확인 / 다음 문제
+  useEffect(() => {
+    if (finished || !question) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+
+      const num = Number(e.key);
+      if (!checked && num >= 1 && num <= question.options.length) {
+        e.preventDefault();
+        setSelected(num - 1);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (checked) nextQuestion();
+        else checkAnswer();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [finished, question, checked, checkAnswer, nextQuestion]);
+
+  if (!quiz || !question) return notFound();
+  const course = getCourse(quiz.courseId);
 
   const retry = () => {
     setStep(0);
@@ -166,13 +189,31 @@ export default function QuizPlayPage() {
             {step + 1}/{quiz.questions.length}
           </span>
         </div>
+        {/* 문항별 진행 도트 */}
+        <div className="mt-3 flex items-center gap-1.5" aria-hidden>
+          {quiz.questions.map((qq, i) => (
+            <span
+              key={qq.id}
+              className={clsx(
+                "h-2.5 rounded-full transition-all duration-300",
+                i < answers.length
+                  ? answers[i]
+                    ? "w-2.5 bg-success"
+                    : "w-2.5 bg-danger"
+                  : i === step
+                    ? "w-6 bg-forest-800"
+                    : "w-2.5 bg-cream-300"
+              )}
+            />
+          ))}
+        </div>
       </div>
 
       <div className="card p-5 md:p-7">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-forest-500">
+        <p className="text-[16px] font-bold uppercase tracking-widest text-forest-500">
           Question {step + 1}
         </p>
-        <h2 className="mt-2 text-[17px] font-bold leading-relaxed text-forest-950 md:text-lg">
+        <h2 className="mt-2 text-[25px] font-bold leading-relaxed text-forest-950 md:text-lg">
           {question.question}
         </h2>
 
@@ -188,7 +229,7 @@ export default function QuizPlayPage() {
                 onClick={() => !checked && setSelected(i)}
                 disabled={checked}
                 className={clsx(
-                  "flex min-h-[56px] w-full items-center gap-3.5 rounded-2xl border-2 px-4 py-3 text-left text-sm transition-all duration-200 md:text-[15px]",
+                  "flex min-h-[56px] w-full items-center gap-3.5 rounded-2xl border-2 px-4 py-3 text-left text-sm transition-all duration-200 md:text-[22px]",
                   showCorrect
                     ? "border-success bg-forest-50 text-forest-950"
                     : showWrong
@@ -201,7 +242,7 @@ export default function QuizPlayPage() {
               >
                 <span
                   className={clsx(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] font-bold transition-colors",
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[19px] font-bold transition-colors",
                     showCorrect
                       ? "bg-success text-white"
                       : showWrong
@@ -252,19 +293,35 @@ export default function QuizPlayPage() {
           </div>
         )}
 
-        <div className="mt-6">
+        {/* 키보드 단축키 힌트 (데스크톱) */}
+        <p className="mt-4 hidden items-center justify-center gap-2 text-xs text-forest-950/40 md:flex">
+          <kbd className="rounded border border-cream-300 bg-cream-50 px-1.5 py-0.5 font-sans text-[16px] font-semibold">
+            1
+          </kbd>
+          ~
+          <kbd className="rounded border border-cream-300 bg-cream-50 px-1.5 py-0.5 font-sans text-[16px] font-semibold">
+            {question.options.length}
+          </kbd>
+          보기 선택 ·
+          <kbd className="rounded border border-cream-300 bg-cream-50 px-1.5 py-0.5 font-sans text-[16px] font-semibold">
+            Enter
+          </kbd>
+          {checked ? "다음 문제" : "정답 확인"}
+        </p>
+
+        <div className="mt-4">
           {!checked ? (
             <button
               onClick={checkAnswer}
               disabled={selected === null}
-              className="btn-press min-h-[52px] w-full rounded-full bg-forest-900 text-[15px] font-bold text-cream-50 transition-colors hover:bg-forest-800 disabled:opacity-40"
+              className="btn-press min-h-[52px] w-full rounded-full bg-forest-900 text-[22px] font-bold text-cream-50 transition-colors hover:bg-forest-800 disabled:opacity-40"
             >
               정답 확인
             </button>
           ) : (
             <button
               onClick={nextQuestion}
-              className="btn-press inline-flex min-h-[52px] w-full items-center justify-center gap-1.5 rounded-full bg-forest-900 text-[15px] font-bold text-cream-50 transition-colors hover:bg-forest-800"
+              className="btn-press inline-flex min-h-[52px] w-full items-center justify-center gap-1.5 rounded-full bg-forest-900 text-[22px] font-bold text-cream-50 transition-colors hover:bg-forest-800"
             >
               {step + 1 >= quiz.questions.length ? "결과 보기" : "다음 문제"}
               <ArrowRight size={17} />

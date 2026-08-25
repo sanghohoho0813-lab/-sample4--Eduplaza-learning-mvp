@@ -34,13 +34,13 @@ export function MobileNav() {
               key={href}
               href={href}
               className={clsx(
-                "flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[11px] font-medium transition-colors",
+                "flex min-h-[64px] flex-1 flex-col items-center justify-center gap-1 rounded-lg text-[16px] font-medium transition-colors",
                 active ? "text-cream-50" : "text-cream-200/50"
               )}
             >
               <span
                 className={clsx(
-                  "flex h-7 w-11 items-center justify-center rounded-full transition-colors",
+                  "flex h-8 w-12 items-center justify-center rounded-full transition-colors",
                   active && "bg-forest-700/80"
                 )}
               >

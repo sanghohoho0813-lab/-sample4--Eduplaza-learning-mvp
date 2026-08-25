@@ -7,6 +7,19 @@ const config: Config = {
     "./lib/**/*.{ts,tsx}",
   ],
   theme: {
+    // 기본 스케일 대비 약 1.5배 확대된 타이포그래피 (요청사항: 전반적으로 글씨 1.5배↑)
+    fontSize: {
+      xs: ["1.05rem", { lineHeight: "1.55rem" }], // 16.8px
+      sm: ["1.2rem", { lineHeight: "1.8rem" }], // 19.2px
+      base: ["1.4rem", { lineHeight: "2.1rem" }], // 22.4px
+      lg: ["1.6rem", { lineHeight: "2.25rem" }], // 25.6px
+      xl: ["1.8rem", { lineHeight: "2.45rem" }], // 28.8px
+      "2xl": ["2.1rem", { lineHeight: "2.75rem" }], // 33.6px
+      "3xl": ["2.6rem", { lineHeight: "3.25rem" }], // 41.6px
+      "4xl": ["3.2rem", { lineHeight: "3.8rem" }], // 51.2px
+      "5xl": ["4.4rem", { lineHeight: "1.1" }], // 70.4px
+      "6xl": ["5.6rem", { lineHeight: "1.1" }], // 89.6px
+    },
     extend: {
       colors: {
         forest: {

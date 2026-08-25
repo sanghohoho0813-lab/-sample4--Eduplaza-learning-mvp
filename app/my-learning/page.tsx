@@ -95,7 +95,7 @@ export default function MyLearningPage() {
                   )
                 : "-"}
             </p>
-            <h3 className="mt-0.5 truncate font-display text-[16px] font-semibold md:text-lg">
+            <h3 className="mt-0.5 truncate font-display text-[24px] font-semibold md:text-lg">
               {continueCourse.title}
             </h3>
             <p className="mt-0.5 truncate text-xs text-cream-200/70">

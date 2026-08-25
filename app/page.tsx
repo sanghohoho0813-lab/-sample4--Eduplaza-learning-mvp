@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import {
   ArrowRight,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { useStore } from "@/lib/store";
+import { BRAND } from "@/lib/brand";
 import { COURSES, formatMinutes, getInstructor } from "@/lib/data";
 import { Header } from "@/components/Header";
 import { CourseCard } from "@/components/CourseCard";
@@ -51,32 +53,58 @@ export default function HomePage() {
     .map((e) => COURSES.find((c) => c.id === e.courseId))
     .filter((c): c is NonNullable<typeof c> => Boolean(c));
   const inProgress = enrolledCourses.filter((c) => courseProgress(c.id) < 100);
-  const recommended = COURSES.filter(
-    (c) =>
-      !state.enrollments.some((e) => e.courseId === c.id) &&
-      state.interests.includes(c.categoryId)
-  ).slice(0, 3);
+  // 관심분야 우선, 부족하면 평점 높은 미수강 강의로 채운다
+  const notEnrolled = COURSES.filter(
+    (c) => !state.enrollments.some((e) => e.courseId === c.id)
+  );
+  const byInterest = notEnrolled.filter((c) =>
+    state.interests.includes(c.categoryId)
+  );
+  const recommended = [
+    ...byInterest,
+    ...notEnrolled
+      .filter((c) => !byInterest.includes(c))
+      .sort((a, b) => b.rating - a.rating),
+  ].slice(0, 3);
   const doneMissions = state.missions.filter((m) => m.done).length;
 
   return (
     <div className="animate-fade-up">
       <Header
         title={`${greeting()}, ${state.name}님`}
-        subtitle="오늘도 성장하는 하루 보내세요."
+        subtitle={`${BRAND.company} ${state.name}님, 오늘도 성장하는 하루 되세요.`}
         serif
       />
 
+      {/* 미래에이아이랩 브랜드 리본 */}
+      <section className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-cream-300/70 bg-white px-4 py-3 shadow-card sm:px-5 sm:py-3.5 md:mb-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <img
+            src={BRAND.logo}
+            alt={`${BRAND.company} 로고`}
+            className="h-10 w-auto shrink-0 md:h-12"
+          />
+          <span className="hidden h-8 w-px bg-cream-300 sm:block" />
+          <p className="hidden text-xs font-semibold text-forest-950/60 sm:block sm:text-sm">
+            {BRAND.company}이 만든 학습 플랫폼 레퍼런스
+          </p>
+        </div>
+        <span className="chip shrink-0 whitespace-nowrap bg-forest-950 text-[16px] uppercase tracking-widest text-cream-100">
+          Reference
+        </span>
+      </section>
+
       {/* 핵심 지표 */}
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        <div className="card flex items-center gap-3.5 p-4 md:p-5">
-          <ProgressRing value={overallProgress()} size={58} stroke={6}>
-            <span className="text-[13px] font-bold text-forest-800">
+        <div className="card flex flex-col items-start gap-3 p-4 sm:flex-row sm:items-center sm:gap-3.5 md:p-5">
+          <ProgressRing value={overallProgress()} size={68} stroke={7}>
+            <span className="text-[19px] font-bold text-forest-800">
               {overallProgress()}%
             </span>
           </ProgressRing>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs text-forest-950/50">전체 진행률</p>
-            <p className="mt-0.5 text-sm font-bold text-forest-950">
+            <p className="mt-0.5 whitespace-nowrap text-sm font-bold text-forest-950">
               순항 중이에요
             </p>
           </div>
@@ -189,7 +217,7 @@ export default function HomePage() {
         {/* 오늘의 학습 미션 */}
         <div className="card p-5 md:p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="flex items-center gap-2 text-[15px] font-bold text-forest-950">
+            <h3 className="flex items-center gap-2 text-[22px] font-bold text-forest-950">
               <CalendarCheck2 size={17} className="text-forest-600" />
               오늘의 학습 미션
             </h3>

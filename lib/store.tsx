@@ -26,7 +26,7 @@ import type {
   UserState,
 } from "./types";
 
-const STORAGE_KEY = "eduplaza-state-v1";
+const STORAGE_KEY = "eduplaza-state-v2";
 
 function seedState(): UserState {
   const lessonProgress: Record<string, LessonStatus> = {};
@@ -53,7 +53,7 @@ function seedState(): UserState {
   };
 
   return {
-    name: "지현",
+    name: "김팀장",
     interests: ["data", "ai", "design"],
     streakDays: 12,
     weeklyMinutes: [95, 80, 70, 110, 60, 60, 50], // 합계 8시간 45분

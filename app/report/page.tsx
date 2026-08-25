@@ -106,7 +106,7 @@ export default function ReportPage() {
           {/* 주간 학습 차트 */}
           <section className="card p-5 md:p-6">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-[15px] font-bold text-forest-950">
+              <h2 className="flex items-center gap-2 text-[22px] font-bold text-forest-950">
                 <BarChart3 size={17} className="text-forest-600" />
                 주간 학습 시간
               </h2>
@@ -114,13 +114,13 @@ export default function ReportPage() {
                 주간 목표 {formatMinutes(WEEKLY_GOAL_MIN)}
               </span>
             </div>
-            <div className="flex h-40 items-end justify-between gap-2 md:gap-3">
+            <div className="flex h-48 items-end justify-between gap-2 md:gap-3">
               {state.weeklyMinutes.map((min, i) => (
                 <div
                   key={i}
                   className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
                 >
-                  <span className="text-[11px] font-semibold text-forest-950/55">
+                  <span className="text-[16px] font-semibold text-forest-950/55">
                     {min > 0 ? formatMinutes(min) : ""}
                   </span>
                   <div
@@ -164,7 +164,7 @@ export default function ReportPage() {
 
           {/* 강의별 성과 */}
           <section className="card p-5 md:p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-[15px] font-bold text-forest-950">
+            <h2 className="mb-4 flex items-center gap-2 text-[22px] font-bold text-forest-950">
               <TrendingUp size={17} className="text-forest-600" />
               강의별 진도
             </h2>
@@ -201,7 +201,7 @@ export default function ReportPage() {
 
           {/* 퀴즈 기록 */}
           <section className="card p-5 md:p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-[15px] font-bold text-forest-950">
+            <h2 className="mb-4 flex items-center gap-2 text-[22px] font-bold text-forest-950">
               <PenSquare size={17} className="text-forest-600" />
               퀴즈 기록
             </h2>
@@ -256,7 +256,7 @@ export default function ReportPage() {
             <h3 className="mb-4 text-sm font-bold text-forest-950">
               전체 학습 진행률
             </h3>
-            <ProgressRing value={store.overallProgress()} size={130} stroke={11}>
+            <ProgressRing value={store.overallProgress()} size={160} stroke={13}>
               <div>
                 <p className="font-display text-3xl font-semibold text-forest-900">
                   {store.overallProgress()}%
@@ -293,7 +293,7 @@ export default function ReportPage() {
                     <p className="mt-1 text-xs font-bold text-forest-950">
                       {a.label}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-forest-950/50">
+                    <p className="mt-0.5 text-[16px] text-forest-950/50">
                       {a.description}
                     </p>
                   </li>

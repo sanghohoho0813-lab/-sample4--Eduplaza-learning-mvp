@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { Clock, Heart, Star, Users } from "lucide-react";
+import { Clock, Heart, PlayCircle, Star, Users } from "lucide-react";
 import type { Course } from "@/lib/types";
 import { LEVEL_LABEL, formatMinutes, formatPrice, getCategory, getInstructor } from "@/lib/data";
 import { useStore } from "@/lib/store";
@@ -17,8 +18,10 @@ export function CourseCard({
   course: Course;
   showProgress?: boolean;
 }) {
-  const { isFavorite, toggleFavorite, isEnrolled, courseProgress, courseStatus } = useStore();
+  const { isFavorite, toggleFavorite, isEnrolled, courseProgress, courseStatus, nextLesson } =
+    useStore();
   const { toast } = useToast();
+  const router = useRouter();
   const fav = isFavorite(course.id);
   const enrolled = isEnrolled(course.id);
   const pct = courseProgress(course.id);
@@ -35,7 +38,7 @@ export function CourseCard({
   return (
     <Link
       href={`/courses/${course.id}`}
-      className="card group block overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+      className="card group flex h-full flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
     >
       <div className="relative">
         <CourseThumbnail tone={course.thumbnailTone} title={course.title} rounded="rounded-none" />
@@ -69,11 +72,11 @@ export function CourseCard({
         )}
       </div>
 
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4">
         <p className="text-xs font-medium text-forest-950/45">
           {instructor?.name} · {LEVEL_LABEL[course.level]}
         </p>
-        <h3 className="mt-1 line-clamp-2 text-[15px] font-bold leading-snug text-forest-950 transition-colors group-hover:text-forest-600">
+        <h3 className="mt-1 line-clamp-2 text-[22px] font-bold leading-snug text-forest-950 transition-colors group-hover:text-forest-600">
           {course.title}
         </h3>
 
@@ -94,15 +97,33 @@ export function CourseCard({
         </div>
 
         {showProgress && enrolled ? (
-          <div className="mt-3">
+          <div className="mt-auto pt-3">
             <div className="mb-1 flex items-center justify-between text-xs">
               <span className="text-forest-950/50">진도율</span>
               <span className="font-bold text-forest-700">{pct}%</span>
             </div>
             <ProgressBar value={pct} fillClass={pct >= 100 ? "bg-success" : "bg-forest-600"} />
+            {pct < 100 && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const lesson = nextLesson(course.id);
+                  router.push(
+                    lesson
+                      ? `/learn/${course.id}?lesson=${lesson.id}`
+                      : `/learn/${course.id}`
+                  );
+                }}
+                className="btn-press mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-full bg-forest-900 text-xs font-bold text-cream-50 transition-colors hover:bg-forest-800"
+              >
+                <PlayCircle size={16} />
+                이어보기
+              </button>
+            )}
           </div>
         ) : (
-          <p className="mt-3 text-[15px] font-bold text-forest-950">
+          <p className="mt-auto pt-3 text-[22px] font-bold text-forest-950">
             {formatPrice(course.price)}
           </p>
         )}

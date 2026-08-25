@@ -4,11 +4,11 @@ import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: {
-    default: "EduPlaza — 온라인 학습 플랫폼",
-    template: "%s | EduPlaza",
+    default: "EduPlaza by 미래에이아이랩 — 온라인 학습 플랫폼",
+    template: "%s | EduPlaza by 미래에이아이랩",
   },
   description:
-    "온라인 강의와 자기주도 학습을 한 곳에서. 강의 수강, 학습 진도 관리, 퀴즈와 학습노트까지 EduPlaza에서 시작하세요.",
+    "미래에이아이랩(MIRAE AI LAB)이 기획·개발한 학습 플랫폼 레퍼런스. 강의 수강, 학습 진도 관리, 퀴즈와 학습노트까지 EduPlaza에서 시작하세요.",
 };
 
 export const viewport: Viewport = {

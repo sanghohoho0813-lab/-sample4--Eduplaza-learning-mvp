@@ -83,7 +83,7 @@ export default function NotesPage() {
         ) : (
           <div className="card p-5 animate-scale-in md:p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[15px] font-bold text-forest-950">
+              <h3 className="text-[22px] font-bold text-forest-950">
                 새 노트 작성
               </h3>
               <button

@@ -102,7 +102,7 @@ export default function CourseDetailPage() {
             <h1 className="mt-3 font-display text-2xl font-semibold leading-snug md:text-3xl">
               {course.title}
             </h1>
-            <p className="mt-2 text-sm text-cream-200/75 md:text-[15px]">
+            <p className="mt-2 text-sm text-cream-200/75 md:text-[22px]">
               {course.subtitle}
             </p>
 
@@ -142,7 +142,7 @@ export default function CourseDetailPage() {
               <button
                 onClick={handleEnroll}
                 disabled={enrolling}
-                className="btn-press inline-flex min-h-[48px] items-center gap-2 rounded-full bg-cream-100 px-7 py-3 text-[15px] font-bold text-forest-950 transition-colors hover:bg-cream-50 disabled:opacity-70"
+                className="btn-press inline-flex min-h-[48px] items-center gap-2 rounded-full bg-cream-100 px-7 py-3 text-[22px] font-bold text-forest-950 transition-colors hover:bg-cream-50 disabled:opacity-70"
               >
                 <PlayCircle size={19} />
                 {enrolling
@@ -189,7 +189,7 @@ export default function CourseDetailPage() {
           {/* 소개 */}
           <section className="card p-6">
             <h2 className="mb-3 text-lg font-bold text-forest-950">강의 소개</h2>
-            <p className="text-[15px] leading-relaxed text-forest-950/75">
+            <p className="text-[22px] leading-relaxed text-forest-950/75">
               {course.description}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -332,13 +332,13 @@ export default function CourseDetailPage() {
               <div className="flex items-center gap-3">
                 <InstructorAvatar name={instructor.name} />
                 <div>
-                  <p className="font-display text-[15px] font-semibold text-forest-950">
+                  <p className="font-display text-[22px] font-semibold text-forest-950">
                     {instructor.name}
                   </p>
                   <p className="text-xs text-forest-950/55">{instructor.title}</p>
                 </div>
               </div>
-              <p className="mt-3 text-[13px] leading-relaxed text-forest-950/65">
+              <p className="mt-3 text-[19px] leading-relaxed text-forest-950/65">
                 {instructor.bio}
               </p>
             </section>
@@ -351,7 +351,7 @@ export default function CourseDetailPage() {
             </h3>
             <ul className="space-y-2">
               {course.goals.map((g) => (
-                <li key={g} className="flex gap-2 text-[13px] leading-relaxed text-forest-950/70">
+                <li key={g} className="flex gap-2 text-[19px] leading-relaxed text-forest-950/70">
                   <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-success" />
                   {g}
                 </li>
@@ -366,7 +366,7 @@ export default function CourseDetailPage() {
             </h3>
             <ul className="space-y-2">
               {course.requirements.map((r) => (
-                <li key={r} className="flex gap-2 text-[13px] leading-relaxed text-forest-950/70">
+                <li key={r} className="flex gap-2 text-[19px] leading-relaxed text-forest-950/70">
                   <Circle size={7} className="mt-1.5 shrink-0 fill-forest-300 text-forest-300" />
                   {r}
                 </li>
@@ -375,6 +375,51 @@ export default function CourseDetailPage() {
           </section>
         </aside>
       </div>
+
+      {/* 모바일 하단 고정 CTA */}
+      <div
+        className="fixed inset-x-0 bottom-[64px] z-30 border-t border-cream-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden"
+        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+      >
+        <div className="mx-auto flex max-w-2xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            {enrolled ? (
+              <>
+                <p className="text-xs text-forest-950/50">내 진도율</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <ProgressBar value={pct} height="h-1.5" animate={false} />
+                  <span className="shrink-0 text-xs font-bold text-forest-700">
+                    {pct}%
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-forest-950/50">수강료</p>
+                <p className="font-display text-lg font-semibold text-forest-950">
+                  {formatPrice(course.price)}
+                </p>
+              </>
+            )}
+          </div>
+          <button
+            onClick={handleEnroll}
+            disabled={enrolling}
+            className="btn-press inline-flex min-h-[52px] shrink-0 items-center gap-2 rounded-full bg-forest-900 px-6 text-sm font-bold text-cream-50 transition-colors hover:bg-forest-800 disabled:opacity-70"
+          >
+            <PlayCircle size={18} />
+            {enrolling
+              ? "등록 중..."
+              : enrolled
+                ? pct > 0
+                  ? "이어보기"
+                  : "학습 시작"
+                : "수강 시작하기"}
+          </button>
+        </div>
+      </div>
+      {/* 고정 CTA에 가려지지 않도록 여백 확보 */}
+      <div className="h-24 lg:hidden" />
     </div>
   );
 }

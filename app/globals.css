@@ -19,6 +19,12 @@ body {
   @apply bg-forest-200 text-forest-950;
 }
 
+:focus-visible {
+  outline: 2px solid #456a50;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* thin scrollbar for curriculum lists */
 .thin-scroll::-webkit-scrollbar {
   width: 6px;
@@ -36,7 +42,7 @@ body {
     @apply rounded-2xl bg-white shadow-card;
   }
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium;
+    @apply inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium;
   }
 }
 
@@ -47,6 +53,18 @@ body {
 }
 .animate-progress {
   animation: progress-fill 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* 모션 민감 사용자를 위한 애니메이션 축소 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @keyframes shimmer {

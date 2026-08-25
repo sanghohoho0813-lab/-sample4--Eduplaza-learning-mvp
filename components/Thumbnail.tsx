@@ -29,7 +29,7 @@ export function CourseThumbnail({
       <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-cream-50/10 blur-2xl" />
       <div className="absolute -bottom-12 -left-6 h-28 w-28 rounded-full bg-gold-300/10 blur-2xl" />
       <div className="absolute inset-0 flex items-center justify-center">
-        <GraduationCap className="text-cream-50/25" size={34} />
+        <GraduationCap className="text-cream-50/25" size={44} />
       </div>
     </div>
   );

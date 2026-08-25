@@ -215,7 +215,7 @@ function CoursesContent() {
           <SlidersHorizontal size={15} />
           필터
           {activeFilterCount > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-forest-800 text-[11px] font-bold text-cream-50">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-forest-800 text-[16px] font-bold text-cream-50">
               {activeFilterCount}
             </span>
           )}
@@ -312,7 +312,7 @@ function FilterChip({
     <button
       onClick={onClick}
       className={clsx(
-        "btn-press whitespace-nowrap rounded-full border px-3.5 py-2 text-[13px] font-medium transition-colors",
+        "btn-press whitespace-nowrap rounded-full border px-3.5 py-2 text-[19px] font-medium transition-colors",
         active
           ? "border-forest-900 bg-forest-900 text-cream-50"
           : "border-cream-300 bg-white text-forest-950/70 hover:border-forest-300"

@@ -238,15 +238,15 @@ function PlayerContent() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),340px]">
         <div className="min-w-0">
-          {/* 데모 비디오 플레이어 */}
-          <div className="relative overflow-hidden rounded-2xl bg-forest-950 shadow-card">
+          {/* 데모 비디오 플레이어 — 모바일에서는 스크롤해도 상단에 고정 */}
+          <div className="sticky top-0 z-20 -mx-4 overflow-hidden bg-forest-950 shadow-card sm:-mx-6 sm:rounded-2xl lg:static lg:mx-0 lg:rounded-2xl">
             <div className="relative aspect-video">
               <div className="absolute inset-0 bg-gradient-to-br from-forest-900 via-forest-950 to-forest-800" />
               <div className="absolute -left-10 top-6 h-40 w-40 rounded-full bg-forest-500/20 blur-3xl" />
               <div className="absolute bottom-4 right-10 h-32 w-32 rounded-full bg-gold-500/10 blur-3xl" />
 
               <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cream-200/40">
+                <p className="text-[16px] font-semibold uppercase tracking-[0.2em] text-cream-200/40">
                   Lesson {idx + 1} / {lessons.length}
                 </p>
                 <h2 className="mt-2 max-w-md font-display text-lg font-semibold leading-snug text-cream-50 md:text-2xl">
@@ -411,7 +411,7 @@ function PlayerContent() {
 
               {tab === "about" && (
                 <div className="space-y-3">
-                  <h3 className="text-[15px] font-bold text-forest-950">
+                  <h3 className="text-[22px] font-bold text-forest-950">
                     {lesson.title}
                   </h3>
                   <p className="text-sm leading-relaxed text-forest-950/70">

@@ -140,7 +140,7 @@ export default function QuizListPage() {
                     <p className="text-xs font-medium text-forest-950/45">
                       {course?.title}
                     </p>
-                    <h3 className="mt-1 text-[16px] font-bold text-forest-950">
+                    <h3 className="mt-1 text-[24px] font-bold text-forest-950">
                       {assignment.title}
                     </h3>
                     <p className="mt-1.5 text-sm leading-relaxed text-forest-950/60">
