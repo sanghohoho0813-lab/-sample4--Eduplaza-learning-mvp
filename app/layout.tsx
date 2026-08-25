@@ -1,0 +1,32 @@
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+import { AppShell } from "@/components/AppShell";
+
+export const metadata: Metadata = {
+  title: {
+    default: "EduPlaza — 온라인 학습 플랫폼",
+    template: "%s | EduPlaza",
+  },
+  description:
+    "온라인 강의와 자기주도 학습을 한 곳에서. 강의 수강, 학습 진도 관리, 퀴즈와 학습노트까지 EduPlaza에서 시작하세요.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#131F19",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="ko">
+      <body>
+        <AppShell>{children}</AppShell>
+      </body>
+    </html>
+  );
+}
