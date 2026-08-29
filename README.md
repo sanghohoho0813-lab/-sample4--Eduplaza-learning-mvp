@@ -86,11 +86,29 @@ npm run build  # 프로덕션 빌드 (Vercel 배포 가능)
 - **접근성** — 전역 `:focus-visible` 링, 44px 이상 터치 타겟, aria 라벨,
   `word-break: keep-all`로 한글 어절 단위 줄바꿈.
 
+## 컬러 시스템
+
+딥 포레스트 그린과 크림을 기본 톤으로 두고, 보조 색 3종을 더해 가시성을 확보했습니다.
+
+| 계열 | 용도 |
+| --- | --- |
+| `forest` | 기본 브랜드 톤 — 사이드바, 히어로, 주요 버튼 |
+| `cream` | 배경과 카드 — 눈이 편한 오프화이트 |
+| `teal` | 학습·진도 계열 (미래에이아이랩 로고의 시안과 연결) |
+| `amber` | 퀴즈·성취·점수 계열 |
+| `clay` | 연속 학습·일정·마감 계열 |
+
+사이드바 메뉴는 항목마다 고유 색을 갖되 채도를 낮춰 톤을 해치지 않도록 했고,
+활성 상태에서만 또렷한 색으로 전환됩니다. 강의 카테고리 배지도 이 4계열을
+번갈아 사용합니다(`CATEGORY_TONE`).
+
 ## 이미지 교체 가이드
 
-썸네일·프로필은 현재 그라디언트 플레이스홀더로 렌더링됩니다.
-실제 이미지가 준비되면 아래 경로에 넣고 `components/Thumbnail.tsx`를
-`<img>` 렌더링으로 교체하면 됩니다.
+강의 썸네일 18종은 `public/images/courses/{courseId}.jpg`에 들어 있으며
+모두 16:9(1280×720)로 정규화되어 있습니다. 파일이 없거나 로딩에 실패하면
+`CourseThumbnail`이 자동으로 그라디언트 플레이스홀더로 대체하므로
+레이아웃이 깨지지 않습니다.
 
-- 강의 썸네일(16:9): `public/images/courses/{courseId}.jpg`
-- 강사 프로필(1:1): `public/images/instructors/{instructorId}.jpg`
+강사 프로필(1:1)은 아직 이니셜 아바타를 쓰고 있습니다. 이미지를 넣으려면
+`public/images/instructors/{instructorId}.jpg`를 추가하고
+`components/Thumbnail.tsx`의 `InstructorAvatar`를 `<img>`로 바꾸면 됩니다.

@@ -104,9 +104,9 @@ export default function QuizListPage() {
                       className={clsx(
                         "chip",
                         best === 100
-                          ? "bg-gold-300/25 text-gold-600"
+                          ? "bg-amber-100 text-amber-600"
                           : best >= 70
-                            ? "bg-forest-100 text-forest-700"
+                            ? "bg-teal-100 text-teal-600"
                             : "bg-cream-100 text-forest-950/50"
                       )}
                     >

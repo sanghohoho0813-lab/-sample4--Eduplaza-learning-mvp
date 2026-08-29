@@ -166,13 +166,13 @@ export default function CalendarPage() {
                     )}
                     {ev?.quiz && (
                       <span
-                        className="h-1.5 w-1.5 rounded-full bg-info"
+                        className="h-1.5 w-1.5 rounded-full bg-teal-500"
                         title="퀴즈"
                       />
                     )}
                     {ev?.assignment && (
                       <span
-                        className="h-1.5 w-1.5 rounded-full bg-gold-500"
+                        className="h-1.5 w-1.5 rounded-full bg-clay-400"
                         title="과제 마감"
                       />
                     )}
@@ -187,10 +187,10 @@ export default function CalendarPage() {
               <span className="h-2 w-2 rounded-full bg-success" /> 강의 수강
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-info" /> 퀴즈
+              <span className="h-2 w-2 rounded-full bg-teal-500" /> 퀴즈
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-gold-500" /> 과제 마감
+              <span className="h-2 w-2 rounded-full bg-clay-400" /> 과제 마감
             </span>
           </div>
         </section>

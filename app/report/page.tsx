@@ -61,19 +61,19 @@ export default function ReportPage() {
         {[
           {
             icon: Timer,
-            iconClass: "bg-cream-100 text-forest-600",
+            iconClass: "bg-teal-100 text-teal-600",
             label: "이번 주 학습시간",
             value: formatMinutes(weeklyTotal),
           },
           {
             icon: PenSquare,
-            iconClass: "bg-forest-100 text-forest-700",
+            iconClass: "bg-amber-100 text-amber-600",
             label: "퀴즈 평균 점수",
             value: `${quizAvg}점`,
           },
           {
             icon: Flame,
-            iconClass: "bg-gold-300/25 text-gold-600",
+            iconClass: "bg-clay-100 text-clay-500",
             label: "연속 학습",
             value: `${state.streakDays}일`,
           },
@@ -87,7 +87,7 @@ export default function ReportPage() {
           <div key={label} className="card p-4 md:p-5">
             <span
               className={clsx(
-                "mb-2 flex h-9 w-9 items-center justify-center rounded-full",
+                "mb-2 flex h-10 w-10 items-center justify-center rounded-xl",
                 iconClass
               )}
             >
@@ -107,7 +107,7 @@ export default function ReportPage() {
           <section className="card p-5 md:p-6">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-[22px] font-bold text-forest-950">
-                <BarChart3 size={17} className="text-forest-600" />
+                <BarChart3 size={17} className="text-teal-600" />
                 주간 학습 시간
               </h2>
               <span className="text-xs text-forest-950/45">
@@ -127,8 +127,8 @@ export default function ReportPage() {
                     className={clsx(
                       "w-full max-w-[38px] rounded-t-lg transition-all duration-500",
                       i === todayIdx
-                        ? "bg-gradient-to-t from-forest-800 to-forest-500"
-                        : "bg-forest-200"
+                        ? "bg-gradient-to-t from-teal-700 to-teal-400"
+                        : "bg-teal-100"
                     )}
                     style={{
                       height: `${Math.max((min / maxDay) * 62, min > 0 ? 8 : 3)}%`,
@@ -138,7 +138,7 @@ export default function ReportPage() {
                     className={clsx(
                       "text-xs",
                       i === todayIdx
-                        ? "font-bold text-forest-800"
+                        ? "font-bold text-teal-700"
                         : "text-forest-950/45"
                     )}
                   >
@@ -165,7 +165,7 @@ export default function ReportPage() {
           {/* 강의별 성과 */}
           <section className="card p-5 md:p-6">
             <h2 className="mb-4 flex items-center gap-2 text-[22px] font-bold text-forest-950">
-              <TrendingUp size={17} className="text-forest-600" />
+              <TrendingUp size={17} className="text-teal-600" />
               강의별 진도
             </h2>
             <ul className="space-y-4">
@@ -202,7 +202,7 @@ export default function ReportPage() {
           {/* 퀴즈 기록 */}
           <section className="card p-5 md:p-6">
             <h2 className="mb-4 flex items-center gap-2 text-[22px] font-bold text-forest-950">
-              <PenSquare size={17} className="text-forest-600" />
+              <PenSquare size={17} className="text-amber-600" />
               퀴즈 기록
             </h2>
             {state.quizResults.length === 0 ? (
@@ -234,9 +234,9 @@ export default function ReportPage() {
                         className={clsx(
                           "chip",
                           r.score === 100
-                            ? "bg-gold-300/25 text-gold-600"
+                            ? "bg-amber-100 text-amber-600"
                             : r.score >= 70
-                              ? "bg-forest-100 text-forest-700"
+                              ? "bg-teal-100 text-teal-600"
                               : "bg-cream-100 text-forest-950/55"
                         )}
                       >
@@ -273,7 +273,7 @@ export default function ReportPage() {
           {/* 성취 배지 */}
           <section className="card p-5">
             <h3 className="mb-4 flex items-center gap-1.5 text-sm font-bold text-forest-950">
-              <Award size={15} className="text-gold-500" />
+              <Award size={15} className="text-amber-500" />
               나의 성취
             </h3>
             <ul className="grid grid-cols-2 gap-2.5">
@@ -285,7 +285,7 @@ export default function ReportPage() {
                     className={clsx(
                       "rounded-xl border p-3 text-center transition-all",
                       unlocked
-                        ? "border-gold-300/60 bg-gold-300/10"
+                        ? "border-amber-200 bg-amber-50"
                         : "border-cream-200 bg-cream-50 opacity-50"
                     )}
                   >

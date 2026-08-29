@@ -93,7 +93,7 @@ export default function CourseDetailPage() {
         <div className="relative grid gap-6 lg:grid-cols-[1fr,360px] lg:items-center">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="chip bg-forest-800 text-cream-100">
+              <span className="chip bg-teal-500/20 text-teal-200 ring-1 ring-teal-400/30">
                 {getCategory(course.categoryId)?.name}
               </span>
               <span className="chip border border-cream-200/20 text-cream-200">
@@ -179,6 +179,8 @@ export default function CourseDetailPage() {
             <CourseThumbnail
               tone={course.thumbnailTone}
               title={course.title}
+              courseId={course.id}
+              priority
               className="ring-1 ring-cream-50/10"
             />
           </div>
@@ -195,7 +197,7 @@ export default function CourseDetailPage() {
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {course.tags.map((t) => (
-                <span key={t} className="chip bg-cream-100 text-forest-700">
+                <span key={t} className="chip bg-teal-50 text-teal-600">
                   #{t}
                 </span>
               ))}
@@ -347,7 +349,7 @@ export default function CourseDetailPage() {
 
           <section className="card p-5">
             <h3 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-forest-950">
-              <ListChecks size={15} className="text-forest-600" />
+              <ListChecks size={15} className="text-teal-600" />
               이런 분께 추천해요
             </h3>
             <ul className="space-y-2">
@@ -362,7 +364,7 @@ export default function CourseDetailPage() {
 
           <section className="card p-5">
             <h3 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-forest-950">
-              <BarChart3 size={15} className="text-forest-600" />
+              <BarChart3 size={15} className="text-clay-500" />
               준비사항
             </h3>
             <ul className="space-y-2">

@@ -84,6 +84,8 @@ export default function MyLearningPage() {
             <CourseThumbnail
               tone={continueCourse.thumbnailTone}
               title={continueCourse.title}
+              courseId={continueCourse.id}
+              priority
             />
           </div>
           <div className="min-w-0 flex-1">

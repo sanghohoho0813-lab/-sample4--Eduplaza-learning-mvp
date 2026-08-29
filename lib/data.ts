@@ -1,6 +1,7 @@
 import type {
   Assignment,
   Category,
+  CategoryId,
   Course,
   CourseLevel,
   CourseSection,
@@ -20,6 +21,18 @@ export const CATEGORIES: Category[] = [
   { id: "career", name: "커리어" },
   { id: "language", name: "외국어" },
 ];
+
+// 카테고리별 배지 색 — forest / teal / amber / clay 4계열을 돌려쓴다.
+export const CATEGORY_TONE: Record<CategoryId, string> = {
+  dev: "bg-teal-100 text-teal-700",
+  ai: "bg-teal-50 text-teal-600",
+  data: "bg-forest-100 text-forest-700",
+  design: "bg-clay-100 text-clay-600",
+  marketing: "bg-amber-100 text-amber-600",
+  business: "bg-forest-50 text-forest-600",
+  career: "bg-clay-50 text-clay-500",
+  language: "bg-amber-50 text-amber-500",
+};
 
 export const LEVEL_LABEL: Record<CourseLevel, string> = {
   beginner: "입문",

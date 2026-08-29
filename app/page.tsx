@@ -110,8 +110,8 @@ export default function HomePage() {
           </div>
         </div>
         <div className="card p-4 md:p-5">
-          <span className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-cream-100 text-forest-600">
-            <Timer size={17} />
+          <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-600">
+            <Timer size={18} />
           </span>
           <p className="text-xs text-forest-950/50">이번 주 학습시간</p>
           <p className="mt-0.5 font-display text-lg font-semibold text-forest-950">
@@ -119,8 +119,8 @@ export default function HomePage() {
           </p>
         </div>
         <div className="card p-4 md:p-5">
-          <span className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-gold-300/25 text-gold-600">
-            <Flame size={17} />
+          <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-clay-100 text-clay-500">
+            <Flame size={18} />
           </span>
           <p className="text-xs text-forest-950/50">연속 학습</p>
           <p className="mt-0.5 font-display text-lg font-semibold text-forest-950">
@@ -128,8 +128,8 @@ export default function HomePage() {
           </p>
         </div>
         <div className="card p-4 md:p-5">
-          <span className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-forest-100 text-success">
-            <GraduationCap size={17} />
+          <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+            <GraduationCap size={18} />
           </span>
           <p className="text-xs text-forest-950/50">완료한 강의</p>
           <p className="mt-0.5 font-display text-lg font-semibold text-forest-950">
@@ -189,6 +189,8 @@ export default function HomePage() {
                 <CourseThumbnail
                   tone={current.thumbnailTone}
                   title={current.title}
+                  courseId={current.id}
+                  priority
                   className="ring-1 ring-cream-50/10"
                 />
                 <p className="mt-2 text-xs text-cream-200/50">
@@ -270,7 +272,7 @@ export default function HomePage() {
       <section className="mt-8 md:mt-10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-bold text-forest-950">
-            <BookOpenCheck size={19} className="text-forest-600" />
+            <BookOpenCheck size={19} className="text-teal-600" />
             학습 이어가기
           </h2>
           <Link
@@ -291,7 +293,7 @@ export default function HomePage() {
       <section className="mt-8 md:mt-10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-bold text-forest-950">
-            <Sparkles size={19} className="text-gold-500" />
+            <Sparkles size={19} className="text-amber-500" />
             {state.name}님을 위한 추천 강의
           </h2>
           <Link
