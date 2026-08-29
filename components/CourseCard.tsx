@@ -92,7 +92,7 @@ export function CourseCard({
             {getCategory(course.categoryId)?.name}
           </span>
           <span className="truncate text-xs font-medium text-forest-950/45">
-            {instructor?.name} · {LEVEL_LABEL[course.level]}
+            {instructor?.name} 강사
           </span>
         </div>
         <h3 className="mt-1 line-clamp-2 text-[22px] font-bold leading-snug text-forest-950 transition-colors group-hover:text-forest-600">
@@ -112,6 +112,9 @@ export function CourseCard({
           <span className="inline-flex items-center gap-1">
             <Users size={13} />
             {course.studentCount.toLocaleString()}명
+          </span>
+          <span className="rounded-md bg-cream-100 px-1.5 py-0.5 text-[16px] font-semibold text-forest-950/55">
+            {LEVEL_LABEL[course.level]}
           </span>
         </div>
 
