@@ -1,5 +1,5 @@
 // 미래에이아이랩 브랜드 상수 — EduPlaza는 미래에이아이랩의 레퍼런스 프로젝트다.
-// 로고 원본(JPG)의 배경을 제거해 투명 PNG로 가공했으므로 밝은/어두운 배경 모두에 얹을 수 있다.
+// 로고는 투명 배경 원본 PNG를 그대로 사용한다(여백만 트리밍).
 export const BRAND = {
   company: "미래에이아이랩",
   companyEn: "MIRAE AI LAB",

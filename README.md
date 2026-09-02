@@ -58,8 +58,7 @@ npm run build  # 프로덕션 빌드 (Vercel 배포 가능)
 
 | 파일 | 용도 |
 | --- | --- |
-| `mirae-logo.jpg` | 지급받은 원본 (배경 포함) |
-| `mirae-logo.png` | 배경을 제거한 가로형 로고 — 실제 화면에서 사용 |
+| `mirae-logo.png` | 투명 배경 원본 가로형 로고 — 실제 화면에서 사용 |
 | `mirae-symbol.png` | M 심볼만 분리 — 사이드바 상단 |
 | `app/icon.png` | 브라우저 탭 파비콘 (심볼 + 딥네이비 배경) |
 
