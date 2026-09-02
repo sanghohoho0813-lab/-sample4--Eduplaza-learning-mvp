@@ -135,16 +135,14 @@ export function Sidebar() {
       </nav>
 
       <div className="space-y-3 px-3 pb-5 pt-4">
-        {/* 미래에이아이랩 브랜드 크레딧 — 로고는 밝은 판에 얹어 원본 색을 보존한다 */}
-        <div className="rounded-xl border border-forest-800 bg-forest-900/40 p-3">
-          <div className="rounded-lg bg-white px-3 py-2.5">
-            <img
-              src={BRAND.logo}
-              alt={`${BRAND.company} 로고`}
-              className="h-7 w-auto"
-            />
-          </div>
-          <p className="mt-2.5 px-0.5 text-[16px] leading-snug text-cream-200/55">
+        {/* 미래에이아이랩 브랜드 크레딧 */}
+        <div className="rounded-xl border border-forest-800 bg-forest-900/40 px-4 py-3.5">
+          <img
+            src={BRAND.logoDark}
+            alt={`${BRAND.company} 로고`}
+            className="h-8 w-auto"
+          />
+          <p className="mt-2.5 text-[16px] leading-snug text-cream-200/55">
             {BRAND.company} 레퍼런스 프로젝트
           </p>
         </div>
