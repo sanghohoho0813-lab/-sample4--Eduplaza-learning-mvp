@@ -6,6 +6,7 @@ import { BRAND } from "@/lib/brand";
 import { ToastProvider } from "./Toast";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
+import { SampleBridgeCTA } from "./SampleBridgeCTA";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +24,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div id="main-content" className="flex-1">
               {children}
             </div>
+
+            {/* 샘플 하단 공통 CTA 브릿지 — 상담 / 다른 샘플 / 홈페이지 */}
+            <SampleBridgeCTA className="mt-14" />
 
             {/* 미래에이아이랩 브랜드 푸터 */}
             <footer className="mt-14 border-t border-cream-300/70 pb-4 pt-7">

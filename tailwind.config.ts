@@ -118,11 +118,25 @@ const config: Config = {
           "60%": { transform: "scale(1.15)" },
           "100%": { transform: "scale(1)" },
         },
+        // CTA 버튼 위를 천천히 지나가는 빛. 전체 5초 중 약 1.5초만 움직이고 나머지는 정지.
+        "cta-sweep": {
+          "0%": { transform: "translateX(0) skewX(-12deg)" },
+          "30%": { transform: "translateX(420%) skewX(-12deg)" },
+          "100%": { transform: "translateX(420%) skewX(-12deg)" },
+        },
+        // 배지 위를 아주 옅게 스치는 빛
+        "badge-shimmer": {
+          "0%": { transform: "translateX(0) skewX(-12deg)" },
+          "35%": { transform: "translateX(420%) skewX(-12deg)" },
+          "100%": { transform: "translateX(420%) skewX(-12deg)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 0.35s ease both",
         "scale-in": "scale-in 0.25s ease both",
         "check-pop": "check-pop 0.3s ease both",
+        "cta-sweep": "cta-sweep 5s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+        "badge-shimmer": "badge-shimmer 6s cubic-bezier(0.4, 0, 0.2, 1) infinite",
       },
     },
   },
