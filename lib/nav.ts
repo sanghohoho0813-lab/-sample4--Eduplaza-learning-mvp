@@ -45,8 +45,9 @@ export const PRIMARY_NAV: NavItem[] = [
   { href: "/my", label: "마이", short: "마이", icon: User, match: ["/my"] },
 ];
 
-// 모바일 하단 탭은 5칸. 마이는 모든 화면 헤더의 프로필 버튼으로 들어간다.
-export const MOBILE_NAV = PRIMARY_NAV.filter((n) => n.href !== "/my");
+// 모바일 하단 탭은 5칸이라 리포트를 뺀다. 리포트는 홈의 "이번 주 학습",
+// 내 학습 상단, 마이페이지 바로가기, 퀴즈 결과 화면에서 진입한다.
+export const MOBILE_NAV = PRIMARY_NAV.filter((n) => n.href !== "/report");
 
 export function matchPath(pathname: string, prefix: string): boolean {
   if (prefix === "/") return pathname === "/";

@@ -20,7 +20,7 @@ import { groupWeak, weeklyGoalMessage } from "@/lib/insights";
 import { Header } from "@/components/Header";
 import { CourseCard } from "@/components/CourseCard";
 import { CourseThumbnail } from "@/components/Thumbnail";
-import { ProgressBar } from "@/components/ProgressBar";
+import { ProgressBar, ProgressRing } from "@/components/ProgressBar";
 import { ActivityList } from "@/components/ActivityList";
 import { HomeSkeleton } from "@/components/Skeletons";
 
@@ -86,6 +86,10 @@ export default function HomePage() {
     .map((id) => CATEGORIES.find((c) => c.id === id)?.name)
     .filter(Boolean)
     .join("·");
+
+  const overall = store.overallProgress();
+  const doneCourses = store.completedCourseCount();
+  const activeCourses = enrolledCourses(state).filter((c) => store.courseProgress(c.id) < 100).length;
 
   const lessonReachesGoal = next ? weeklyLeft > 0 && next.durationMin >= weeklyLeft : false;
 
@@ -214,17 +218,38 @@ export default function HomePage() {
         </span>
       </section>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr),360px] lg:gap-6">
+      {/* 학습 요약 — 카드 4장 대신 한 줄로 */}
+      <section
+        className="card mb-5 grid grid-cols-3 divide-x divide-cream-200 py-3 md:mb-6 md:py-4"
+        aria-label="학습 요약"
+      >
+        <div className="flex flex-col items-center gap-1.5 px-2 text-center">
+          <ProgressRing value={overall} size={56} stroke={6}>
+            <span className="text-sm font-bold text-forest-800">{overall}%</span>
+          </ProgressRing>
+          <span className="text-xs text-forest-950/55">전체 진행률</span>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
+          <span className="font-display text-2xl font-semibold text-forest-950">{doneCourses}개</span>
+          <span className="text-xs text-forest-950/55">완료한 강의</span>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
+          <span className="font-display text-2xl font-semibold text-forest-950">{activeCourses}개</span>
+          <span className="text-xs text-forest-950/55">수강 중</span>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr),320px] lg:gap-6 min-[1400px]:grid-cols-[minmax(0,1fr),360px]">
         {/* ---- 메인: 지금 할 공부 ---- */}
         <div className="min-w-0 space-y-5 lg:space-y-6">
           {/* 1. 이어서 학습 — 화면의 유일한 Primary CTA */}
           {current && next ? (
             <section className="relative overflow-hidden rounded-2xl bg-forest-950 p-6 text-cream-50 shadow-card md:p-8">
               <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-forest-600/30 blur-3xl" />
-              <div className="relative grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr),220px] md:items-center lg:grid-cols-1 min-[1400px]:grid-cols-[minmax(0,1fr),220px]">
+              <div className="relative grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr),220px] md:items-center lg:grid-cols-[minmax(0,1fr),168px] min-[1400px]:grid-cols-[minmax(0,1fr),220px]">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gold-300">이어서 학습</p>
-                  <h2 className="mt-2 font-display text-xl font-semibold leading-snug md:text-2xl">
+                  <h2 className="mt-2 font-display text-xl font-semibold leading-snug md:text-2xl lg:text-xl min-[1400px]:text-2xl">
                     {current.title}
                   </h2>
                   <p className="mt-2 text-sm text-cream-200/75">
@@ -264,7 +289,7 @@ export default function HomePage() {
                     </p>
                   )}
                 </div>
-                <div className="hidden md:block lg:hidden min-[1400px]:block">
+                <div className="hidden md:block">
                   <CourseThumbnail
                     tone={current.thumbnailTone}
                     title={current.title}
