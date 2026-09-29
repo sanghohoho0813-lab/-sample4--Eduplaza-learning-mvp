@@ -215,7 +215,7 @@ function CoursesContent() {
           <SlidersHorizontal size={15} />
           필터
           {activeFilterCount > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-forest-800 text-[16px] font-bold text-cream-50">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-forest-800 text-xs font-bold text-cream-50">
               {activeFilterCount}
             </span>
           )}
@@ -229,7 +229,7 @@ function CoursesContent() {
         </div>
       </div>
 
-      <div className="lg:grid lg:grid-cols-[240px,1fr] lg:gap-8">
+      <div className="lg:grid lg:grid-cols-[240px,minmax(0,1fr)] lg:gap-8">
         {/* PC 사이드 필터 */}
         <aside className="hidden lg:block">
           <div className="card sticky top-6 p-5">{FilterPanel}</div>
@@ -257,7 +257,7 @@ function CoursesContent() {
               description="필터를 조정하거나 다른 키워드로 검색해보세요."
             />
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {filtered.map((course) => (
                 <CourseCard key={course.id} course={course} />
               ))}
@@ -312,7 +312,7 @@ function FilterChip({
     <button
       onClick={onClick}
       className={clsx(
-        "btn-press whitespace-nowrap rounded-full border px-3.5 py-2 text-[19px] font-medium transition-colors",
+        "btn-press whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium transition-colors",
         active
           ? "border-forest-900 bg-forest-900 text-cream-50"
           : "border-cream-300 bg-white text-forest-950/70 hover:border-forest-300"

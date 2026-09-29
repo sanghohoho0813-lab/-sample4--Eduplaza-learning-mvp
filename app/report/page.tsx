@@ -2,23 +2,14 @@
 
 import Link from "next/link";
 import clsx from "clsx";
-import {
-  Award,
-  BarChart3,
-  Flame,
-  GraduationCap,
-  PenSquare,
-  Timer,
-  TrendingUp,
-} from "lucide-react";
-import { COURSES, QUIZZES, formatMinutes } from "@/lib/data";
-import { ACHIEVEMENTS, useStore } from "@/lib/store";
+import { ChevronRight, RotateCcw } from "lucide-react";
+import { ASSIGNMENTS, QUIZZES, formatMinutes } from "@/lib/data";
+import { ACHIEVEMENTS, WEEKLY_GOAL_MIN, dayKey, dueLabel, enrolledCourses, useStore } from "@/lib/store";
+import { groupWeak, weeklyGoalMessage } from "@/lib/insights";
 import { Header } from "@/components/Header";
-import { ProgressBar, ProgressRing } from "@/components/ProgressBar";
+import { ProgressBar } from "@/components/ProgressBar";
+import { ActivityList, relativeWhen } from "@/components/ActivityList";
 import { ListSkeleton } from "@/components/Skeletons";
-
-const DAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"];
-const WEEKLY_GOAL_MIN = 300; // 주 5시간
 
 export default function ReportPage() {
   const store = useStore();
@@ -26,150 +17,124 @@ export default function ReportPage() {
   if (!store.ready) {
     return (
       <div>
-        <Header title="성적 · 리포트" />
+        <Header title="학습 리포트" />
         <ListSkeleton rows={5} />
       </div>
     );
   }
 
-  const { state } = store;
-  const weeklyTotal = state.weeklyMinutes.reduce((a, b) => a + b, 0);
-  const maxDay = Math.max(...state.weeklyMinutes, 1);
-  const todayIdx = (new Date().getDay() + 6) % 7;
+  const { state, last7, weeklyTotal, streak } = store;
+  const weekStart = last7[0].key;
+  const inWeek = (iso: string) => dayKey(new Date(iso)) >= weekStart;
+  const lessonsThisWeek = state.activity.filter((a) => a.type === "lesson" && inWeek(a.at)).length;
+  const fullAttempts = state.quizResults.filter((r) => r.mode === "full");
+  const quizAvg = fullAttempts.length
+    ? Math.round(fullAttempts.reduce((a, r) => a + r.score, 0) / fullAttempts.length)
+    : 0;
+  const maxDay = Math.max(...last7.map((d) => d.minutes), 1);
+  const weak = groupWeak(store.weakQuestions);
+  const courses = enrolledCourses(state);
+  const submitted = ASSIGNMENTS.filter((a) => store.assignmentStatus(a.id) === "submitted").length;
+  const weeklyLeft = Math.max(0, WEEKLY_GOAL_MIN - weeklyTotal);
 
-  const quizAvg =
-    state.quizResults.length > 0
-      ? Math.round(
-          state.quizResults.reduce((a, r) => a + r.score, 0) /
-            state.quizResults.length
-        )
-      : 0;
-
-  const enrolled = state.enrollments
-    .map((e) => COURSES.find((c) => c.id === e.courseId))
-    .filter((c): c is NonNullable<typeof c> => Boolean(c));
+  const summary =
+    lessonsThisWeek > 0
+      ? `최근 7일 동안 레슨 ${lessonsThisWeek}개를 마치고 ${formatMinutes(weeklyTotal)} 공부했어요.`
+      : "최근 7일 동안 기록이 없어요. 짧은 레슨 하나로 다시 시작해볼까요?";
 
   return (
     <div className="animate-fade-up">
-      <Header
-        title="성적 · 리포트"
-        subtitle="꾸준함이 쌓여 실력이 됩니다. 이번 주도 잘하고 있어요."
-      />
+      <Header title="학습 리포트" subtitle="최근 7일 동안의 학습을 돌아보고 다음 걸음을 정해요." />
 
-      {/* 요약 지표 */}
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        {[
-          {
-            icon: Timer,
-            iconClass: "bg-teal-100 text-teal-600",
-            label: "이번 주 학습시간",
-            value: formatMinutes(weeklyTotal),
-          },
-          {
-            icon: PenSquare,
-            iconClass: "bg-amber-100 text-amber-600",
-            label: "퀴즈 평균 점수",
-            value: `${quizAvg}점`,
-          },
-          {
-            icon: Flame,
-            iconClass: "bg-clay-100 text-clay-500",
-            label: "연속 학습",
-            value: `${state.streakDays}일`,
-          },
-          {
-            icon: GraduationCap,
-            iconClass: "bg-forest-100 text-success",
-            label: "완료 레슨",
-            value: `${store.completedLessonCount()}개`,
-          },
-        ].map(({ icon: Icon, iconClass, label, value }) => (
-          <div key={label} className="card p-4 md:p-5">
-            <span
-              className={clsx(
-                "mb-2 flex h-10 w-10 items-center justify-center rounded-xl",
-                iconClass
-              )}
-            >
-              <Icon size={17} />
+      {/* 이번 주 요약 — 숫자는 한 카드 안에서만 */}
+      <section className="card p-5 md:p-6" aria-labelledby="summary-heading">
+        <h2 id="summary-heading" className="text-base font-bold text-forest-950">
+          이번 주 요약
+        </h2>
+        <p className="mt-1 text-sm text-forest-950/65">{summary}</p>
+        <dl className="mt-5 grid grid-cols-2 gap-y-5 md:grid-cols-4 md:divide-x md:divide-cream-200">
+          {[
+            ["학습 시간", formatMinutes(weeklyTotal)],
+            ["완료 레슨", `${lessonsThisWeek}개`],
+            ["퀴즈 평균", fullAttempts.length ? `${quizAvg}점` : "-"],
+            ["연속 학습", `${streak}일`],
+          ].map(([label, value]) => (
+            <div key={label} className="md:px-5 md:first:pl-0">
+              <dt className="text-xs text-forest-950/50">{label}</dt>
+              <dd className="mt-0.5 font-display text-xl font-semibold text-forest-950">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="mt-5 rounded-xl bg-cream-100 p-4">
+          <div className="mb-1.5 flex justify-between text-sm">
+            <span className="text-forest-950/65">{weeklyGoalMessage(weeklyTotal, WEEKLY_GOAL_MIN)}</span>
+            <span className="font-bold text-forest-800">
+              {Math.min(100, Math.round((weeklyTotal / WEEKLY_GOAL_MIN) * 100))}%
             </span>
-            <p className="text-xs text-forest-950/50">{label}</p>
-            <p className="mt-0.5 font-display text-lg font-semibold text-forest-950">
-              {value}
-            </p>
           </div>
-        ))}
+          <ProgressBar
+            value={(weeklyTotal / WEEKLY_GOAL_MIN) * 100}
+            fillClass={weeklyLeft === 0 ? "bg-success" : "bg-forest-600"}
+            trackClass="bg-cream-300/60"
+          />
+        </div>
       </section>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-[1fr,340px]">
-        <div className="space-y-5">
-          {/* 주간 학습 차트 */}
-          <section className="card p-5 md:p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-[22px] font-bold text-forest-950">
-                <BarChart3 size={17} className="text-teal-600" />
-                주간 학습 시간
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr),360px]">
+        <div className="min-w-0 space-y-6">
+          {/* 최근 7일 */}
+          <section className="card p-5 md:p-6" aria-labelledby="chart-heading">
+            <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <h2 id="chart-heading" className="text-base font-bold text-forest-950">
+                최근 7일 학습 시간
               </h2>
-              <span className="text-xs text-forest-950/45">
-                주간 목표 {formatMinutes(WEEKLY_GOAL_MIN)}
-              </span>
+              <span className="shrink-0 text-xs text-forest-950/45">단위: 분</span>
             </div>
             <div className="flex h-48 items-end justify-between gap-2 md:gap-3">
-              {state.weeklyMinutes.map((min, i) => (
+              {last7.map((d) => (
                 <div
-                  key={i}
+                  key={d.key}
                   className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
                 >
-                  <span className="text-[16px] font-semibold text-forest-950/55">
-                    {min > 0 ? formatMinutes(min) : ""}
+                  <span
+                    className={clsx(
+                      "text-xs font-semibold",
+                      d.isToday ? "text-forest-800" : "text-forest-950/50"
+                    )}
+                  >
+                    {d.minutes > 0 ? d.minutes : ""}
                   </span>
                   <div
                     className={clsx(
                       "w-full max-w-[38px] rounded-t-lg transition-all duration-500",
-                      i === todayIdx
-                        ? "bg-gradient-to-t from-teal-700 to-teal-400"
-                        : "bg-teal-100"
+                      d.isToday ? "bg-forest-700" : "bg-forest-200"
                     )}
-                    style={{
-                      height: `${Math.max((min / maxDay) * 62, min > 0 ? 8 : 3)}%`,
-                    }}
+                    style={{ height: `${Math.max((d.minutes / maxDay) * 70, d.minutes > 0 ? 8 : 3)}%` }}
+                    aria-label={`${d.label}요일 ${d.minutes}분`}
                   />
                   <span
                     className={clsx(
                       "text-xs",
-                      i === todayIdx
-                        ? "font-bold text-teal-700"
-                        : "text-forest-950/45"
+                      d.isToday ? "font-bold text-forest-800" : "text-forest-950/50"
                     )}
                   >
-                    {DAY_LABELS[i]}
+                    {d.isToday ? "오늘" : d.label}
                   </span>
                 </div>
               ))}
             </div>
-            <div className="mt-5 rounded-xl bg-cream-100 p-3.5">
-              <div className="mb-1.5 flex justify-between text-xs">
-                <span className="text-forest-950/55">주간 목표 달성률</span>
-                <span className="font-bold text-forest-800">
-                  {Math.min(100, Math.round((weeklyTotal / WEEKLY_GOAL_MIN) * 100))}%
-                </span>
-              </div>
-              <ProgressBar
-                value={(weeklyTotal / WEEKLY_GOAL_MIN) * 100}
-                fillClass="bg-success"
-                trackClass="bg-cream-300/60"
-              />
-            </div>
           </section>
 
-          {/* 강의별 성과 */}
-          <section className="card p-5 md:p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-[22px] font-bold text-forest-950">
-              <TrendingUp size={17} className="text-teal-600" />
-              강의별 진도
-            </h2>
+          {/* 강의별 진도 */}
+          <section className="card p-5 md:p-6" aria-labelledby="course-heading">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 id="course-heading" className="text-base font-bold text-forest-950">
+                강의별 진도
+              </h2>
+              <span className="text-sm text-forest-950/50">평균 {store.overallProgress()}%</span>
+            </div>
             <ul className="space-y-4">
-              {enrolled.map((course) => {
+              {courses.map((course) => {
                 const pct = store.courseProgress(course.id);
                 return (
                   <li key={course.id}>
@@ -199,45 +164,86 @@ export default function ReportPage() {
             </ul>
           </section>
 
+          {/* 최근 학습 기록 */}
+          <section className="card p-5 md:p-6" aria-labelledby="log-heading">
+            <h2 id="log-heading" className="mb-1 text-base font-bold text-forest-950">
+              최근 학습 기록
+            </h2>
+            <ActivityList items={state.activity.slice(0, 8)} />
+          </section>
+        </div>
+
+        <aside className="space-y-6">
+          {/* 취약 영역 — 틀린 문항에서 계산 */}
+          <section className="card p-5" aria-labelledby="weak-heading">
+            <h2 id="weak-heading" className="text-base font-bold text-forest-950">
+              취약 영역
+            </h2>
+            {weak.length === 0 ? (
+              <p className="mt-2 text-sm text-forest-950/55">
+                지금은 다시 풀 문제가 없어요. 잘하고 있어요!
+              </p>
+            ) : (
+              <>
+                <p className="mt-1 text-sm text-forest-950/55">
+                  틀린 문제에서 찾은 보완 주제예요.
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {weak.map((g) => (
+                    <li key={g.quiz.id}>
+                      <Link
+                        href={`/quiz/${g.quiz.id}?mode=review`}
+                        className="group flex min-h-[56px] items-center gap-3 rounded-xl border border-cream-200 px-3.5 py-2.5 transition-colors hover:border-forest-300"
+                      >
+                        <RotateCcw size={16} className="shrink-0 text-forest-600" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold text-forest-950">
+                            {g.topics.join(", ")}
+                          </span>
+                          <span className="block truncate text-xs text-forest-950/50">
+                            {g.quiz.title} · {g.count}문제
+                          </span>
+                        </span>
+                        <ChevronRight size={16} className="shrink-0 text-forest-950/30" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </section>
+
           {/* 퀴즈 기록 */}
-          <section className="card p-5 md:p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-[22px] font-bold text-forest-950">
-              <PenSquare size={17} className="text-amber-600" />
+          <section className="card p-5" aria-labelledby="quiz-heading">
+            <h2 id="quiz-heading" className="text-base font-bold text-forest-950">
               퀴즈 기록
             </h2>
             {state.quizResults.length === 0 ? (
-              <p className="text-sm text-forest-950/50">
+              <p className="mt-2 text-sm text-forest-950/55">
                 아직 퀴즈 기록이 없어요.{" "}
                 <Link href="/quiz" className="font-semibold text-forest-600">
                   첫 퀴즈에 도전해보세요.
                 </Link>
               </p>
             ) : (
-              <ul className="divide-y divide-cream-100">
-                {state.quizResults.slice(0, 6).map((r) => {
+              <ul className="mt-1 divide-y divide-cream-100">
+                {state.quizResults.slice(0, 5).map((r) => {
                   const quiz = QUIZZES.find((q) => q.id === r.quizId);
                   return (
-                    <li
-                      key={r.id}
-                      className="flex items-center justify-between gap-3 py-3"
-                    >
+                    <li key={r.id} className="flex items-center justify-between gap-3 py-3">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-forest-950/85">
                           {quiz?.title ?? "퀴즈"}
                         </p>
-                        <p className="text-xs text-forest-950/45">
-                          {new Date(r.date).toLocaleDateString("ko-KR")} · 정답{" "}
+                        <p className="text-xs text-forest-950/50">
+                          {relativeWhen(r.date)} · {r.mode === "review" ? "오답 복습" : "전체 풀이"}{" "}
                           {r.correct}/{r.total}
                         </p>
                       </div>
                       <span
                         className={clsx(
-                          "chip",
-                          r.score === 100
-                            ? "bg-amber-100 text-amber-600"
-                            : r.score >= 70
-                              ? "bg-teal-100 text-teal-600"
-                              : "bg-cream-100 text-forest-950/55"
+                          "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
+                          r.score === 100 ? "bg-gold-300/25 text-gold-600" : "bg-forest-50 text-forest-700"
                         )}
                       >
                         {r.score}점
@@ -248,34 +254,57 @@ export default function ReportPage() {
               </ul>
             )}
           </section>
-        </div>
 
-        <aside className="space-y-5">
-          {/* 전체 진행률 */}
-          <section className="card flex flex-col items-center p-6 text-center">
-            <h3 className="mb-4 text-sm font-bold text-forest-950">
-              전체 학습 진행률
-            </h3>
-            <ProgressRing value={store.overallProgress()} size={160} stroke={13}>
-              <div>
-                <p className="font-display text-3xl font-semibold text-forest-900">
-                  {store.overallProgress()}%
-                </p>
-              </div>
-            </ProgressRing>
-            <p className="mt-4 text-sm text-forest-950/55">
-              수강 중인 {enrolled.length}개 강의 기준이에요.
-              <br />
-              조금만 더 하면 다음 강의를 완료할 수 있어요!
-            </p>
+          {/* 과제 현황 */}
+          <section className="card p-5" aria-labelledby="assignment-heading">
+            <div className="flex items-center justify-between">
+              <h2 id="assignment-heading" className="text-base font-bold text-forest-950">
+                과제
+              </h2>
+              <span className="text-sm text-forest-950/50">
+                제출 {submitted}/{ASSIGNMENTS.length}
+              </span>
+            </div>
+            <ProgressBar
+              value={(submitted / ASSIGNMENTS.length) * 100}
+              fillClass="bg-forest-600"
+              height="h-1.5"
+              className="mt-3"
+            />
+            {store.upcomingAssignments.length > 0 ? (
+              <ul className="mt-3 space-y-1">
+                {store.upcomingAssignments.slice(0, 3).map((u) => (
+                  <li key={u.assignment.id}>
+                    <Link
+                      href={`/quiz?tab=assignment#${u.assignment.id}`}
+                      className="flex min-h-[44px] items-center justify-between gap-3 rounded-lg px-1 text-sm hover:bg-cream-50"
+                    >
+                      <span className="truncate text-forest-950/80">{u.assignment.title}</span>
+                      <span
+                        className={clsx(
+                          "shrink-0 text-xs font-semibold",
+                          u.dLeft <= 1 ? "text-amber-600" : "text-forest-950/50"
+                        )}
+                      >
+                        {dueLabel(u.dLeft)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-forest-950/55">남은 과제가 없어요.</p>
+            )}
           </section>
 
-          {/* 성취 배지 */}
-          <section className="card p-5">
-            <h3 className="mb-4 flex items-center gap-1.5 text-sm font-bold text-forest-950">
-              <Award size={15} className="text-amber-500" />
-              나의 성취
-            </h3>
+          {/* 성취 */}
+          <section className="card p-5" aria-labelledby="ach-heading">
+            <h2 id="ach-heading" className="mb-3 text-base font-bold text-forest-950">
+              나의 성취{" "}
+              <span className="text-sm font-medium text-forest-950/45">
+                {state.unlockedAchievements.length}/{ACHIEVEMENTS.length}
+              </span>
+            </h2>
             <ul className="grid grid-cols-2 gap-2.5">
               {ACHIEVEMENTS.map((a) => {
                 const unlocked = state.unlockedAchievements.includes(a.id);
@@ -283,19 +312,15 @@ export default function ReportPage() {
                   <li
                     key={a.id}
                     className={clsx(
-                      "rounded-xl border p-3 text-center transition-all",
-                      unlocked
-                        ? "border-amber-200 bg-amber-50"
-                        : "border-cream-200 bg-cream-50 opacity-50"
+                      "rounded-xl border p-3 text-center",
+                      unlocked ? "border-gold-300/60 bg-gold-300/10" : "border-cream-200 bg-cream-50 opacity-55"
                     )}
                   >
-                    <span className="text-xl">{a.emoji}</span>
-                    <p className="mt-1 text-xs font-bold text-forest-950">
-                      {a.label}
-                    </p>
-                    <p className="mt-0.5 text-[16px] text-forest-950/50">
-                      {a.description}
-                    </p>
+                    <span className="text-xl" aria-hidden>
+                      {a.emoji}
+                    </span>
+                    <p className="mt-1 text-xs font-bold text-forest-950">{a.label}</p>
+                    <p className="mt-0.5 text-xs text-forest-950/50">{a.description}</p>
                   </li>
                 );
               })}

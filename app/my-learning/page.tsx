@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import clsx from "clsx";
-import { BookOpen, Heart, PlayCircle } from "lucide-react";
-import { COURSES } from "@/lib/data";
-import { useStore } from "@/lib/store";
+import { BarChart3, BookOpen, ChevronRight, ClipboardList, Heart, PlayCircle } from "lucide-react";
+import { COURSES, getCourse } from "@/lib/data";
+import { dueLabel, useStore } from "@/lib/store";
 import { Header } from "@/components/Header";
 import { CourseCard } from "@/components/CourseCard";
 import { CourseThumbnail } from "@/components/Thumbnail";
@@ -23,8 +24,20 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 export default function MyLearningPage() {
+  return (
+    <Suspense fallback={null}>
+      <MyLearning />
+    </Suspense>
+  );
+}
+
+function MyLearning() {
   const store = useStore();
-  const [tab, setTab] = useState<Tab>("all");
+  const searchParams = useSearchParams();
+  const initial = searchParams.get("tab") as Tab | null;
+  const [tab, setTab] = useState<Tab>(
+    initial && TABS.some((t) => t.key === initial) ? initial : "all"
+  );
 
   const enrolledCourses = useMemo(
     () =>
@@ -38,7 +51,7 @@ export default function MyLearningPage() {
     return (
       <div>
         <Header title="내 학습" />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2].map((i) => (
             <CourseCardSkeleton key={i} />
           ))}
@@ -73,6 +86,15 @@ export default function MyLearningPage() {
         title="내 학습"
         subtitle="지난번 공부하던 곳에서 이어서 시작하세요."
       />
+      <div className="-mt-3 mb-5 flex justify-end md:-mt-5">
+        <Link
+          href="/report"
+          className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-forest-600 hover:text-forest-800"
+        >
+          <BarChart3 size={15} />
+          학습 리포트 보기
+        </Link>
+      </div>
 
       {/* 이어보기 배너 */}
       {continueCourse && continueNext && (
@@ -97,7 +119,7 @@ export default function MyLearningPage() {
                   )
                 : "-"}
             </p>
-            <h3 className="mt-0.5 truncate font-display text-[24px] font-semibold md:text-lg">
+            <h3 className="mt-0.5 truncate font-display text-base font-semibold md:text-lg">
               {continueCourse.title}
             </h3>
             <p className="mt-0.5 truncate text-xs text-cream-200/70">
@@ -124,8 +146,47 @@ export default function MyLearningPage() {
         </Link>
       )}
 
+      {/* 남은 과제 — 과제 제출이 이 화면에도 바로 반영된다 */}
+      {store.upcomingAssignments.length > 0 && (
+        <section className="card mb-6 p-2" aria-labelledby="todo-assign">
+          <h2 id="todo-assign" className="px-3.5 pb-1 pt-2.5 text-sm font-bold text-forest-950">
+            남은 과제 {store.upcomingAssignments.length}개
+          </h2>
+          <ul className="divide-y divide-cream-100">
+            {store.upcomingAssignments.map((u) => (
+              <li key={u.assignment.id}>
+                <Link
+                  href={`/quiz?tab=assignment#${u.assignment.id}`}
+                  className="flex min-h-[56px] items-center gap-3 rounded-xl px-3.5 py-2.5 transition-colors hover:bg-cream-50"
+                >
+                  <ClipboardList size={17} className="shrink-0 text-forest-600" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-forest-950">
+                      {u.assignment.title}
+                    </span>
+                    <span className="block truncate text-xs text-forest-950/50">
+                      {getCourse(u.assignment.courseId)?.title}
+                    </span>
+                  </span>
+                  <span
+                    className={clsx(
+                      "shrink-0 text-xs font-semibold",
+                      u.dLeft <= 1 ? "text-amber-600" : "text-forest-950/50"
+                    )}
+                  >
+                    {dueLabel(u.dLeft)}
+                  </span>
+                  <ChevronRight size={16} className="shrink-0 text-forest-950/30" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* 탭 */}
-      <div className="mb-5 inline-flex rounded-full bg-cream-200 p-1">
+      <div className="-mx-4 mb-5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      <div className="inline-flex min-w-max rounded-full bg-cream-200 p-1">
         {TABS.map(({ key, label }) => {
           const count =
             key === "favorite"
@@ -159,6 +220,7 @@ export default function MyLearningPage() {
           );
         })}
       </div>
+      </div>
 
       {filtered.length === 0 ? (
         tab === "favorite" ? (
@@ -179,7 +241,7 @@ export default function MyLearningPage() {
           />
         )
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((course) => (
             <CourseCard
               key={course.id}

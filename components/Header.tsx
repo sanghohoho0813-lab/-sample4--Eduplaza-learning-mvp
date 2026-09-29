@@ -121,8 +121,11 @@ export function Header({
               onFocus={() => q.trim() && setOpen(true)}
               onKeyDown={onKeyDown}
               placeholder="강의 검색"
+              role="combobox"
               aria-label="강의 검색"
-              aria-expanded={open && suggestions.length > 0}
+              aria-autocomplete="list"
+              aria-controls="search-suggestions"
+              aria-expanded={open && q.trim().length > 0}
               className="h-12 w-64 rounded-full border border-cream-300 bg-white pl-11 pr-10 text-sm text-forest-950 placeholder:text-forest-950/35 outline-none transition-all focus:w-80 focus:border-forest-400 focus:ring-2 focus:ring-forest-200"
             />
             {q && (
@@ -142,7 +145,9 @@ export function Header({
 
           {/* 자동완성 드롭다운 */}
           {open && q.trim() && (
-            <div className="absolute right-0 top-14 z-50 w-80 overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-card-hover animate-scale-in">
+            <div
+              id="search-suggestions"
+              className="absolute right-0 top-14 z-50 w-80 overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-card-hover animate-scale-in">
               {suggestions.length === 0 ? (
                 <p className="px-4 py-5 text-sm text-forest-950/50">
                   일치하는 강의가 없어요. 다른 키워드로 찾아볼까요?

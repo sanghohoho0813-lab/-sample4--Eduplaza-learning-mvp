@@ -16,7 +16,7 @@ import {
   Timer,
 } from "lucide-react";
 import { CATEGORIES, COURSES, formatMinutes, formatPrice } from "@/lib/data";
-import { useStore } from "@/lib/store";
+import { STORAGE_KEY, useStore } from "@/lib/store";
 import { BRAND } from "@/lib/brand";
 import { useToast } from "@/components/Toast";
 import { Header } from "@/components/Header";
@@ -40,8 +40,7 @@ export default function MyPage() {
     );
   }
 
-  const { state } = store;
-  const weeklyTotal = state.weeklyMinutes.reduce((a, b) => a + b, 0);
+  const { state, weeklyTotal, streak } = store;
 
   // 결제내역 데모: 수강 중 유료 강의 기준
   const payments = state.enrollments
@@ -53,7 +52,7 @@ export default function MyPage() {
 
   const resetDemo = () => {
     try {
-      localStorage.removeItem("eduplaza-state-v2");
+      localStorage.removeItem(STORAGE_KEY);
     } catch {
       // ignore
     }
@@ -62,9 +61,9 @@ export default function MyPage() {
 
   const quickLinks = [
     { href: "/my-learning", label: "내 강의", icon: BookOpen },
-    { href: "/my-learning", label: "찜한 강의", icon: Heart },
+    { href: "/my-learning?tab=favorite", label: "찜한 강의", icon: Heart },
     { href: "/notes", label: "학습노트", icon: NotebookPen },
-    { href: "/report", label: "학습 기록", icon: GraduationCap },
+    { href: "/report", label: "학습 리포트", icon: GraduationCap },
   ];
 
   return (
@@ -83,14 +82,15 @@ export default function MyPage() {
               {BRAND.company} {state.name}님
             </h2>
             <p className="mt-1 text-sm text-cream-200/70">
-              {state.streakDays}일 연속 학습 중이에요 🔥 오늘도 한 걸음
-              성장해볼까요?
+              {streak > 0
+                ? `${streak}일 연속 학습 중이에요. 오늘도 한 걸음 성장해볼까요?`
+                : "오늘 학습하면 연속 기록이 시작돼요."}
             </p>
           </div>
           <div className="flex gap-6 text-center">
             <div>
               <p className="flex items-center justify-center gap-1 text-xs text-cream-200/60">
-                <Timer size={12} /> 이번 주
+                <Timer size={12} /> 최근 7일
               </p>
               <p className="mt-1 font-display text-lg font-semibold">
                 {formatMinutes(weeklyTotal)}
@@ -101,7 +101,7 @@ export default function MyPage() {
                 <Flame size={12} /> 연속
               </p>
               <p className="mt-1 font-display text-lg font-semibold">
-                {state.streakDays}일
+                {streak}일
               </p>
             </div>
             <div>
@@ -116,7 +116,7 @@ export default function MyPage() {
         </div>
       </section>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* 바로가기 */}
         <section className="card p-5">
           <h3 className="mb-3 text-sm font-bold text-forest-950">바로가기</h3>

@@ -67,6 +67,7 @@ export interface Course {
 
 export interface QuizQuestion {
   id: string;
+  topic: string; // 취약 주제 집계 단위
   question: string;
   options: string[];
   answerIndex: number;
@@ -86,7 +87,7 @@ export interface Assignment {
   courseId: string;
   title: string;
   description: string;
-  dueDate: string; // ISO date
+  dueInDays: number; // 첫 방문(시딩) 기준 마감까지 남은 일수 — 실제 마감일은 상태에 저장
 }
 
 export interface Review {
@@ -113,9 +114,13 @@ export interface Enrollment {
 export interface QuizResult {
   id: string;
   quizId: string;
+  /** full: 전체 풀이(점수 집계 대상) / review: 틀린 문제만 다시 풀기 */
+  mode: "full" | "review";
   score: number; // 100점 만점
   correct: number;
   total: number;
+  questionIds: string[]; // 이번 시도에서 푼 문항
+  answers: number[]; // questionIds와 같은 순서의 선택 보기
   date: string;
 }
 
@@ -134,23 +139,41 @@ export interface AssignmentSubmission {
   submittedAt: string | null;
 }
 
-export interface Mission {
+// 모든 학습 행동은 활동 로그에 남는다.
+// 연속 학습일·최근 7일 학습시간·캘린더·오늘의 목표·최근 기록이 전부 여기서 계산된다.
+export type ActivityType =
+  | "lesson"
+  | "quiz"
+  | "review"
+  | "assignment"
+  | "note"
+  | "enroll"
+  | "achievement";
+
+export interface Activity {
   id: string;
+  type: ActivityType;
+  at: string; // ISO
   label: string;
-  done: boolean;
+  minutes?: number; // lesson만
+  courseId?: string;
+  lessonId?: string;
+  quizId?: string;
+  assignmentId?: string;
+  achievementId?: string;
+  score?: number;
 }
 
 export interface UserState {
   name: string;
   interests: CategoryId[];
-  streakDays: number;
-  weeklyMinutes: number[]; // 월~일 학습시간(분)
   enrollments: Enrollment[];
   lessonProgress: Record<string, LessonStatus>;
   quizResults: QuizResult[];
   notes: Note[];
   favorites: string[];
   assignments: Record<string, AssignmentSubmission>;
-  missions: Mission[];
+  assignmentDue: Record<string, string>; // 과제 id → 마감일(YYYY-MM-DD)
+  activity: Activity[]; // 최신순
   unlockedAchievements: string[];
 }

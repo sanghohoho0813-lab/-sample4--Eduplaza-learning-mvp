@@ -30,7 +30,7 @@ export function HomeSkeleton() {
         ))}
       </div>
       <div className="skeleton h-56" />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {[0, 1, 2].map((i) => (
           <CourseCardSkeleton key={i} />
         ))}

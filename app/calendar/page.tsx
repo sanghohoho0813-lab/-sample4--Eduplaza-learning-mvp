@@ -3,76 +3,60 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
-import {
-  BookOpen,
-  CalendarCheck2,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  PenSquare,
-} from "lucide-react";
-import { ASSIGNMENTS, QUIZZES, getCourse } from "@/lib/data";
-import { useStore } from "@/lib/store";
+import { ChevronLeft, ChevronRight, ClipboardList, Flame } from "lucide-react";
+import { ASSIGNMENTS, getCourse } from "@/lib/data";
+import { dayKey, dueLabel, useStore } from "@/lib/store";
 import { Header } from "@/components/Header";
+import { ActivityTabs } from "@/components/ActivityTabs";
+import { ActivityList } from "@/components/ActivityList";
 import { ListSkeleton } from "@/components/Skeletons";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
-function dateKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
+interface DayMarks {
+  lesson?: boolean;
+  quiz?: boolean;
+  due?: boolean;
+  any?: boolean;
 }
 
 export default function CalendarPage() {
   const store = useStore();
   const today = new Date();
+  const todayKey = dayKey(today);
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
+  const [selected, setSelected] = useState(todayKey);
 
-  // 날짜별 이벤트 맵
-  const events = useMemo(() => {
-    const map = new Map<
-      string,
-      { study?: boolean; quiz?: boolean; assignment?: boolean }
-    >();
-    const put = (key: string, patch: Record<string, boolean>) => {
-      map.set(key, { ...map.get(key), ...patch });
-    };
-    if (store.ready) {
-      // 연속 학습일: 오늘 포함 streakDays일
-      for (let i = 0; i < store.state.streakDays; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        put(dateKey(d), { study: true });
-      }
-      store.state.quizResults.forEach((r) => {
-        put(dateKey(new Date(r.date)), { quiz: true });
-      });
-      ASSIGNMENTS.forEach((a) => {
-        put(a.dueDate, { assignment: true });
-      });
+  // 캘린더 표시는 저장된 숫자가 아니라 실제 활동 로그와 과제 마감일에서 만든다.
+  const marks = useMemo(() => {
+    const map = new Map<string, DayMarks>();
+    const put = (key: string, patch: DayMarks) => map.set(key, { ...map.get(key), ...patch });
+    for (const a of store.state.activity) {
+      const key = dayKey(new Date(a.at));
+      if (a.type === "lesson") put(key, { lesson: true, any: true });
+      else if (a.type === "quiz" || a.type === "review") put(key, { quiz: true, any: true });
+      else if (a.type !== "enroll" && a.type !== "achievement") put(key, { any: true });
     }
+    for (const u of store.upcomingAssignments) put(u.due, { due: true });
     return map;
-  }, [store.ready, store.state.streakDays, store.state.quizResults]);
+  }, [store.state.activity, store.upcomingAssignments]);
 
   if (!store.ready) {
     return (
       <div>
-        <Header title="학습 캘린더" />
+        <Header title="학습 활동" />
         <ListSkeleton rows={4} />
       </div>
     );
   }
 
-  const firstDay = new Date(year, month, 1);
-  const startOffset = firstDay.getDay();
+  const startOffset = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const cells: (number | null)[] = [
     ...Array(startOffset).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
-  const todayKey = dateKey(today);
 
   const move = (delta: number) => {
     const d = new Date(year, month + delta, 1);
@@ -80,42 +64,42 @@ export default function CalendarPage() {
     setMonth(d.getMonth());
   };
 
-  const upcomingAssignments = ASSIGNMENTS.filter(
-    (a) => store.assignmentStatus(a.id) !== "submitted"
-  )
-    .filter((a) => new Date(a.dueDate + "T23:59:59").getTime() >= Date.now())
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-
-  const doneMissions = store.state.missions.filter((m) => m.done).length;
+  const dayActivity = store.state.activity.filter((a) => dayKey(new Date(a.at)) === selected);
+  const dayDue = ASSIGNMENTS.filter(
+    (a) => store.assignmentDue(a.id) === selected && store.assignmentStatus(a.id) === "pending"
+  );
+  const dayMinutes = dayActivity.reduce((s, a) => s + (a.type === "lesson" ? a.minutes ?? 0 : 0), 0);
+  const [, sm, sd] = selected.split("-").map(Number);
+  const selectedLabel = selected === todayKey ? "오늘" : `${sm}월 ${sd}일`;
 
   return (
     <div className="animate-fade-up">
-      <Header
-        title="학습 캘린더"
-        subtitle="꾸준히 쌓아온 학습 기록을 한눈에 확인하세요."
+      <Header title="학습 활동" subtitle="날짜를 눌러 그날의 학습 기록을 확인하세요." />
+      <ActivityTabs
+        active="calendar"
+        counts={{ assignment: store.upcomingAssignments.length || undefined }}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[1fr,340px]">
-        {/* 캘린더 */}
-        <section className="card p-5 md:p-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr),360px]">
+        <section className="card p-5 md:p-6" aria-labelledby="month-heading">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold text-forest-950">
+            <h2 id="month-heading" className="font-display text-lg font-semibold text-forest-950">
               {year}년 {month + 1}월
             </h2>
             <div className="flex gap-1.5">
               <button
                 onClick={() => move(-1)}
-                className="btn-press flex h-10 w-10 items-center justify-center rounded-full border border-cream-300 text-forest-800"
+                className="btn-press flex h-11 w-11 items-center justify-center rounded-full border border-cream-300 text-forest-800"
                 aria-label="이전 달"
               >
-                <ChevronLeft size={17} />
+                <ChevronLeft size={18} />
               </button>
               <button
                 onClick={() => move(1)}
-                className="btn-press flex h-10 w-10 items-center justify-center rounded-full border border-cream-300 text-forest-800"
+                className="btn-press flex h-11 w-11 items-center justify-center rounded-full border border-cream-300 text-forest-800"
                 aria-label="다음 달"
               >
-                <ChevronRight size={17} />
+                <ChevronRight size={18} />
               </button>
             </div>
           </div>
@@ -126,11 +110,7 @@ export default function CalendarPage() {
                 key={w}
                 className={clsx(
                   "pb-2 text-xs font-bold",
-                  i === 0
-                    ? "text-danger/70"
-                    : i === 6
-                      ? "text-info"
-                      : "text-forest-950/45"
+                  i === 0 ? "text-danger/70" : i === 6 ? "text-info" : "text-forest-950/45"
                 )}
               >
                 {w}
@@ -138,142 +118,130 @@ export default function CalendarPage() {
             ))}
             {cells.map((day, i) => {
               if (day === null) return <div key={`e-${i}`} />;
-              const key = dateKey(new Date(year, month, day));
-              const ev = events.get(key);
+              const key = dayKey(new Date(year, month, day));
+              const m = marks.get(key);
               const isToday = key === todayKey;
+              const isSelected = key === selected;
               return (
-                <div
+                <button
                   key={key}
+                  onClick={() => setSelected(key)}
+                  aria-pressed={isSelected}
+                  aria-label={`${month + 1}월 ${day}일${m?.any ? ", 학습 기록 있음" : ""}${m?.due ? ", 과제 마감" : ""}`}
                   className={clsx(
-                    "relative flex aspect-square flex-col items-center justify-center rounded-xl text-sm transition-colors md:aspect-auto md:min-h-[64px]",
-                    isToday
+                    "relative flex aspect-square min-h-[44px] flex-col items-center justify-center rounded-xl text-sm transition-colors md:aspect-auto md:min-h-[64px]",
+                    isSelected
                       ? "bg-forest-950 font-bold text-cream-50 shadow-glow"
-                      : ev?.study
-                        ? "bg-forest-50 text-forest-950"
-                        : "text-forest-950/70"
+                      : m?.any
+                        ? "bg-forest-50 text-forest-950 hover:bg-forest-100"
+                        : "text-forest-950/70 hover:bg-cream-100",
+                    isToday && !isSelected && "ring-2 ring-forest-400"
                   )}
                 >
                   {day}
-                  <div className="mt-1 flex h-1.5 items-center gap-0.5">
-                    {ev?.study && (
-                      <span
-                        className={clsx(
-                          "h-1.5 w-1.5 rounded-full",
-                          isToday ? "bg-gold-300" : "bg-success"
-                        )}
-                        title="학습"
-                      />
+                  <span className="mt-1 flex h-1.5 items-center gap-0.5" aria-hidden>
+                    {m?.lesson && (
+                      <span className={clsx("h-1.5 w-1.5 rounded-full", isSelected ? "bg-cream-100" : "bg-forest-600")} />
                     )}
-                    {ev?.quiz && (
-                      <span
-                        className="h-1.5 w-1.5 rounded-full bg-teal-500"
-                        title="퀴즈"
-                      />
-                    )}
-                    {ev?.assignment && (
-                      <span
-                        className="h-1.5 w-1.5 rounded-full bg-clay-400"
-                        title="과제 마감"
-                      />
-                    )}
-                  </div>
-                </div>
+                    {m?.quiz && <span className="h-1.5 w-1.5 rounded-full bg-teal-400" />}
+                    {m?.due && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />}
+                  </span>
+                </button>
               );
             })}
           </div>
 
           <div className="mt-5 flex flex-wrap gap-4 border-t border-cream-100 pt-4 text-xs text-forest-950/55">
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-success" /> 강의 수강
+              <span className="h-2 w-2 rounded-full bg-forest-600" /> 레슨
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-teal-500" /> 퀴즈
+              <span className="h-2 w-2 rounded-full bg-teal-400" /> 퀴즈
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-clay-400" /> 과제 마감
+              <span className="h-2 w-2 rounded-full bg-amber-500" /> 과제 마감
             </span>
           </div>
         </section>
 
-        {/* 오늘 일정 */}
-        <aside className="space-y-5">
-          <section className="card p-5">
-            <h3 className="mb-3.5 flex items-center gap-1.5 text-sm font-bold text-forest-950">
-              <CalendarCheck2 size={15} className="text-forest-600" />
-              오늘의 학습 일정
-            </h3>
-            <div className="rounded-xl bg-forest-950 p-4 text-cream-50">
-              <p className="text-xs text-cream-200/60">오늘의 미션</p>
-              <p className="mt-1 font-display text-lg font-semibold">
-                {doneMissions}/{store.state.missions.length} 완료
-              </p>
-              <p className="mt-1 text-xs text-cream-200/70">
-                {doneMissions === store.state.missions.length
-                  ? "오늘 목표 달성! 멋져요 🎉"
-                  : "오늘의 학습 미션을 완료해보세요."}
-              </p>
+        <aside className="space-y-6">
+          <section className="card p-5" aria-labelledby="day-heading">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 id="day-heading" className="text-base font-bold text-forest-950">
+                {selectedLabel}의 학습
+              </h2>
+              {dayMinutes > 0 && (
+                <span className="text-sm font-semibold text-forest-700">{dayMinutes}분</span>
+              )}
+            </div>
+            {dayDue.map((a) => (
+              <Link
+                key={a.id}
+                href={`/quiz?tab=assignment#${a.id}`}
+                className="mt-3 flex min-h-[48px] items-center gap-2.5 rounded-xl bg-amber-50 px-3.5 text-sm font-semibold text-amber-600"
+              >
+                <ClipboardList size={16} className="shrink-0" />
+                <span className="truncate">{a.title} 마감</span>
+              </Link>
+            ))}
+            <ActivityList
+              items={dayActivity}
+              showTime={false}
+              empty={
+                selected === todayKey
+                  ? "아직 오늘 기록이 없어요. 레슨 하나로 시작해볼까요?"
+                  : "이날은 학습 기록이 없어요."
+              }
+            />
+            {selected === todayKey && dayActivity.length === 0 && (
               <Link
                 href="/"
-                className="btn-press mt-3 inline-block rounded-full bg-cream-100 px-4 py-2 text-xs font-bold text-forest-950"
+                className="btn-press mt-2 inline-flex min-h-[48px] items-center rounded-full bg-forest-900 px-5 text-sm font-bold text-cream-50"
               >
-                미션 확인하기
+                오늘 학습하러 가기
               </Link>
-            </div>
-            <p className="mt-3 text-center text-xs text-forest-950/50">
-              {store.state.streakDays}일 연속 학습 중이에요 🔥
-            </p>
+            )}
           </section>
 
-          <section className="card p-5">
-            <h3 className="mb-3.5 flex items-center gap-1.5 text-sm font-bold text-forest-950">
-              <ClipboardList size={15} className="text-forest-600" />
+          <section className="card p-5" aria-labelledby="due-heading">
+            <h2 id="due-heading" className="mb-2 text-base font-bold text-forest-950">
               다가오는 과제 마감
-            </h3>
-            {upcomingAssignments.length === 0 ? (
-              <p className="text-sm text-forest-950/50">
-                남아있는 과제가 없어요. 여유롭게 학습을 이어가세요.
-              </p>
+            </h2>
+            {store.upcomingAssignments.length === 0 ? (
+              <p className="text-sm text-forest-950/55">남은 과제가 없어요.</p>
             ) : (
-              <ul className="space-y-2.5">
-                {upcomingAssignments.map((a) => (
-                  <li key={a.id}>
+              <ul className="divide-y divide-cream-100">
+                {store.upcomingAssignments.map((u) => (
+                  <li key={u.assignment.id}>
                     <Link
-                      href="/quiz"
-                      className="block rounded-xl border border-cream-200 p-3.5 transition-colors hover:border-forest-300"
+                      href={`/quiz?tab=assignment#${u.assignment.id}`}
+                      className="flex min-h-[56px] items-center justify-between gap-3 py-2.5"
                     >
-                      <p className="text-sm font-semibold text-forest-950">
-                        {a.title}
-                      </p>
-                      <p className="mt-0.5 text-xs text-forest-950/50">
-                        {getCourse(a.courseId)?.title} · 마감 {a.dueDate}
-                      </p>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-forest-950">
+                          {u.assignment.title}
+                        </span>
+                        <span className="block truncate text-xs text-forest-950/50">
+                          {getCourse(u.assignment.courseId)?.title}
+                        </span>
+                      </span>
+                      <span
+                        className={clsx(
+                          "shrink-0 text-xs font-semibold",
+                          u.dLeft <= 1 ? "text-amber-600" : "text-forest-950/50"
+                        )}
+                      >
+                        {dueLabel(u.dLeft)}
+                      </span>
                     </Link>
                   </li>
                 ))}
               </ul>
             )}
-          </section>
-
-          <section className="card p-5">
-            <h3 className="mb-3.5 flex items-center gap-1.5 text-sm font-bold text-forest-950">
-              <PenSquare size={15} className="text-forest-600" />
-              추천 퀴즈
-            </h3>
-            <ul className="space-y-2.5">
-              {QUIZZES.slice(0, 2).map((q) => (
-                <li key={q.id}>
-                  <Link
-                    href={`/quiz/${q.id}`}
-                    className="flex items-center gap-2.5 rounded-xl border border-cream-200 p-3.5 transition-colors hover:border-forest-300"
-                  >
-                    <BookOpen size={16} className="shrink-0 text-forest-500" />
-                    <span className="text-sm font-semibold text-forest-950">
-                      {q.title}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <p className="mt-3 flex items-center gap-1.5 border-t border-cream-100 pt-3 text-sm text-forest-950/65">
+              <Flame size={15} className="text-gold-500" />
+              {store.streak > 0 ? `${store.streak}일 연속 학습 중이에요` : "오늘 학습하면 연속 기록이 시작돼요"}
+            </p>
           </section>
         </aside>
       </div>

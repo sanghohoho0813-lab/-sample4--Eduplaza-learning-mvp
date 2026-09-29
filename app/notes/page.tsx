@@ -15,6 +15,7 @@ import { COURSES, courseLessons, getCourse, getLesson } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import { useToast } from "@/components/Toast";
 import { Header } from "@/components/Header";
+import { ActivityTabs } from "@/components/ActivityTabs";
 import { EmptyState } from "@/components/EmptyState";
 import { ListSkeleton } from "@/components/Skeletons";
 
@@ -31,7 +32,7 @@ export default function NotesPage() {
   if (!store.ready) {
     return (
       <div>
-        <Header title="학습노트" />
+        <Header title="학습 활동" />
         <ListSkeleton rows={4} />
       </div>
     );
@@ -64,8 +65,12 @@ export default function NotesPage() {
   return (
     <div className="animate-fade-up">
       <Header
-        title="학습노트"
+        title="학습 활동"
         subtitle="배운 것을 내 언어로 정리하면 온전히 내 것이 돼요."
+      />
+      <ActivityTabs
+        active="notes"
+        counts={{ assignment: store.upcomingAssignments.length || undefined }}
       />
 
       <div className="mb-6">
@@ -83,7 +88,7 @@ export default function NotesPage() {
         ) : (
           <div className="card p-5 animate-scale-in md:p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[22px] font-bold text-forest-950">
+              <h3 className="text-base font-bold text-forest-950">
                 새 노트 작성
               </h3>
               <button
@@ -94,7 +99,7 @@ export default function NotesPage() {
                 <X size={16} />
               </button>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1.5 block text-xs font-semibold text-forest-950/55">
                   강의 선택
@@ -162,7 +167,7 @@ export default function NotesPage() {
           actionLabel="학습하러 가기"
         />
       ) : (
-        <ul className="grid gap-4 md:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {store.state.notes.map((note) => {
             const course = getCourse(note.courseId);
             const lessonInfo = note.lessonId ? getLesson(note.lessonId) : undefined;

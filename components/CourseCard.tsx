@@ -6,7 +6,6 @@ import clsx from "clsx";
 import { Clock, Heart, PlayCircle, Star, Users } from "lucide-react";
 import type { Course } from "@/lib/types";
 import {
-  CATEGORY_TONE,
   LEVEL_LABEL,
   formatMinutes,
   formatPrice,
@@ -84,10 +83,7 @@ export function CourseCard({
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-center gap-2">
           <span
-            className={clsx(
-              "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
-              CATEGORY_TONE[course.categoryId]
-            )}
+            className="shrink-0 rounded-full bg-forest-50 px-2.5 py-1 text-xs font-semibold text-forest-700"
           >
             {getCategory(course.categoryId)?.name}
           </span>
@@ -95,7 +91,7 @@ export function CourseCard({
             {instructor?.name} 강사
           </span>
         </div>
-        <h3 className="mt-1 line-clamp-2 text-[22px] font-bold leading-snug text-forest-950 transition-colors group-hover:text-forest-600">
+        <h3 className="mt-1 line-clamp-2 text-base font-bold leading-snug text-forest-950 transition-colors group-hover:text-forest-600">
           {course.title}
         </h3>
 
@@ -113,7 +109,7 @@ export function CourseCard({
             <Users size={13} />
             {course.studentCount.toLocaleString()}명
           </span>
-          <span className="rounded-md bg-cream-100 px-1.5 py-0.5 text-[16px] font-semibold text-forest-950/55">
+          <span className="rounded-md bg-cream-100 px-1.5 py-0.5 text-xs font-semibold text-forest-950/55">
             {LEVEL_LABEL[course.level]}
           </span>
         </div>
@@ -137,7 +133,7 @@ export function CourseCard({
                       : `/learn/${course.id}`
                   );
                 }}
-                className="btn-press mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-full bg-forest-900 text-xs font-bold text-cream-50 transition-colors hover:bg-forest-800"
+                className="btn-press mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-full border border-forest-200 text-sm font-semibold text-forest-800 transition-colors hover:border-forest-400 hover:bg-forest-50"
               >
                 <PlayCircle size={16} />
                 이어보기
@@ -145,7 +141,7 @@ export function CourseCard({
             )}
           </div>
         ) : (
-          <p className="mt-auto pt-3 text-[22px] font-bold text-forest-950">
+          <p className="mt-auto pt-3 text-base font-bold text-forest-950">
             {formatPrice(course.price)}
           </p>
         )}

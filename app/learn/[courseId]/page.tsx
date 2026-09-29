@@ -32,7 +32,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { QUIZZES, courseLessons, getCourse, getInstructor } from "@/lib/data";
-import { useStore } from "@/lib/store";
+import { WEEKLY_GOAL_MIN, useStore } from "@/lib/store";
+import { weeklyGoalMessage } from "@/lib/insights";
 import { useToast } from "@/components/Toast";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PlayerSkeleton } from "@/components/Skeletons";
@@ -68,6 +69,7 @@ function PlayerContent() {
   const [noteDraft, setNoteDraft] = useState("");
   const completedFired = useRef(false);
   const lastTracked = useRef<string | null>(null);
+  const [justCompleted, setJustCompleted] = useState(false);
 
   const lessonId = lesson?.id;
   const courseId = course?.id;
@@ -79,6 +81,7 @@ function PlayerContent() {
   useEffect(() => {
     setPct(0);
     setPlaying(false);
+    setJustCompleted(false);
     completedFired.current = false;
   }, [lessonId]);
 
@@ -99,7 +102,8 @@ function PlayerContent() {
     if (!course || !lesson || completedFired.current || isCompleted) return;
     completedFired.current = true;
     store.completeLesson(course.id, lesson);
-    toast("레슨 완료! 진도에 반영했어요 ✅", "celebrate");
+    setJustCompleted(true);
+    toast("레슨 완료! 진도와 주간 학습시간에 반영했어요", "celebrate");
   }, [course, lesson, isCompleted, store, toast]);
 
   // 데모 재생 타이머
@@ -236,7 +240,7 @@ function PlayerContent() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),340px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr),340px]">
         <div className="min-w-0">
           {/* 데모 비디오 플레이어 — 모바일에서는 스크롤해도 상단에 고정 */}
           <div className="sticky top-0 z-20 -mx-4 overflow-hidden bg-forest-950 shadow-card sm:-mx-6 sm:rounded-2xl lg:static lg:mx-0 lg:rounded-2xl">
@@ -246,7 +250,7 @@ function PlayerContent() {
               <div className="absolute bottom-4 right-10 h-32 w-32 rounded-full bg-gold-500/10 blur-3xl" />
 
               <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-                <p className="text-[16px] font-semibold uppercase tracking-[0.2em] text-cream-200/40">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cream-200/40">
                   Lesson {idx + 1} / {lessons.length}
                 </p>
                 <h2 className="mt-2 max-w-md font-display text-lg font-semibold leading-snug text-cream-50 md:text-2xl">
@@ -339,42 +343,15 @@ function PlayerContent() {
             </button>
           </div>
 
-          {/* 완료 후 다음 액션 배너 */}
+          {/* 완료 후 다음 행동 — Primary는 하나만 */}
           {isCompleted && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-forest-200 bg-forest-50 px-5 py-4 animate-scale-in">
-              <div>
-                <p className="text-sm font-bold text-forest-950">
-                  {nextL
-                    ? "잘하셨어요! 다음 레슨으로 이어갈까요?"
-                    : "축하해요! 모든 커리큘럼을 마쳤어요 🎓"}
-                </p>
-                <p className="mt-0.5 text-xs text-forest-950/55">
-                  {quiz
-                    ? "퀴즈까지 완료하면 오늘 목표 달성!"
-                    : "조금만 더 하면 이 강의를 완료할 수 있어요."}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                {quiz && (
-                  <Link
-                    href={`/quiz/${quiz.id}`}
-                    className="btn-press inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-forest-300 bg-white px-4 text-sm font-semibold text-forest-800"
-                  >
-                    <PenSquare size={15} />
-                    퀴즈 풀기
-                  </Link>
-                )}
-                {nextL && (
-                  <Link
-                    href={`/learn/${course.id}?lesson=${nextL.id}`}
-                    className="btn-press inline-flex min-h-[44px] items-center gap-1 rounded-full bg-forest-900 px-4 text-sm font-bold text-cream-50"
-                  >
-                    다음 레슨
-                    <ChevronRight size={15} />
-                  </Link>
-                )}
-              </div>
-            </div>
+            <LessonDonePanel
+              fresh={justCompleted}
+              courseId={course.id}
+              lessonMinutes={lesson.durationMin}
+              quizId={quiz?.id}
+              onWriteNote={() => setTab("notes")}
+            />
           )}
 
           {/* 탭 */}
@@ -411,7 +388,7 @@ function PlayerContent() {
 
               {tab === "about" && (
                 <div className="space-y-3">
-                  <h3 className="text-[22px] font-bold text-forest-950">
+                  <h3 className="text-base font-bold text-forest-950">
                     {lesson.title}
                   </h3>
                   <p className="text-sm leading-relaxed text-forest-950/70">
@@ -524,5 +501,96 @@ export default function PlayerPage() {
     <Suspense fallback={<PlayerSkeleton />}>
       <PlayerContent />
     </Suspense>
+  );
+}
+
+function LessonDonePanel({
+  fresh,
+  courseId,
+  lessonMinutes,
+  quizId,
+  onWriteNote,
+}: {
+  fresh: boolean;
+  courseId: string;
+  lessonMinutes: number;
+  quizId?: string;
+  onWriteNote: () => void;
+}) {
+  const store = useStore();
+  const pct = store.courseProgress(courseId);
+  const upNext = store.nextLesson(courseId); // 아직 안 끝낸 첫 레슨
+  const courseDone = pct >= 100;
+  const noteDone = store.todayGoals.find((g) => g.id === "note")?.done;
+
+  const primary = upNext
+    ? { href: `/learn/${courseId}?lesson=${upNext.id}`, label: "다음 강의 이어보기", icon: PlayCircle }
+    : quizId
+      ? { href: `/quiz/${quizId}`, label: "퀴즈로 마무리하기", icon: PenSquare }
+      : { href: "/courses", label: "다음 강의 찾아보기", icon: ChevronRight };
+  const PrimaryIcon = primary.icon;
+
+  return (
+    <section
+      aria-live="polite"
+      className="mt-4 rounded-2xl border border-forest-200 bg-forest-50 p-5 animate-scale-in md:p-6"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-base font-bold text-forest-950">
+            <CheckCircle2 size={19} className="shrink-0 text-success" />
+            {fresh
+              ? courseDone
+                ? "강의를 모두 완주했어요!"
+                : `레슨 완료! 진도가 ${pct}%로 올랐어요`
+              : "이미 완료한 레슨이에요"}
+          </p>
+          {fresh ? (
+            <ul className="mt-2 space-y-0.5 text-sm text-forest-950/65">
+              <li>
+                +{lessonMinutes}분 · {weeklyGoalMessage(store.weeklyTotal, WEEKLY_GOAL_MIN)}
+              </li>
+              {store.streak > 0 && <li>{store.streak}일 연속 학습 중</li>}
+            </ul>
+          ) : (
+            <p className="mt-1 text-sm text-forest-950/60">
+              {upNext ? `다음은 ‘${upNext.title}’ 차례예요.` : "이 강의의 모든 레슨을 마쳤어요."}
+            </p>
+          )}
+        </div>
+        <div className="w-full sm:w-auto">
+          <Link
+            href={primary.href}
+            className="btn-press inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-forest-900 px-6 text-sm font-bold text-cream-50 transition-colors hover:bg-forest-800 sm:w-auto"
+          >
+            <PrimaryIcon size={18} />
+            {primary.label}
+          </Link>
+        </div>
+      </div>
+
+      {fresh && (
+        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 border-t border-forest-200/70 pt-3">
+          {upNext && quizId && (
+            <Link
+              href={`/quiz/${quizId}`}
+              className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-forest-700 hover:text-forest-950"
+            >
+              <PenSquare size={15} />
+              배운 내용 퀴즈로 확인
+            </Link>
+          )}
+          {!noteDone && (
+            <button
+              onClick={onWriteNote}
+              className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-forest-700 hover:text-forest-950"
+            >
+              <NotebookPen size={15} />
+              핵심 내용 노트로 남기기
+            </button>
+          )}
+        </div>
+      )}
+    </section>
   );
 }

@@ -90,10 +90,10 @@ export default function CourseDetailPage() {
       {/* 히어로 */}
       <section className="relative overflow-hidden rounded-2xl bg-forest-950 p-6 text-cream-50 shadow-card md:p-8">
         <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-forest-600/25 blur-3xl" />
-        <div className="relative grid gap-6 lg:grid-cols-[1fr,360px] lg:items-center">
+        <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr),360px] lg:items-center">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="chip bg-teal-500/20 text-teal-200 ring-1 ring-teal-400/30">
+              <span className="chip bg-forest-800 text-cream-100">
                 {getCategory(course.categoryId)?.name}
               </span>
               <span className="chip border border-cream-200/20 text-cream-200">
@@ -103,7 +103,7 @@ export default function CourseDetailPage() {
             <h1 className="mt-3 font-display text-2xl font-semibold leading-snug md:text-3xl">
               {course.title}
             </h1>
-            <p className="mt-2 text-sm text-cream-200/75 md:text-[22px]">
+            <p className="mt-2 text-sm text-cream-200/75 md:text-base">
               {course.subtitle}
             </p>
 
@@ -143,7 +143,7 @@ export default function CourseDetailPage() {
               <button
                 onClick={handleEnroll}
                 disabled={enrolling}
-                className="btn-press inline-flex min-h-[48px] items-center gap-2 rounded-full bg-cream-100 px-7 py-3 text-[22px] font-bold text-forest-950 transition-colors hover:bg-cream-50 disabled:opacity-70"
+                className="btn-press inline-flex min-h-[48px] items-center gap-2 rounded-full bg-cream-100 px-7 py-3 text-base font-bold text-forest-950 transition-colors hover:bg-cream-50 disabled:opacity-70"
               >
                 <PlayCircle size={19} />
                 {enrolling
@@ -187,17 +187,17 @@ export default function CourseDetailPage() {
         </div>
       </section>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr),320px]">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),320px]">
         <div className="min-w-0 space-y-8">
           {/* 소개 */}
           <section className="card p-6">
             <h2 className="mb-3 text-lg font-bold text-forest-950">강의 소개</h2>
-            <p className="text-[22px] leading-relaxed text-forest-950/75">
+            <p className="text-base leading-relaxed text-forest-950/75">
               {course.description}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {course.tags.map((t) => (
-                <span key={t} className="chip bg-teal-50 text-teal-600">
+                <span key={t} className="chip bg-cream-100 text-forest-700">
                   #{t}
                 </span>
               ))}
@@ -335,13 +335,13 @@ export default function CourseDetailPage() {
               <div className="flex items-center gap-3">
                 <InstructorAvatar name={instructor.name} />
                 <div>
-                  <p className="font-display text-[22px] font-semibold text-forest-950">
+                  <p className="font-display text-base font-semibold text-forest-950">
                     {instructor.name}
                   </p>
                   <p className="text-xs text-forest-950/55">{instructor.title}</p>
                 </div>
               </div>
-              <p className="mt-3 text-[19px] leading-relaxed text-forest-950/65">
+              <p className="mt-3 text-sm leading-relaxed text-forest-950/65">
                 {instructor.bio}
               </p>
             </section>
@@ -349,12 +349,12 @@ export default function CourseDetailPage() {
 
           <section className="card p-5">
             <h3 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-forest-950">
-              <ListChecks size={15} className="text-teal-600" />
+              <ListChecks size={15} className="text-forest-600" />
               이런 분께 추천해요
             </h3>
             <ul className="space-y-2">
               {course.goals.map((g) => (
-                <li key={g} className="flex gap-2 text-[19px] leading-relaxed text-forest-950/70">
+                <li key={g} className="flex gap-2 text-sm leading-relaxed text-forest-950/70">
                   <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-success" />
                   {g}
                 </li>
@@ -364,12 +364,12 @@ export default function CourseDetailPage() {
 
           <section className="card p-5">
             <h3 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-forest-950">
-              <BarChart3 size={15} className="text-clay-500" />
+              <BarChart3 size={15} className="text-forest-600" />
               준비사항
             </h3>
             <ul className="space-y-2">
               {course.requirements.map((r) => (
-                <li key={r} className="flex gap-2 text-[19px] leading-relaxed text-forest-950/70">
+                <li key={r} className="flex gap-2 text-sm leading-relaxed text-forest-950/70">
                   <Circle size={7} className="mt-1.5 shrink-0 fill-forest-300 text-forest-300" />
                   {r}
                 </li>

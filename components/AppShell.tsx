@@ -7,6 +7,7 @@ import { ToastProvider } from "./Toast";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { SampleBridgeCTA } from "./SampleBridgeCTA";
+import { AchievementWatcher } from "./AchievementWatcher";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         >
           본문 바로가기
         </a>
+        <AchievementWatcher />
         <Sidebar />
         <main className="min-h-screen pb-28 lg:pb-10 lg:pl-72">
           <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pt-6 sm:px-6 md:pt-8 lg:px-8">

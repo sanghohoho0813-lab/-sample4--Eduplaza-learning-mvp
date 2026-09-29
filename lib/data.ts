@@ -1,7 +1,6 @@
 import type {
   Assignment,
   Category,
-  CategoryId,
   Course,
   CourseLevel,
   CourseSection,
@@ -22,17 +21,6 @@ export const CATEGORIES: Category[] = [
   { id: "language", name: "외국어" },
 ];
 
-// 카테고리별 배지 색 — forest / teal / amber / clay 4계열을 돌려쓴다.
-export const CATEGORY_TONE: Record<CategoryId, string> = {
-  dev: "bg-teal-100 text-teal-700",
-  ai: "bg-teal-50 text-teal-600",
-  data: "bg-forest-100 text-forest-700",
-  design: "bg-clay-100 text-clay-600",
-  marketing: "bg-amber-100 text-amber-600",
-  business: "bg-forest-50 text-forest-600",
-  career: "bg-clay-50 text-clay-500",
-  language: "bg-amber-50 text-amber-500",
-};
 
 export const LEVEL_LABEL: Record<CourseLevel, string> = {
   beginner: "입문",
@@ -867,6 +855,7 @@ export const QUIZZES: Quiz[] = [
     questions: [
       {
         id: "q1-1",
+        topic: "데이터 종류",
         question: "다음 중 정형 데이터의 예시로 가장 적절한 것은?",
         options: [
           "고객 인터뷰 녹음 파일",
@@ -880,6 +869,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q1-2",
+        topic: "분석 프로세스",
         question: "데이터 분석 프로세스의 일반적인 순서로 옳은 것은?",
         options: [
           "시각화 → 수집 → 정제 → 해석",
@@ -893,6 +883,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q1-3",
+        topic: "Pandas 기초",
         question: "Pandas에서 표 형태의 데이터를 담는 핵심 자료구조는?",
         options: ["List", "DataFrame", "Tuple", "Dictionary"],
         answerIndex: 1,
@@ -901,6 +892,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q1-4",
+        topic: "결측치 처리",
         question: "결측치(missing value)에 대한 설명으로 옳은 것은?",
         options: [
           "항상 0으로 바꿔야 한다",
@@ -914,6 +906,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q1-5",
+        topic: "탐색적 분석(EDA)",
         question: "탐색적 데이터 분석(EDA)의 주된 목적은?",
         options: [
           "최종 보고서를 예쁘게 꾸미기 위해",
@@ -927,6 +920,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q1-6",
+        topic: "데이터 시각화",
         question: "매출 추이를 시간 흐름에 따라 보여줄 때 가장 적절한 차트는?",
         options: ["파이 차트", "선(라인) 차트", "산점도", "히트맵"],
         answerIndex: 1,
@@ -935,6 +929,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q1-7",
+        topic: "기초 통계",
         question: "평균보다 중앙값을 쓰는 것이 나은 경우는?",
         options: [
           "데이터에 극단적인 이상치가 있을 때",
@@ -956,6 +951,7 @@ export const QUIZZES: Quiz[] = [
     questions: [
       {
         id: "q2-1",
+        topic: "프롬프트 설계",
         question: "좋은 프롬프트의 조건으로 가장 거리가 먼 것은?",
         options: [
           "역할과 맥락을 구체적으로 지정한다",
@@ -969,6 +965,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q2-2",
+        topic: "AI의 한계",
         question: "생성형 AI의 '환각(Hallucination)'이란?",
         options: [
           "AI가 스스로 학습을 멈추는 현상",
@@ -982,6 +979,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q2-3",
+        topic: "업무 활용 범위",
         question: "업무에서 생성형 AI를 활용하기에 가장 적합한 일은?",
         options: [
           "회사 기밀 데이터의 외부 공유",
@@ -995,6 +993,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q2-4",
+        topic: "프롬프트 설계",
         question: "프롬프트에서 '역할 지정'의 예시로 알맞은 것은?",
         options: [
           "'아무거나 써줘'",
@@ -1008,6 +1007,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q2-5",
+        topic: "결과물 검증",
         question: "AI가 생성한 결과물을 업무에 쓰기 전 반드시 해야 할 일은?",
         options: [
           "그대로 복사해 제출한다",
@@ -1021,6 +1021,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q2-6",
+        topic: "출력 형식 지정",
         question: "회의록 요약을 요청할 때 가장 효과적인 프롬프트는?",
         options: [
           "'요약해줘'",
@@ -1034,6 +1035,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q2-7",
+        topic: "업무 자동화",
         question: "반복 업무 자동화에 프롬프트 템플릿을 쓰는 이유는?",
         options: [
           "매번 새로 고민하지 않고 일관된 품질의 결과를 얻기 위해",
@@ -1055,6 +1057,7 @@ export const QUIZZES: Quiz[] = [
     questions: [
       {
         id: "q3-1",
+        topic: "SELECT 기초",
         question: "테이블에서 데이터를 조회하는 SQL 명령어는?",
         options: ["INSERT", "SELECT", "UPDATE", "DELETE"],
         answerIndex: 1,
@@ -1062,6 +1065,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q3-2",
+        topic: "조건 필터링",
         question: "특정 조건을 만족하는 행만 조회하려면 어떤 절을 사용할까요?",
         options: ["ORDER BY", "WHERE", "GROUP BY", "LIMIT"],
         answerIndex: 1,
@@ -1069,6 +1073,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q3-3",
+        topic: "집계",
         question: "카테고리별 매출 합계를 구할 때 필요한 조합은?",
         options: [
           "GROUP BY + SUM",
@@ -1082,6 +1087,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q3-4",
+        topic: "JOIN",
         question: "두 테이블을 공통 키로 연결해 조회하는 방법은?",
         options: ["UNION", "JOIN", "HAVING", "INDEX"],
         answerIndex: 1,
@@ -1090,6 +1096,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q3-5",
+        topic: "정렬",
         question: "조회 결과를 매출이 큰 순서대로 정렬하려면?",
         options: [
           "ORDER BY sales ASC",
@@ -1102,6 +1109,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q3-6",
+        topic: "집계",
         question: "집계 결과에 조건을 걸 때 사용하는 절은?",
         options: ["WHERE", "HAVING", "LIMIT", "ON"],
         answerIndex: 1,
@@ -1110,6 +1118,7 @@ export const QUIZZES: Quiz[] = [
       },
       {
         id: "q3-7",
+        topic: "중복 제거",
         question: "중복을 제거하고 고유한 값만 조회하는 키워드는?",
         options: ["UNIQUE ONLY", "DISTINCT", "REMOVE DUP", "SINGLE"],
         answerIndex: 1,
@@ -1128,7 +1137,7 @@ export const ASSIGNMENTS: Assignment[] = [
     title: "판매 데이터 요약 분석",
     description:
       "제공된 월별 판매 데이터에서 발견한 인사이트 3가지를 정리해 제출해주세요. 어떤 데이터를 근거로 했는지 함께 적으면 좋아요.",
-    dueDate: "2026-08-28",
+    dueInDays: 2,
   },
   {
     id: "a2",
@@ -1136,7 +1145,7 @@ export const ASSIGNMENTS: Assignment[] = [
     title: "나의 데이터 분석 주제 정하기",
     description:
       "일상이나 업무에서 분석해보고 싶은 주제 1가지를 정하고, 필요한 데이터와 예상 분석 과정을 간단히 설명해주세요.",
-    dueDate: "2026-09-02",
+    dueInDays: 6,
   },
   {
     id: "a3",
@@ -1144,7 +1153,7 @@ export const ASSIGNMENTS: Assignment[] = [
     title: "업무 프롬프트 템플릿 만들기",
     description:
       "본인의 반복 업무 1가지를 골라 재사용 가능한 프롬프트 템플릿을 작성하고, 실제 실행 결과와 함께 제출해주세요.",
-    dueDate: "2026-08-30",
+    dueInDays: 4,
   },
   {
     id: "a4",
@@ -1152,7 +1161,7 @@ export const ASSIGNMENTS: Assignment[] = [
     title: "레퍼런스 앱 UX 분석",
     description:
       "자주 쓰는 앱 하나를 골라 좋은 UX 요소 2가지와 개선하고 싶은 요소 1가지를 분석해 제출해주세요.",
-    dueDate: "2026-09-05",
+    dueInDays: 9,
   },
   {
     id: "a5",
@@ -1160,7 +1169,7 @@ export const ASSIGNMENTS: Assignment[] = [
     title: "분석 쿼리 작성 연습",
     description:
       "실습 데이터베이스에서 '월별 신규 가입자 수'를 구하는 쿼리를 작성하고, 쿼리의 각 부분이 하는 역할을 설명해주세요.",
-    dueDate: "2026-08-26",
+    dueInDays: 1,
   },
 ];
 
