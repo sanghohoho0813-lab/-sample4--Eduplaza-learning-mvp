@@ -1,11 +1,13 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Bell, CornerDownLeft, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { useStore } from "@/lib/store";
+import { BRAND } from "@/lib/brand";
 import { COURSES, getCategory, getInstructor } from "@/lib/data";
 import { useToast } from "./Toast";
 
@@ -86,8 +88,25 @@ export function Header({
 
   return (
     <header className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-4 md:mb-8">
-      {/* 모바일에서는 제목이 전체 폭을 쓰도록 액션 버튼을 윗줄로 보낸다 */}
-      <div className="order-2 w-full min-w-0 sm:order-1 sm:w-auto sm:flex-1">
+      {/* 사이드바가 없는 화면(lg 미만)의 왼쪽 위 — 사이드바와 같은 브랜드 마크 */}
+      <Link
+        href="/"
+        aria-label="EduPlaza 홈"
+        className="order-1 mr-auto flex min-w-0 items-center gap-2.5 lg:hidden"
+      >
+        <img src={BRAND.symbol} alt="" aria-hidden className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
+        <span className="min-w-0">
+          <span className="block font-display text-lg font-semibold leading-tight tracking-wide text-forest-950">
+            {BRAND.product}
+          </span>
+          <span className="hidden truncate text-xs leading-tight text-forest-950/50 min-[400px]:block">
+            by {BRAND.company}
+          </span>
+        </span>
+      </Link>
+
+      {/* 제목은 lg 미만에서 아래 줄 전체 폭을 쓰고, lg 이상에서는 왼쪽 */}
+      <div className="order-3 w-full min-w-0 lg:order-1 lg:w-auto lg:flex-1">
         <h1
           className={
             serif
@@ -104,7 +123,7 @@ export function Header({
         )}
       </div>
 
-      <div className="order-1 ml-auto flex items-center gap-2.5 sm:order-2">
+      <div className="order-2 ml-auto flex items-center gap-2.5 lg:order-3">
         <div ref={boxRef} className="relative hidden sm:block">
           <form onSubmit={submit}>
             <Search
@@ -194,14 +213,14 @@ export function Header({
 
         <Link
           href="/courses"
-          className="btn-press flex h-12 w-12 items-center justify-center rounded-full border border-cream-300 bg-white text-forest-800 sm:hidden"
+          className="btn-press flex h-11 w-11 items-center justify-center rounded-full sm:h-12 sm:w-12 border border-cream-300 bg-white text-forest-800 sm:hidden"
           aria-label="검색"
         >
           <Search size={18} />
         </Link>
         <button
           onClick={() => toast("새로운 알림이 없어요. 오늘도 화이팅!", "info")}
-          className="btn-press relative flex h-12 w-12 items-center justify-center rounded-full border border-cream-300 bg-white text-forest-800"
+          className="btn-press relative flex h-11 w-11 items-center justify-center rounded-full sm:h-12 sm:w-12 border border-cream-300 bg-white text-forest-800"
           aria-label="알림"
         >
           <Bell size={18} />
@@ -209,7 +228,7 @@ export function Header({
         </button>
         <Link
           href="/my"
-          className="btn-press flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-forest-600 to-forest-800 font-display text-sm font-semibold text-cream-50"
+          className="btn-press flex h-11 w-11 items-center justify-center rounded-full sm:h-12 sm:w-12 bg-gradient-to-br from-forest-600 to-forest-800 font-display text-sm font-semibold text-cream-50"
           aria-label="마이페이지"
         >
           {ready ? state.name.charAt(0) : "…"}
