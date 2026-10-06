@@ -176,4 +176,12 @@ export interface UserState {
   assignmentDue: Record<string, string>; // 과제 id → 마감일(YYYY-MM-DD)
   activity: Activity[]; // 최신순
   unlockedAchievements: string[];
+  /** 알림 설정. 이전 버전 저장 데이터에는 없을 수 있다 → 기본값으로 채운다 */
+  notifications?: NotificationPrefs;
+}
+
+export interface NotificationPrefs {
+  daily: boolean;
+  assignment: boolean;
+  marketing: boolean;
 }

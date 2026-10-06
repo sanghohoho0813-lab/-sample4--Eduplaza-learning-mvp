@@ -45,14 +45,7 @@ function QuizList() {
 
   return (
     <div className="animate-fade-up">
-      <Header
-        title="학습 활동"
-        subtitle={
-          tab === "quiz"
-            ? "배운 내용을 퀴즈로 점검하고, 틀린 문제는 다시 풀어보세요."
-            : "과제로 배운 내용을 내 것으로 만들어보세요."
-        }
-      />
+      <Header title="학습 활동" />
       <ActivityTabs
         active={tab}
         counts={{ assignment: store.upcomingAssignments.length || undefined }}

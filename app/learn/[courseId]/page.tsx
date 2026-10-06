@@ -37,6 +37,7 @@ import { weeklyGoalMessage } from "@/lib/insights";
 import { useToast } from "@/components/Toast";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PlayerSkeleton } from "@/components/Skeletons";
+import { CourseThumbnail } from "@/components/Thumbnail";
 
 const DEMO_PLAY_SECONDS = 24; // 데모 재생: 24초 만에 레슨 1개 완료
 
@@ -94,6 +95,14 @@ function PlayerContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, lessonId, store.ready, enrolled]);
 
+  // 커리큘럼 목록이 길어도 지금 듣는 레슨이 보이도록 목록 안에서만 스크롤한다
+  useEffect(() => {
+    document.querySelectorAll<HTMLElement>("[data-curriculum]").forEach((box) => {
+      const el = box.querySelector<HTMLElement>('[data-active="true"]');
+      if (el) box.scrollTop = el.offsetTop - box.clientHeight / 2 + el.clientHeight / 2;
+    });
+  }, [lessonId, store.ready]);
+
   const idx = lessons.findIndex((l) => l.id === lessonId);
   const prevLesson = idx > 0 ? lessons[idx - 1] : null;
   const nextL = idx >= 0 && idx < lessons.length - 1 ? lessons[idx + 1] : null;
@@ -133,19 +142,43 @@ function PlayerContent() {
 
   if (!enrolled) {
     return (
-      <div className="card mx-auto max-w-lg p-8 text-center animate-fade-up">
-        <h2 className="font-display text-xl font-semibold">
-          아직 수강 신청 전이에요
-        </h2>
-        <p className="mt-2 text-sm text-forest-950/55">
-          수강 신청 후 바로 학습을 시작할 수 있어요.
-        </p>
-        <Link
-          href={`/courses/${course.id}`}
-          className="btn-press mt-5 inline-block rounded-full bg-forest-800 px-6 py-3 text-sm font-bold text-cream-50"
-        >
-          강의 정보 보러 가기
-        </Link>
+      <div className="mx-auto max-w-lg animate-fade-up">
+        <div className="card overflow-hidden">
+          <CourseThumbnail
+            tone={course.thumbnailTone}
+            title={course.title}
+            courseId={course.id}
+            rounded="rounded-none"
+            priority
+          />
+          <div className="p-6 text-center md:p-8">
+            <p className="text-sm font-semibold text-forest-600">아직 수강 신청 전이에요</p>
+            <h1 className="mt-1.5 font-display text-xl font-semibold leading-snug text-forest-950">
+              {course.title}
+            </h1>
+            <p className="mt-2 text-sm text-forest-950/55">
+              수강 신청하면 &lsquo;{lesson.title}&rsquo;부터 바로 볼 수 있어요.
+            </p>
+            <div className="mt-6 flex flex-col gap-2.5">
+              <button
+                onClick={() => {
+                  store.enroll(course.id);
+                  toast("수강 신청 완료! 바로 시작해볼까요?", "celebrate");
+                }}
+                className="btn-press inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-forest-900 text-sm font-bold text-cream-50 transition-colors hover:bg-forest-800"
+              >
+                <PlayCircle size={18} />
+                수강 신청하고 시작하기
+              </button>
+              <Link
+                href={`/courses/${course.id}`}
+                className="inline-flex min-h-[48px] items-center justify-center text-sm font-semibold text-forest-950/60 hover:text-forest-950"
+              >
+                강의 정보 먼저 보기
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -164,11 +197,11 @@ function PlayerContent() {
     if (!content) return;
     store.addNote(course.id, lesson.id, content);
     setNoteDraft("");
-    toast("학습노트를 저장했어요 ✍️");
+    toast("학습노트를 저장했어요");
   };
 
   const CurriculumList = (
-    <ul className="thin-scroll max-h-[480px] space-y-1 overflow-y-auto pr-1">
+    <ul data-curriculum className="thin-scroll relative max-h-[480px] space-y-1 overflow-y-auto pr-1">
       {course.sections.map((section) => (
         <li key={section.id}>
           <p className="px-2 pb-1.5 pt-3 text-xs font-bold uppercase tracking-wide text-forest-950/40">
@@ -182,6 +215,8 @@ function PlayerContent() {
                 <li key={l.id}>
                   <Link
                     href={`/learn/${course.id}?lesson=${l.id}`}
+                    data-active={active}
+                    aria-current={active ? "true" : undefined}
                     className={clsx(
                       "flex min-h-[46px] items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors",
                       active
@@ -223,17 +258,17 @@ function PlayerContent() {
 
   return (
     <div className="animate-fade-up">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <button
-          onClick={() => router.push(`/courses/${course.id}`)}
-          className="btn-press inline-flex items-center gap-1 text-sm font-semibold text-forest-950/55 hover:text-forest-950"
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <Link
+          href={`/courses/${course.id}`}
+          className="btn-press inline-flex min-h-[44px] min-w-0 items-center gap-1 text-sm font-semibold text-forest-950/55 hover:text-forest-950"
         >
-          <ChevronLeft size={16} />
-          {course.title}
-        </button>
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs text-forest-950/50">강의 진도</span>
-          <div className="w-28">
+          <ChevronLeft size={16} className="shrink-0" />
+          <span className="truncate">{course.title}</span>
+        </Link>
+        <div className="flex shrink-0 items-center gap-2.5">
+          <span className="hidden text-xs text-forest-950/50 sm:inline">강의 진도</span>
+          <div className="w-16 sm:w-28">
             <ProgressBar value={coursePct} height="h-1.5" animate={false} />
           </div>
           <span className="text-sm font-bold text-forest-700">{coursePct}%</span>
@@ -249,13 +284,10 @@ function PlayerContent() {
               <div className="absolute -left-10 top-6 h-40 w-40 rounded-full bg-forest-500/20 blur-3xl" />
               <div className="absolute bottom-4 right-10 h-32 w-32 rounded-full bg-gold-500/10 blur-3xl" />
 
-              <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cream-200/40">
+              <div className="absolute inset-0 flex flex-col items-center justify-center px-6 pb-8 text-center">
+                <p className="mb-4 hidden text-xs font-semibold uppercase tracking-[0.2em] text-cream-200/40 sm:block">
                   Lesson {idx + 1} / {lessons.length}
                 </p>
-                <h2 className="mt-2 max-w-md font-display text-lg font-semibold leading-snug text-cream-50 md:text-2xl">
-                  {lesson.title}
-                </h2>
                 <button
                   onClick={() => {
                     if (pct >= 100) {
@@ -267,7 +299,7 @@ function PlayerContent() {
                     }
                   }}
                   aria-label={playing ? "일시정지" : "재생"}
-                  className="btn-press mt-5 flex h-16 w-16 items-center justify-center rounded-full bg-cream-100/95 text-forest-950 shadow-glow transition-transform hover:scale-105"
+                  className="btn-press flex h-16 w-16 items-center justify-center rounded-full bg-cream-100/95 text-forest-950 shadow-glow transition-transform hover:scale-105 md:h-20 md:w-20"
                 >
                   {playing ? (
                     <Pause size={26} />
@@ -305,40 +337,62 @@ function PlayerContent() {
             </div>
           </div>
 
-          {/* 레슨 내비게이션 */}
-          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+          {/* 레슨 제목 */}
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-forest-950/50">
+              {sectionOf(lesson.sectionId)?.title} · 레슨 {idx + 1}/{lessons.length} · {lesson.durationMin}분
+            </p>
+            <h1 className="mt-1 text-lg font-bold leading-snug text-forest-950 md:text-xl">
+              {lesson.title}
+            </h1>
+          </div>
+
+          {/* 레슨 내비게이션 — 모바일에서도 한 줄 */}
+          <div className="mt-4 grid grid-cols-[auto,minmax(0,1fr),auto] items-center gap-2 sm:flex sm:gap-2.5">
             <button
               onClick={() =>
                 prevLesson &&
                 router.push(`/learn/${course.id}?lesson=${prevLesson.id}`)
               }
               disabled={!prevLesson}
-              className="btn-press inline-flex min-h-[44px] items-center gap-1 rounded-full border border-cream-300 bg-white px-4 text-sm font-semibold text-forest-950 disabled:opacity-40"
+              aria-label="이전 레슨"
+              className="btn-press inline-flex min-h-[48px] items-center gap-1 rounded-full border border-cream-300 bg-white px-3.5 text-sm font-semibold text-forest-950 disabled:opacity-40 sm:px-4"
             >
               <ChevronLeft size={16} />
-              이전 강의
+              <span>
+                이전<span className="hidden sm:inline"> 강의</span>
+              </span>
             </button>
             <button
               onClick={markComplete}
               disabled={isCompleted}
               className={clsx(
-                "btn-press inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-5 text-sm font-bold transition-colors",
+                "btn-press inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-full px-5 text-sm font-bold transition-colors",
                 isCompleted
                   ? "bg-forest-100 text-success"
                   : "bg-forest-900 text-cream-50 hover:bg-forest-800"
               )}
             >
-              <CheckCircle2 size={16} />
-              {isCompleted ? "학습 완료됨" : "학습 완료 처리"}
+              <CheckCircle2 size={16} className="shrink-0" />
+              {isCompleted ? (
+                "학습 완료됨"
+              ) : (
+                <span>
+                  학습 완료<span className="hidden sm:inline"> 처리</span>
+                </span>
+              )}
             </button>
             <button
               onClick={() =>
                 nextL && router.push(`/learn/${course.id}?lesson=${nextL.id}`)
               }
               disabled={!nextL}
-              className="btn-press inline-flex min-h-[44px] items-center gap-1 rounded-full border border-cream-300 bg-white px-4 text-sm font-semibold text-forest-950 disabled:opacity-40"
+              aria-label="다음 레슨"
+              className="btn-press inline-flex min-h-[48px] items-center gap-1 rounded-full border border-cream-300 bg-white px-3.5 text-sm font-semibold text-forest-950 disabled:opacity-40 sm:px-4"
             >
-              다음 강의
+              <span>
+                다음<span className="hidden sm:inline"> 강의</span>
+              </span>
               <ChevronRight size={16} />
             </button>
           </div>
@@ -387,20 +441,9 @@ function PlayerContent() {
               {tab === "curriculum" && <div className="lg:hidden">{CurriculumList}</div>}
 
               {tab === "about" && (
-                <div className="space-y-3">
-                  <h3 className="text-base font-bold text-forest-950">
-                    {lesson.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed text-forest-950/70">
-                    {course.description}
-                  </p>
-                  <p className="text-sm text-forest-950/50">
-                    이 레슨은 &lsquo;
-                    {sectionOf(lesson.sectionId)?.title}&rsquo; 섹션의{" "}
-                    {lesson.order}번째 강의로, 약 {lesson.durationMin}분 분량입니다.
-                    학습 후 노트에 핵심 내용을 정리해보세요.
-                  </p>
-                </div>
+                <p className="text-sm leading-relaxed text-forest-950/70">
+                  {course.description}
+                </p>
               )}
 
               {tab === "notes" && (

@@ -2,7 +2,6 @@
 
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import clsx from "clsx";
 import {
   ArrowRight,
   Check,
@@ -18,7 +17,7 @@ import { BRAND } from "@/lib/brand";
 import { CATEGORIES, COURSES, QUIZZES, formatMinutes, getInstructor } from "@/lib/data";
 import { groupWeak, weeklyGoalMessage } from "@/lib/insights";
 import { Header } from "@/components/Header";
-import { CourseCard } from "@/components/CourseCard";
+import { CourseCard, CourseRow } from "@/components/CourseCard";
 import { CourseThumbnail } from "@/components/Thumbnail";
 import { ProgressBar, ProgressRing } from "@/components/ProgressBar";
 import { ActivityList } from "@/components/ActivityList";
@@ -218,27 +217,6 @@ export default function HomePage() {
         </span>
       </section>
 
-      {/* 학습 요약 — 카드 4장 대신 한 줄로 */}
-      <section
-        className="card mb-5 grid grid-cols-3 divide-x divide-cream-200 py-3 md:mb-6 md:py-4"
-        aria-label="학습 요약"
-      >
-        <div className="flex flex-col items-center gap-1.5 px-2 text-center">
-          <ProgressRing value={overall} size={56} stroke={6}>
-            <span className="text-sm font-bold text-forest-800">{overall}%</span>
-          </ProgressRing>
-          <span className="text-xs text-forest-950/55">전체 진행률</span>
-        </div>
-        <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
-          <span className="font-display text-2xl font-semibold text-forest-950">{doneCourses}개</span>
-          <span className="text-xs text-forest-950/55">완료한 강의</span>
-        </div>
-        <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
-          <span className="font-display text-2xl font-semibold text-forest-950">{activeCourses}개</span>
-          <span className="text-xs text-forest-950/55">수강 중</span>
-        </div>
-      </section>
-
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr),320px] lg:gap-6 min-[1400px]:grid-cols-[minmax(0,1fr),360px]">
         {/* ---- 메인: 지금 할 공부 ---- */}
         <div className="min-w-0 space-y-5 lg:space-y-6">
@@ -318,6 +296,27 @@ export default function HomePage() {
             </section>
           )}
 
+              {/* 학습 요약 — 할 일(이어보기) 다음에 현황을 한 줄로 */}
+          <section
+            className="card grid grid-cols-3 divide-x divide-cream-200 py-3 md:py-4"
+            aria-label="학습 요약"
+          >
+            <div className="flex flex-col items-center gap-1.5 px-2 text-center">
+              <ProgressRing value={overall} size={56} stroke={6}>
+                <span className="text-sm font-bold text-forest-800">{overall}%</span>
+              </ProgressRing>
+              <span className="text-xs text-forest-950/55">전체 진행률</span>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
+              <span className="font-display text-2xl font-semibold text-forest-950">{doneCourses}개</span>
+              <span className="text-xs text-forest-950/55">완료한 강의</span>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
+              <span className="font-display text-2xl font-semibold text-forest-950">{activeCourses}개</span>
+              <span className="text-xs text-forest-950/55">수강 중</span>
+            </div>
+          </section>
+
           {/* 모바일에서는 오늘의 목표를 이어보기 바로 아래에 */}
           <div className="lg:hidden">{todayGoalsCard("m")}</div>
 
@@ -391,7 +390,14 @@ export default function HomePage() {
                   내 학습 <ArrowRight size={14} />
                 </Link>
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <ul className="space-y-3 sm:hidden">
+                {others.map((course) => (
+                  <li key={course.id}>
+                    <CourseRow course={course} showProgress />
+                  </li>
+                ))}
+              </ul>
+              <div className="hidden grid-cols-2 gap-4 sm:grid">
                 {others.map((course) => (
                   <CourseCard key={course.id} course={course} showProgress />
                 ))}
@@ -413,11 +419,14 @@ export default function HomePage() {
                 더 찾아보기 <ArrowRight size={14} />
               </Link>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {/* 모바일: 옆으로 넘겨 보는 카드 / 태블릿 이상: 그리드 */}
+            <ul className="thin-scroll relative -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-3">
               {recommended.map((course) => (
-                <CourseCard key={course.id} course={course} />
+                <li key={course.id} className="w-[78%] shrink-0 snap-start sm:w-auto">
+                  <CourseCard course={course} />
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
 
           <div className="lg:hidden">{recentCard("m")}</div>

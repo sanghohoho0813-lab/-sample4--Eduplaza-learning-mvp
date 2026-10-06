@@ -18,15 +18,26 @@ import React, {
   useRef,
   useState,
 } from "react";
+import {
+  CalendarCheck,
+  Flame,
+  GraduationCap,
+  Sprout,
+  Target,
+  Trophy,
+  type LucideIcon,
+} from "lucide-react";
 import { ASSIGNMENTS, COURSES, QUIZZES, courseLessons, getCourse, getLesson } from "./data";
 import type {
   Activity,
   Assignment,
   AssignmentStatus,
+  CategoryId,
   Course,
   Lesson,
   LessonStatus,
   Note,
+  NotificationPrefs,
   QuizResult,
   UserState,
 } from "./types";
@@ -34,6 +45,12 @@ import type {
 export const STORAGE_KEY = "eduplaza-state-v3";
 
 export const WEEKLY_GOAL_MIN = 300; // 최근 7일 기준 5시간
+
+const DEFAULT_NOTIFICATIONS: NotificationPrefs = {
+  daily: true,
+  assignment: true,
+  marketing: false,
+};
 const STUDY_TYPES = new Set(["lesson", "quiz", "review", "assignment", "note"]);
 const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -143,16 +160,16 @@ export interface AchievementDef {
   id: string;
   label: string;
   description: string;
-  emoji: string;
+  icon: LucideIcon;
 }
 
 export const ACHIEVEMENTS: AchievementDef[] = [
-  { id: "first-lesson", label: "첫 발걸음", description: "첫 레슨 완료", emoji: "🌱" },
-  { id: "first-course", label: "첫 완주", description: "첫 강의 완료", emoji: "🎓" },
-  { id: "streak-3", label: "꾸준함의 시작", description: "3일 연속 학습", emoji: "🔥" },
-  { id: "streak-7", label: "일주일의 힘", description: "7일 연속 학습", emoji: "💪" },
-  { id: "quiz-100", label: "퍼펙트 스코어", description: "퀴즈 100점 달성", emoji: "🏆" },
-  { id: "weekly-goal", label: "주간 목표 달성", description: "최근 7일 5시간 학습", emoji: "⭐" },
+  { id: "first-lesson", label: "첫 발걸음", description: "첫 레슨 완료", icon: Sprout },
+  { id: "first-course", label: "첫 완주", description: "첫 강의 완료", icon: GraduationCap },
+  { id: "streak-3", label: "꾸준함의 시작", description: "3일 연속 학습", icon: Flame },
+  { id: "streak-7", label: "일주일의 힘", description: "7일 연속 학습", icon: CalendarCheck },
+  { id: "quiz-100", label: "퍼펙트 스코어", description: "퀴즈 100점 달성", icon: Trophy },
+  { id: "weekly-goal", label: "주간 목표 달성", description: "최근 7일 5시간 학습", icon: Target },
 ];
 
 /** 상태를 보고 새로 달성한 성취를 해금하고, 해금 자체도 활동 로그에 남긴다. */
@@ -390,6 +407,11 @@ interface StoreApi {
   // favorites
   isFavorite: (courseId: string) => boolean;
   toggleFavorite: (courseId: string) => void;
+  // settings
+  /** 관심분야 토글. 마지막 하나는 지울 수 없다(false 반환) */
+  toggleInterest: (categoryId: CategoryId) => boolean;
+  notifications: NotificationPrefs;
+  setNotification: (key: keyof NotificationPrefs, on: boolean) => void;
   // assignments
   assignmentStatus: (id: string) => AssignmentStatus;
   assignmentDue: (id: string) => string;
@@ -728,6 +750,30 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  // ---- settings ----
+  const toggleInterest = useCallback(
+    (categoryId: CategoryId) => {
+      const has = state.interests.includes(categoryId);
+      if (has && state.interests.length <= 1) return false;
+      setState((s) => ({
+        ...s,
+        interests: s.interests.includes(categoryId)
+          ? s.interests.filter((id) => id !== categoryId)
+          : [...s.interests, categoryId],
+      }));
+      return true;
+    },
+    [state.interests]
+  );
+
+  const notifications = state.notifications ?? DEFAULT_NOTIFICATIONS;
+  const setNotification = useCallback((key: keyof NotificationPrefs, on: boolean) => {
+    setState((s) => ({
+      ...s,
+      notifications: { ...(s.notifications ?? DEFAULT_NOTIFICATIONS), [key]: on },
+    }));
+  }, []);
+
   // ---- assignments ----
   const assignmentStatus = useCallback(
     (id: string): AssignmentStatus => state.assignments[id]?.status ?? "pending",
@@ -794,6 +840,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       deleteNote,
       isFavorite,
       toggleFavorite,
+      toggleInterest,
+      notifications,
+      setNotification,
       assignmentStatus,
       assignmentDue,
       submitAssignment,
@@ -826,6 +875,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       deleteNote,
       isFavorite,
       toggleFavorite,
+      toggleInterest,
+      notifications,
+      setNotification,
       assignmentStatus,
       assignmentDue,
       submitAssignment,

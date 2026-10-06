@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { notFound, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import clsx from "clsx";
@@ -20,7 +20,6 @@ import { QUIZZES, getCourse } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import type { Quiz, QuizQuestion, QuizResult } from "@/lib/types";
 import { useToast } from "@/components/Toast";
-import { ProgressBar } from "@/components/ProgressBar";
 import { ListSkeleton } from "@/components/Skeletons";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
@@ -80,6 +79,21 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
   }, [store.ready, store.weakQuestions, questions, mode, quiz]);
 
   const question = questions?.[step];
+  const cardRef = useRef<HTMLDivElement>(null);
+  const actionRef = useRef<HTMLDivElement>(null);
+
+  // 정답 확인 후 해설과 '다음 문제' 버튼이 화면 밖이면 보이게 끌어온다(모바일)
+  useEffect(() => {
+    if (checked) actionRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [checked]);
+  // 다음 문제로 넘어가면 문제 카드 머리가 보이게
+  useEffect(() => {
+    if (step === 0) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top;
+    if (top < 0) window.scrollBy({ top: top - 16, behavior: "smooth" });
+  }, [step]);
 
   const checkAnswer = useCallback(() => {
     if (selected === null || !question) return;
@@ -186,17 +200,9 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
         <h1 className="mt-1 font-display text-xl font-semibold text-forest-950 md:text-2xl">
           {quiz.title}
         </h1>
-        <div className="mt-4 flex items-center gap-3">
-          <ProgressBar
-            value={((step + (checked ? 1 : 0)) / questions.length) * 100}
-            fillClass="bg-forest-600"
-            animate={false}
-          />
-          <span className="shrink-0 text-sm font-bold text-forest-700">
-            {step + 1}/{questions.length}
-          </span>
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-1.5" aria-hidden>
+        {/* 진행 표시는 한 가지로 — 점 하나가 한 문제, 맞힘/틀림까지 보여준다 */}
+        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1.5" aria-hidden>
           {questions.map((qq, i) => (
             <span
               key={qq.id}
@@ -213,9 +219,14 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
             />
           ))}
         </div>
+          <span className="shrink-0 text-sm font-bold text-forest-700">
+            <span className="sr-only">전체 {questions.length}문제 중 </span>
+            {step + 1}/{questions.length}
+          </span>
+        </div>
       </div>
 
-      <div className="card p-5 md:p-7">
+      <div ref={cardRef} className="card p-5 md:p-7">
         <p className="text-xs font-bold uppercase tracking-widest text-forest-500">
           Question {step + 1} · {question.topic}
         </p>
@@ -313,7 +324,7 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
           {checked ? "다음 문제" : "정답 확인"}
         </p>
 
-        <div className="mt-4">
+        <div ref={actionRef} className="mt-4 scroll-mb-32">
           {!checked ? (
             <button
               onClick={checkAnswer}

@@ -7,12 +7,15 @@ export function EmptyState({
   description,
   actionHref,
   actionLabel,
+  children,
 }: {
   icon: LucideIcon;
   title: string;
   description: string;
   actionHref?: string;
   actionLabel?: string;
+  /** 링크 대신 버튼 동작이 필요할 때(필터 초기화 등) */
+  children?: React.ReactNode;
 }) {
   return (
     <div className="card flex flex-col items-center px-6 py-14 text-center animate-fade-up">
@@ -21,13 +24,18 @@ export function EmptyState({
       </span>
       <h3 className="font-display text-lg font-semibold text-forest-950">{title}</h3>
       <p className="mt-1.5 max-w-xs text-sm text-forest-950/55">{description}</p>
-      {actionHref && actionLabel && (
-        <Link
-          href={actionHref}
-          className="btn-press mt-5 rounded-full bg-forest-800 px-5 py-2.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-forest-700"
-        >
-          {actionLabel}
-        </Link>
+      {(children || (actionHref && actionLabel)) && (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+          {children}
+          {actionHref && actionLabel && (
+            <Link
+              href={actionHref}
+              className="btn-press inline-flex min-h-[48px] items-center rounded-full bg-forest-900 px-6 text-sm font-bold text-cream-50 transition-colors hover:bg-forest-800"
+            >
+              {actionLabel}
+            </Link>
+          )}
+        </div>
       )}
     </div>
   );

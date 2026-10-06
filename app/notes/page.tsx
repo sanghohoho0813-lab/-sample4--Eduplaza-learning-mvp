@@ -7,6 +7,7 @@ import {
   BookOpen,
   NotebookPen,
   Pencil,
+  PlayCircle,
   Plus,
   Trash2,
   X,
@@ -17,6 +18,7 @@ import { useToast } from "@/components/Toast";
 import { Header } from "@/components/Header";
 import { ActivityTabs } from "@/components/ActivityTabs";
 import { EmptyState } from "@/components/EmptyState";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ListSkeleton } from "@/components/Skeletons";
 
 export default function NotesPage() {
@@ -28,6 +30,7 @@ export default function NotesPage() {
   const [content, setContent] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   if (!store.ready) {
     return (
@@ -51,7 +54,14 @@ export default function NotesPage() {
     setContent("");
     setLessonId("");
     setFormOpen(false);
-    toast("학습노트를 저장했어요 ✍️");
+    toast("학습노트를 저장했어요");
+  };
+
+  const confirmDelete = () => {
+    if (!deleteId) return;
+    store.deleteNote(deleteId);
+    setDeleteId(null);
+    toast("노트를 삭제했어요", "info");
   };
 
   const saveEdit = (id: string) => {
@@ -64,10 +74,7 @@ export default function NotesPage() {
 
   return (
     <div className="animate-fade-up">
-      <Header
-        title="학습 활동"
-        subtitle="배운 것을 내 언어로 정리하면 온전히 내 것이 돼요."
-      />
+      <Header title="학습 활동" />
       <ActivityTabs
         active="notes"
         counts={{ assignment: store.upcomingAssignments.length || undefined }}
@@ -99,6 +106,15 @@ export default function NotesPage() {
                 <X size={16} />
               </button>
             </div>
+            {enrolledCourses.length === 0 ? (
+              <div className="rounded-xl bg-cream-100 p-4 text-sm text-forest-950/65">
+                노트는 수강 중인 강의에 연결해 남겨요. 먼저 강의를 시작해보세요.
+                <Link href="/courses" className="ml-1 font-semibold text-forest-700 underline underline-offset-4">
+                  강의 찾기
+                </Link>
+              </div>
+            ) : (
+            <>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1.5 block text-xs font-semibold text-forest-950/55">
@@ -138,22 +154,37 @@ export default function NotesPage() {
                 </select>
               </label>
             </div>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={5}
-              placeholder="강의를 들으면서 중요한 내용을 기록해보세요."
-              className="mt-3 w-full resize-none rounded-xl border border-cream-200 bg-cream-50 p-3.5 text-sm outline-none placeholder:text-forest-950/35 focus:border-forest-400 focus:ring-2 focus:ring-forest-200"
-            />
-            <div className="mt-3 flex justify-end">
+            <label className="mt-3 block">
+              <span className="sr-only">노트 내용</span>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) save();
+                }}
+                rows={5}
+                autoFocus
+                placeholder="강의를 들으면서 중요한 내용을 기록해보세요."
+                className="w-full resize-none rounded-xl border border-cream-200 bg-cream-50 p-3.5 text-sm outline-none placeholder:text-forest-950/35 focus:border-forest-400 focus:ring-2 focus:ring-forest-200"
+              />
+            </label>
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                onClick={() => setFormOpen(false)}
+                className="btn-press min-h-[48px] rounded-full border border-cream-300 px-5 text-sm font-semibold text-forest-950/60"
+              >
+                취소
+              </button>
               <button
                 onClick={save}
                 disabled={!content.trim() || !courseId}
-                className="btn-press rounded-full bg-forest-900 px-6 py-2.5 text-sm font-bold text-cream-50 disabled:opacity-40"
+                className="btn-press min-h-[48px] rounded-full bg-forest-900 px-6 text-sm font-bold text-cream-50 disabled:opacity-40"
               >
                 저장하기
               </button>
             </div>
+            </>
+            )}
           </div>
         )}
       </div>
@@ -175,42 +206,45 @@ export default function NotesPage() {
             return (
               <li key={note.id} className="card flex flex-col p-5">
                 <div className="mb-2.5 flex items-start justify-between gap-2">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <Link
                       href={`/courses/${note.courseId}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-forest-600 hover:text-forest-800"
+                      className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-forest-600 hover:text-forest-800"
                     >
-                      <BookOpen size={13} />
+                      <BookOpen size={13} className="shrink-0" />
                       <span className="truncate">{course?.title}</span>
                     </Link>
                     {lessonInfo && (
-                      <p className="mt-0.5 truncate text-xs text-forest-950/45">
-                        📍 {lessonInfo.lesson.title}
-                      </p>
+                      <Link
+                        href={`/learn/${note.courseId}?lesson=${lessonInfo.lesson.id}`}
+                        className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-forest-950/45 hover:text-forest-800"
+                      >
+                        <PlayCircle size={13} className="shrink-0" />
+                        <span className="truncate">{lessonInfo.lesson.title}</span>
+                      </Link>
                     )}
                   </div>
-                  <div className="flex shrink-0 gap-1">
-                    <button
-                      onClick={() => {
-                        setEditingId(note.id);
-                        setEditContent(note.content);
-                      }}
-                      className="btn-press flex h-8 w-8 items-center justify-center rounded-full text-forest-950/40 transition-colors hover:bg-cream-100 hover:text-forest-800"
-                      aria-label="노트 수정"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        store.deleteNote(note.id);
-                        toast("노트를 삭제했어요", "info");
-                      }}
-                      className="btn-press flex h-8 w-8 items-center justify-center rounded-full text-forest-950/40 transition-colors hover:bg-danger/10 hover:text-danger"
-                      aria-label="노트 삭제"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                  {!isEditing && (
+                    <div className="-mr-2 -mt-2 flex shrink-0">
+                      <button
+                        onClick={() => {
+                          setEditingId(note.id);
+                          setEditContent(note.content);
+                        }}
+                        className="btn-press flex h-10 w-10 items-center justify-center rounded-full text-forest-950/40 transition-colors hover:bg-cream-100 hover:text-forest-800"
+                        aria-label="노트 수정"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => setDeleteId(note.id)}
+                        className="btn-press flex h-10 w-10 items-center justify-center rounded-full text-forest-950/40 transition-colors hover:bg-danger/10 hover:text-danger"
+                        aria-label="노트 삭제"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {isEditing ? (
@@ -218,19 +252,26 @@ export default function NotesPage() {
                     <textarea
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") setEditingId(null);
+                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) saveEdit(note.id);
+                      }}
+                      aria-label="노트 내용 수정"
+                      autoFocus
                       rows={5}
                       className="w-full resize-none rounded-xl border border-cream-200 bg-cream-50 p-3 text-sm outline-none focus:border-forest-400 focus:ring-2 focus:ring-forest-200"
                     />
                     <div className="mt-2 flex justify-end gap-2">
                       <button
                         onClick={() => setEditingId(null)}
-                        className="btn-press rounded-full border border-cream-300 px-4 py-2 text-xs font-semibold text-forest-950/60"
+                        className="btn-press min-h-[44px] rounded-full border border-cream-300 px-5 text-sm font-semibold text-forest-950/60"
                       >
                         취소
                       </button>
                       <button
                         onClick={() => saveEdit(note.id)}
-                        className="btn-press rounded-full bg-forest-900 px-4 py-2 text-xs font-bold text-cream-50"
+                        disabled={!editContent.trim()}
+                        className="btn-press min-h-[44px] rounded-full bg-forest-900 px-5 text-sm font-bold text-cream-50 disabled:opacity-40"
                       >
                         저장
                       </button>
@@ -258,6 +299,16 @@ export default function NotesPage() {
           })}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        title="이 노트를 삭제할까요?"
+        description="삭제한 노트는 되돌릴 수 없어요."
+        confirmLabel="삭제"
+        danger
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 }

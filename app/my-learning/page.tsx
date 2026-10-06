@@ -1,14 +1,14 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import clsx from "clsx";
 import { BarChart3, BookOpen, ChevronRight, ClipboardList, Heart, PlayCircle } from "lucide-react";
 import { COURSES, getCourse } from "@/lib/data";
 import { dueLabel, useStore } from "@/lib/store";
 import { Header } from "@/components/Header";
-import { CourseCard } from "@/components/CourseCard";
+import { CourseCard, CourseRow } from "@/components/CourseCard";
 import { CourseThumbnail } from "@/components/Thumbnail";
 import { ProgressBar } from "@/components/ProgressBar";
 import { EmptyState } from "@/components/EmptyState";
@@ -35,9 +35,15 @@ function MyLearning() {
   const store = useStore();
   const searchParams = useSearchParams();
   const initial = searchParams.get("tab") as Tab | null;
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>(
     initial && TABS.some((t) => t.key === initial) ? initial : "all"
   );
+  // 탭을 주소에 남겨 강의에 들어갔다 돌아와도 보던 탭이 유지되게 한다
+  const selectTab = (key: Tab) => {
+    setTab(key);
+    router.replace(key === "all" ? "/my-learning" : `/my-learning?tab=${key}`, { scroll: false });
+  };
 
   const enrolledCourses = useMemo(
     () =>
@@ -82,19 +88,7 @@ function MyLearning() {
 
   return (
     <div className="animate-fade-up">
-      <Header
-        title="내 학습"
-        subtitle="지난번 공부하던 곳에서 이어서 시작하세요."
-      />
-      <div className="-mt-3 mb-5 flex justify-end md:-mt-5">
-        <Link
-          href="/report"
-          className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-forest-600 hover:text-forest-800"
-        >
-          <BarChart3 size={15} />
-          학습 리포트 보기
-        </Link>
-      </div>
+      <Header title="내 학습" />
 
       {/* 이어보기 배너 */}
       {continueCourse && continueNext && (
@@ -119,7 +113,7 @@ function MyLearning() {
                   )
                 : "-"}
             </p>
-            <h3 className="mt-0.5 truncate font-display text-base font-semibold md:text-lg">
+            <h3 className="mt-0.5 line-clamp-2 font-display text-base font-semibold leading-snug sm:truncate md:text-lg">
               {continueCourse.title}
             </h3>
             <p className="mt-0.5 truncate text-xs text-cream-200/70">
@@ -146,14 +140,24 @@ function MyLearning() {
         </Link>
       )}
 
-      {/* 남은 과제 — 과제 제출이 이 화면에도 바로 반영된다 */}
+      {/* 남은 과제 — 가까운 마감 2개만. 전체는 과제 탭에서 */}
       {store.upcomingAssignments.length > 0 && (
         <section className="card mb-6 p-2" aria-labelledby="todo-assign">
-          <h2 id="todo-assign" className="px-3.5 pb-1 pt-2.5 text-sm font-bold text-forest-950">
-            남은 과제 {store.upcomingAssignments.length}개
-          </h2>
+          <div className="flex items-center justify-between gap-3 px-3.5 pb-1 pt-2.5">
+            <h2 id="todo-assign" className="text-sm font-bold text-forest-950">
+              남은 과제 {store.upcomingAssignments.length}개
+            </h2>
+            {store.upcomingAssignments.length > 2 && (
+              <Link
+                href="/quiz?tab=assignment"
+                className="inline-flex min-h-[40px] items-center gap-0.5 text-sm font-semibold text-forest-600 hover:text-forest-800"
+              >
+                모두 보기 <ChevronRight size={15} />
+              </Link>
+            )}
+          </div>
           <ul className="divide-y divide-cream-100">
-            {store.upcomingAssignments.map((u) => (
+            {store.upcomingAssignments.slice(0, 2).map((u) => (
               <li key={u.assignment.id}>
                 <Link
                   href={`/quiz?tab=assignment#${u.assignment.id}`}
@@ -184,9 +188,10 @@ function MyLearning() {
         </section>
       )}
 
-      {/* 탭 */}
-      <div className="-mx-4 mb-5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-      <div className="inline-flex min-w-max rounded-full bg-cream-200 p-1">
+      {/* 탭 + 리포트 바로가기 */}
+      <div className="mb-5 flex items-center justify-between gap-3">
+      <div className="-mx-4 min-w-0 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      <div className="inline-flex min-w-max rounded-full bg-cream-200 p-1" role="tablist" aria-label="강의 분류">
         {TABS.map(({ key, label }) => {
           const count =
             key === "favorite"
@@ -201,7 +206,9 @@ function MyLearning() {
           return (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              role="tab"
+              aria-selected={tab === key}
+              onClick={() => selectTab(key)}
               className={clsx(
                 "btn-press min-h-[44px] rounded-full px-4 text-sm font-bold transition-colors sm:px-5",
                 tab === key ? "bg-forest-950 text-cream-50" : "text-forest-950/55"
@@ -220,6 +227,14 @@ function MyLearning() {
           );
         })}
       </div>
+      </div>
+        <Link
+          href="/report"
+          className="hidden min-h-[44px] shrink-0 items-center gap-1.5 text-sm font-semibold text-forest-600 hover:text-forest-800 sm:inline-flex"
+        >
+          <BarChart3 size={15} />
+          학습 리포트
+        </Link>
       </div>
 
       {filtered.length === 0 ? (
@@ -241,15 +256,20 @@ function MyLearning() {
           />
         )
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((course) => (
-            <CourseCard
-              key={course.id}
-              course={course}
-              showProgress={tab !== "favorite"}
-            />
-          ))}
-        </div>
+        <>
+          <ul className="space-y-3 sm:hidden">
+            {filtered.map((course) => (
+              <li key={course.id}>
+                <CourseRow course={course} showProgress={tab !== "favorite"} />
+              </li>
+            ))}
+          </ul>
+          <div className="hidden grid-cols-2 gap-4 sm:grid xl:grid-cols-3">
+            {filtered.map((course) => (
+              <CourseCard key={course.id} course={course} showProgress={tab !== "favorite"} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

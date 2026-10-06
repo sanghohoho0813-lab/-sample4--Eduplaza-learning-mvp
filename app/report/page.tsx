@@ -44,7 +44,7 @@ export default function ReportPage() {
 
   return (
     <div className="animate-fade-up">
-      <Header title="학습 리포트" subtitle="최근 7일 동안의 학습을 돌아보고 다음 걸음을 정해요." />
+      <Header title="학습 리포트" />
 
       {/* 이번 주 요약 — 숫자는 한 카드 안에서만 */}
       <section className="card p-5 md:p-6" aria-labelledby="summary-heading">
@@ -308,19 +308,31 @@ export default function ReportPage() {
             <ul className="grid grid-cols-2 gap-2.5">
               {ACHIEVEMENTS.map((a) => {
                 const unlocked = state.unlockedAchievements.includes(a.id);
+                const Icon = a.icon;
                 return (
                   <li
                     key={a.id}
                     className={clsx(
-                      "rounded-xl border p-3 text-center",
-                      unlocked ? "border-gold-300/60 bg-gold-300/10" : "border-cream-200 bg-cream-50 opacity-55"
+                      "flex flex-col items-center rounded-xl border p-3 text-center",
+                      unlocked ? "border-gold-300/60 bg-gold-300/10" : "border-dashed border-cream-300 bg-white"
                     )}
                   >
-                    <span className="text-xl" aria-hidden>
-                      {a.emoji}
+                    <span
+                      className={clsx(
+                        "flex h-10 w-10 items-center justify-center rounded-full",
+                        unlocked ? "bg-gold-300/30 text-gold-600" : "bg-cream-200 text-forest-950/30"
+                      )}
+                      aria-hidden
+                    >
+                      <Icon size={19} />
                     </span>
-                    <p className="mt-1 text-xs font-bold text-forest-950">{a.label}</p>
-                    <p className="mt-0.5 text-xs text-forest-950/50">{a.description}</p>
+                    <p className={clsx("mt-1.5 text-xs font-bold", unlocked ? "text-forest-950" : "text-forest-950/45")}>
+                      {a.label}
+                    </p>
+                    <p className="mt-0.5 text-xs text-forest-950/45">
+                      {a.description}
+                      <span className="sr-only">{unlocked ? " (달성)" : " (아직 잠김)"}</span>
+                    </p>
                   </li>
                 );
               })}

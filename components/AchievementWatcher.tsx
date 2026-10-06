@@ -23,7 +23,7 @@ export function AchievementWatcher() {
       if (known.current.has(id)) continue;
       known.current.add(id);
       const def = ACHIEVEMENTS.find((a) => a.id === id);
-      if (def) toast(`${def.emoji} 새 성취 · ${def.label}`, "celebrate");
+      if (def) toast(`새 성취 달성 · ${def.label}`, "celebrate");
     }
   }, [ready, state.unlockedAchievements, toast]);
 

@@ -6,7 +6,7 @@ import clsx from "clsx";
 import {
   Bell,
   BookOpen,
-  ChevronRight,
+  Check,
   CreditCard,
   Flame,
   GraduationCap,
@@ -21,15 +21,12 @@ import { BRAND } from "@/lib/brand";
 import { useToast } from "@/components/Toast";
 import { Header } from "@/components/Header";
 import { ListSkeleton } from "@/components/Skeletons";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export default function MyPage() {
   const store = useStore();
   const { toast } = useToast();
-  const [notif, setNotif] = useState({
-    daily: true,
-    assignment: true,
-    marketing: false,
-  });
+  const [resetOpen, setResetOpen] = useState(false);
 
   if (!store.ready) {
     return (
@@ -40,7 +37,7 @@ export default function MyPage() {
     );
   }
 
-  const { state, weeklyTotal, streak } = store;
+  const { state, weeklyTotal, streak, notifications } = store;
 
   // 결제내역 데모: 수강 중 유료 강의 기준
   const payments = state.enrollments
@@ -49,6 +46,15 @@ export default function MyPage() {
       return course ? { course, date: e.enrolledAt } : null;
     })
     .filter((p): p is NonNullable<typeof p> => Boolean(p));
+
+  const toggleInterest = (id: (typeof CATEGORIES)[number]["id"], name: string) => {
+    const on = state.interests.includes(id);
+    if (!store.toggleInterest(id)) {
+      toast("관심분야는 1개 이상 골라주세요", "info");
+      return;
+    }
+    toast(on ? `관심분야에서 ${name} 제외 · 홈 추천에 반영했어요` : `관심분야에 ${name} 추가 · 홈 추천에 반영했어요`, "success");
+  };
 
   const resetDemo = () => {
     try {
@@ -120,18 +126,17 @@ export default function MyPage() {
         {/* 바로가기 */}
         <section className="card p-5">
           <h3 className="mb-3 text-sm font-bold text-forest-950">바로가기</h3>
-          <ul className="grid grid-cols-2 gap-2.5">
+          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
             {quickLinks.map(({ href, label, icon: Icon }) => (
               <li key={label}>
                 <Link
                   href={href}
-                  className="btn-press flex min-h-[56px] items-center gap-3 rounded-xl border border-cream-200 px-4 transition-colors hover:border-forest-300 hover:bg-cream-50"
+                  className="btn-press flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-xl border border-cream-200 px-2 text-center transition-colors hover:border-forest-300 hover:bg-cream-50"
                 >
-                  <Icon size={18} className="text-forest-600" />
-                  <span className="flex-1 text-sm font-semibold text-forest-950">
-                    {label}
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-forest-50 text-forest-600">
+                    <Icon size={19} />
                   </span>
-                  <ChevronRight size={15} className="text-forest-950/30" />
+                  <span className="text-sm font-semibold text-forest-950">{label}</span>
                 </Link>
               </li>
             ))}
@@ -142,23 +147,26 @@ export default function MyPage() {
         <section className="card p-5">
           <h3 className="mb-1 text-sm font-bold text-forest-950">관심분야</h3>
           <p className="mb-3 text-xs text-forest-950/50">
-            관심분야를 기반으로 홈에서 강의를 추천해드려요.
+            고른 분야로 홈의 &lsquo;다음에 들어볼 강의&rsquo;를 추천해요.
           </p>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((c) => {
               const active = state.interests.includes(c.id);
               return (
-                <span
+                <button
                   key={c.id}
+                  onClick={() => toggleInterest(c.id, c.name)}
+                  aria-pressed={active}
                   className={clsx(
-                    "chip min-h-[36px] px-3.5",
+                    "btn-press inline-flex min-h-[40px] items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors",
                     active
-                      ? "bg-forest-900 text-cream-50"
-                      : "bg-cream-100 text-forest-950/45"
+                      ? "border-forest-900 bg-forest-900 text-cream-50"
+                      : "border-cream-300 bg-white text-forest-950/60 hover:border-forest-300"
                   )}
                 >
+                  {active && <Check size={14} />}
                   {c.name}
-                </span>
+                </button>
               );
             })}
           </div>
@@ -172,7 +180,7 @@ export default function MyPage() {
             <span className="chip bg-cream-100 text-forest-950/45">Demo</span>
           </h3>
           <ul className="divide-y divide-cream-100">
-            {payments.slice(0, 5).map(({ course, date }) => (
+            {payments.map(({ course, date }) => (
               <li
                 key={course.id}
                 className="flex items-center justify-between gap-3 py-3"
@@ -217,26 +225,28 @@ export default function MyPage() {
                 </div>
                 <button
                   role="switch"
-                  aria-checked={notif[key]}
+                  aria-checked={notifications[key]}
                   aria-label={label}
                   onClick={() => {
-                    setNotif((n) => ({ ...n, [key]: !n[key] }));
-                    toast(
-                      notif[key] ? "알림을 껐어요" : "알림을 켰어요",
-                      "info"
-                    );
+                    const on = !notifications[key];
+                    store.setNotification(key, on);
+                    toast(on ? `${label} 켜짐` : `${label} 꺼짐`, "info");
                   }}
-                  className={clsx(
-                    "btn-press relative h-7 w-12 shrink-0 rounded-full transition-colors",
-                    notif[key] ? "bg-forest-700" : "bg-cream-300"
-                  )}
+                  className="btn-press flex h-11 w-14 shrink-0 items-center justify-center"
                 >
                   <span
                     className={clsx(
-                      "absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all",
-                      notif[key] ? "left-6" : "left-1"
+                      "relative h-7 w-12 rounded-full transition-colors",
+                      notifications[key] ? "bg-forest-700" : "bg-cream-300"
                     )}
-                  />
+                  >
+                    <span
+                      className={clsx(
+                        "absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all",
+                        notifications[key] ? "left-6" : "left-1"
+                      )}
+                    />
+                  </span>
                 </button>
               </li>
             ))}
@@ -246,13 +256,23 @@ export default function MyPage() {
 
       <div className="mt-8 flex justify-center">
         <button
-          onClick={resetDemo}
+          onClick={() => setResetOpen(true)}
           className="btn-press inline-flex items-center gap-1.5 rounded-full border border-cream-300 px-5 py-2.5 text-xs font-semibold text-forest-950/45 transition-colors hover:text-forest-950/70"
         >
           <RotateCcw size={13} />
           데모 데이터 초기화
         </button>
       </div>
+
+      <ConfirmDialog
+        open={resetOpen}
+        title="데모 데이터를 처음 상태로 되돌릴까요?"
+        description="지금까지의 수강 진도, 퀴즈 결과, 노트, 과제 제출 기록이 처음 샘플 상태로 바뀌어요."
+        confirmLabel="초기화"
+        danger
+        onConfirm={resetDemo}
+        onCancel={() => setResetOpen(false)}
+      />
     </div>
   );
 }

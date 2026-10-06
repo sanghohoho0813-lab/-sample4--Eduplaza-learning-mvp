@@ -69,22 +69,25 @@ export function ActivityList({
         const Icon = META[a.type].icon;
         const isAchievement = a.type === "achievement";
         return (
-          <li key={a.id} className="flex items-center gap-3 py-3">
+          <li key={a.id} className="flex items-start gap-3 py-3">
             <span
               className={clsx(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
                 isAchievement ? "bg-gold-300/25 text-gold-600" : "bg-forest-50 text-forest-600"
               )}
             >
               <Icon size={16} />
             </span>
+            {/* 좁은 사이드 칸에서도 제목이 잘리지 않게, 시간은 보조 줄로 내린다 */}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-forest-950/85">{a.label}</p>
-              <p className="text-xs text-forest-950/45">{detail(a)}</p>
+              <p className="line-clamp-2 text-sm font-semibold leading-snug text-forest-950/85">
+                {a.label}
+              </p>
+              <p className="mt-0.5 text-xs text-forest-950/45">
+                {detail(a)}
+                {showTime && <> · {relativeWhen(a.at)}</>}
+              </p>
             </div>
-            {showTime && (
-              <span className="shrink-0 text-xs text-forest-950/40">{relativeWhen(a.at)}</span>
-            )}
           </li>
         );
       })}

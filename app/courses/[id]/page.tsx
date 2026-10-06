@@ -66,11 +66,22 @@ export default function CourseDetailPage() {
     }
     setEnrolling(true);
     store.enroll(course.id);
-    toast("수강 신청이 완료됐어요! 바로 학습을 시작해볼까요? 🎉", "celebrate");
+    toast("수강 신청 완료! 첫 레슨으로 이동할게요", "celebrate");
     const first = courseLessons(course)[0];
     setTimeout(() => {
       router.push(`/learn/${course.id}?lesson=${first.id}`);
     }, 900);
+  };
+
+  const toggleFav = () => {
+    store.toggleFavorite(course.id);
+    toast(fav ? "찜 목록에서 뺐어요" : "찜 목록에 담았어요", fav ? "info" : "success");
+  };
+
+  // 링크로 바로 들어온 경우(이전 화면 없음)에는 강의 목록으로 보낸다
+  const goBack = () => {
+    if (window.history.length > 1) router.back();
+    else router.push("/courses");
   };
 
   const toggleSection = (id: string) =>
@@ -80,8 +91,8 @@ export default function CourseDetailPage() {
     <>
       <div className="animate-fade-up">
       <button
-        onClick={() => router.back()}
-        className="btn-press mb-4 inline-flex items-center gap-1 text-sm font-semibold text-forest-950/55 hover:text-forest-950"
+        onClick={goBack}
+        className="btn-press mb-3 inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-forest-950/55 hover:text-forest-950"
       >
         <ChevronLeft size={16} />
         돌아가기
@@ -92,6 +103,14 @@ export default function CourseDetailPage() {
         <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-forest-600/25 blur-3xl" />
         <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr),360px] lg:items-center">
           <div>
+            {/* 모바일·태블릿에서는 썸네일을 맨 위에 — 어떤 강의인지 바로 알 수 있게 */}
+            <CourseThumbnail
+              tone={course.thumbnailTone}
+              title={course.title}
+              courseId={course.id}
+              priority
+              className="mb-5 ring-1 ring-cream-50/10 lg:hidden"
+            />
             <div className="flex flex-wrap items-center gap-2">
               <span className="chip bg-forest-800 text-cream-100">
                 {getCategory(course.categoryId)?.name}
@@ -139,7 +158,8 @@ export default function CourseDetailPage() {
               </div>
             )}
 
-            <div className="mt-6 flex flex-wrap items-center gap-3">
+            {/* 모바일에서는 같은 버튼이 하단 고정 바에 있으므로 PC에서만 */}
+            <div className="mt-6 hidden flex-wrap items-center gap-3 lg:flex">
               <button
                 onClick={handleEnroll}
                 disabled={enrolling}
@@ -155,10 +175,8 @@ export default function CourseDetailPage() {
                     : "수강 시작하기"}
               </button>
               <button
-                onClick={() => {
-                  store.toggleFavorite(course.id);
-                  toast(fav ? "찜 목록에서 제거했어요" : "찜 목록에 저장했어요 ♥");
-                }}
+                onClick={toggleFav}
+                aria-pressed={fav}
                 className={clsx(
                   "btn-press inline-flex min-h-[48px] items-center gap-2 rounded-full border px-5 py-3 text-sm font-semibold transition-colors",
                   fav
@@ -388,6 +406,14 @@ export default function CourseDetailPage() {
         style={{ bottom: "calc(64px + env(safe-area-inset-bottom))" }}
       >
         <div className="mx-auto flex max-w-2xl items-center gap-3">
+          <button
+            onClick={toggleFav}
+            aria-label={fav ? "찜 해제" : "찜하기"}
+            aria-pressed={fav}
+            className="btn-press flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-cream-300 bg-white text-forest-800"
+          >
+            <Heart size={21} className={clsx(fav && "fill-gold-400 text-gold-400 animate-check-pop")} />
+          </button>
           <div className="min-w-0 flex-1">
             {enrolled ? (
               <>
