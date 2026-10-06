@@ -59,3 +59,29 @@ export function PlayerSkeleton() {
     </div>
   );
 }
+
+/** 강의 목록 화면 로딩 — 모바일은 목록형 행, 태블릿 이상은 카드 그리드 모양 그대로 */
+export function CourseListSkeleton({ title }: { title: string }) {
+  return (
+    <div aria-busy="true" aria-label={`${title} 불러오는 중`}>
+      <div className="skeleton mb-6 h-9 w-40" />
+      <ul className="space-y-3 sm:hidden">
+        {[0, 1, 2, 3].map((i) => (
+          <li key={i} className="card flex items-center gap-3 p-3">
+            <div className="skeleton aspect-video w-28 shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="skeleton h-3 w-20" />
+              <div className="skeleton h-4 w-full" />
+              <div className="skeleton h-3 w-2/3" />
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="hidden grid-cols-2 gap-4 sm:grid xl:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <CourseCardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}

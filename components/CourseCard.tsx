@@ -212,9 +212,12 @@ export function CourseCard({
 export function CourseRow({
   course,
   showProgress = false,
+  showFav = false,
 }: {
   course: Course;
   showProgress?: boolean;
+  /** 찜 목록처럼 바로 해제할 수 있어야 하는 곳에서만 */
+  showFav?: boolean;
 }) {
   const v = useCourseView(course);
   const progressMode = showProgress && v.enrolled;
@@ -295,6 +298,8 @@ export function CourseRow({
             <CheckCircle2 size={22} />
           </span>
         )
+      ) : showFav ? (
+        <FavButton fav={v.fav} onClick={v.onFav} />
       ) : null}
     </Link>
   );

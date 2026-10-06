@@ -197,7 +197,7 @@ export default function ReportPage() {
                       >
                         <RotateCcw size={16} className="shrink-0 text-forest-600" />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-forest-950">
+                          <span className="line-clamp-2 block text-sm font-semibold leading-snug text-forest-950">
                             {g.topics.join(", ")}
                           </span>
                           <span className="block truncate text-xs text-forest-950/50">

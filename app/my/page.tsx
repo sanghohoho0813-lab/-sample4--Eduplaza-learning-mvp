@@ -7,6 +7,7 @@ import {
   Bell,
   BookOpen,
   Check,
+  ChevronDown,
   CreditCard,
   Flame,
   GraduationCap,
@@ -27,6 +28,7 @@ export default function MyPage() {
   const store = useStore();
   const { toast } = useToast();
   const [resetOpen, setResetOpen] = useState(false);
+  const [showAllPay, setShowAllPay] = useState(false);
 
   if (!store.ready) {
     return (
@@ -45,7 +47,8 @@ export default function MyPage() {
       const course = COURSES.find((c) => c.id === e.courseId);
       return course ? { course, date: e.enrolledAt } : null;
     })
-    .filter((p): p is NonNullable<typeof p> => Boolean(p));
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .sort((a, b) => b.date.localeCompare(a.date));
 
   const toggleInterest = (id: (typeof CATEGORIES)[number]["id"], name: string) => {
     const on = state.interests.includes(id);
@@ -126,7 +129,7 @@ export default function MyPage() {
         {/* 바로가기 */}
         <section className="card p-5">
           <h3 className="mb-3 text-sm font-bold text-forest-950">바로가기</h3>
-          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-2">
             {quickLinks.map(({ href, label, icon: Icon }) => (
               <li key={label}>
                 <Link
@@ -180,7 +183,7 @@ export default function MyPage() {
             <span className="chip bg-cream-100 text-forest-950/45">Demo</span>
           </h3>
           <ul className="divide-y divide-cream-100">
-            {payments.map(({ course, date }) => (
+            {(showAllPay ? payments : payments.slice(0, 3)).map(({ course, date }) => (
               <li
                 key={course.id}
                 className="flex items-center justify-between gap-3 py-3"
@@ -199,6 +202,16 @@ export default function MyPage() {
               </li>
             ))}
           </ul>
+          {payments.length > 3 && (
+            <button
+              onClick={() => setShowAllPay((v) => !v)}
+              aria-expanded={showAllPay}
+              className="btn-press mt-1 inline-flex min-h-[44px] w-full items-center justify-center gap-1 rounded-xl text-sm font-semibold text-forest-600 hover:bg-cream-50"
+            >
+              {showAllPay ? "접기" : `${payments.length - 3}건 더 보기`}
+              <ChevronDown size={16} className={clsx("transition-transform", showAllPay && "rotate-180")} />
+            </button>
+          )}
         </section>
 
         {/* 알림 설정 */}

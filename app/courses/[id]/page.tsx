@@ -57,20 +57,15 @@ export default function CourseDetailPage() {
 
   const handleEnroll = () => {
     if (enrolled) {
-      router.push(
-        next
-          ? `/learn/${course.id}?lesson=${next.id}`
-          : `/learn/${course.id}`
-      );
+      // 다 들은 강의는 처음 레슨부터 다시
+      router.push(`/learn/${course.id}?lesson=${(next ?? courseLessons(course)[0]).id}`);
       return;
     }
+    // 기다리게 하지 않고 바로 첫 레슨으로 — 신청 완료는 토스트로 알린다
     setEnrolling(true);
     store.enroll(course.id);
-    toast("수강 신청 완료! 첫 레슨으로 이동할게요", "celebrate");
-    const first = courseLessons(course)[0];
-    setTimeout(() => {
-      router.push(`/learn/${course.id}?lesson=${first.id}`);
-    }, 900);
+    toast("수강 신청 완료! 첫 레슨부터 시작해요", "celebrate");
+    router.push(`/learn/${course.id}?lesson=${courseLessons(course)[0].id}`);
   };
 
   const toggleFav = () => {
@@ -169,9 +164,11 @@ export default function CourseDetailPage() {
                 {enrolling
                   ? "수강 등록 중..."
                   : enrolled
-                    ? pct > 0
-                      ? "강의 이어보기"
-                      : "학습 시작하기"
+                    ? pct >= 100
+                      ? "처음부터 다시 보기"
+                      : pct > 0
+                        ? "강의 이어보기"
+                        : "학습 시작하기"
                     : "수강 시작하기"}
               </button>
               <button
@@ -268,11 +265,15 @@ export default function CourseDetailPage() {
                                   size={17}
                                   className="shrink-0 text-forest-500"
                                 />
-                              ) : (
+                              ) : enrolled ? (
                                 <Circle
                                   size={17}
                                   className="shrink-0 text-cream-400"
                                 />
+                              ) : (
+                                <span className="flex h-[17px] w-[17px] shrink-0 items-center justify-center text-xs font-semibold text-forest-950/35">
+                                  {lesson.order}
+                                </span>
                               )}
                               <span className="flex-1 text-sm text-forest-950/80">
                                 {lesson.title}
@@ -443,9 +444,11 @@ export default function CourseDetailPage() {
             {enrolling
               ? "등록 중..."
               : enrolled
-                ? pct > 0
-                  ? "이어보기"
-                  : "학습 시작"
+                ? pct >= 100
+                  ? "다시 보기"
+                  : pct > 0
+                    ? "이어보기"
+                    : "학습 시작"
                 : "수강 시작하기"}
           </button>
         </div>

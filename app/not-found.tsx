@@ -10,12 +10,20 @@ export default function NotFound() {
       <p className="mt-2 text-sm text-forest-950/55">
         주소가 바뀌었거나 삭제된 페이지예요.
       </p>
-      <Link
-        href="/"
-        className="btn-press mt-6 rounded-full bg-forest-900 px-6 py-3 text-sm font-bold text-cream-50"
-      >
-        홈으로 돌아가기
-      </Link>
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+        <Link
+          href="/"
+          className="btn-press inline-flex min-h-[48px] items-center rounded-full bg-forest-900 px-6 text-sm font-bold text-cream-50"
+        >
+          홈으로 가기
+        </Link>
+        <Link
+          href="/courses"
+          className="btn-press inline-flex min-h-[48px] items-center rounded-full border border-cream-300 bg-white px-6 text-sm font-semibold text-forest-950/75"
+        >
+          강의 찾기
+        </Link>
+      </div>
     </div>
   );
 }

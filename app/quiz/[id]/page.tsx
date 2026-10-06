@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { notFound, useParams, useSearchParams } from "next/navigation";
+import { notFound, useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import clsx from "clsx";
 import {
@@ -19,7 +19,7 @@ import {
 import { QUIZZES, getCourse } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import type { Quiz, QuizQuestion, QuizResult } from "@/lib/types";
-import { useToast } from "@/components/Toast";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ListSkeleton } from "@/components/Skeletons";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
@@ -55,7 +55,8 @@ function QuizPage() {
 
 function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: () => void }) {
   const store = useStore();
-  const { toast } = useToast();
+  const router = useRouter();
+  const [leaveOpen, setLeaveOpen] = useState(false);
   const course = getCourse(quiz.courseId);
 
   // 풀 문항은 시작 시점에 고정한다(복습 도중 오답 목록이 바뀌어도 흔들리지 않게).
@@ -79,6 +80,7 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
   }, [store.ready, store.weakQuestions, questions, mode, quiz]);
 
   const question = questions?.[step];
+  const savedRef = useRef(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const actionRef = useRef<HTMLDivElement>(null);
 
@@ -109,20 +111,21 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
       setChecked(false);
       return;
     }
+    if (savedRef.current) return; // 빠른 두 번 클릭·Enter 연타로 결과가 두 번 저장되지 않게
+    savedRef.current = true;
     const saved = store.saveQuizResult(
       quiz.id,
       mode,
       questions.map((q) => q.id),
       picks
     );
-    setResult(saved);
-    if (mode === "full" && saved.score === 100) toast("퍼펙트 스코어! 정말 대단해요", "celebrate");
-    else toast("결과를 저장했어요. 리포트에 바로 반영돼요.", "success");
-  }, [questions, step, store, quiz.id, mode, picks, toast]);
+    window.scrollTo({ top: 0 }); // 마지막 문제 위치에 머물지 않고 점수부터 보이게
+    setResult(saved); // 결과 화면이 곧 피드백 — 토스트는 성취 해금 때만(AchievementWatcher)
+  }, [questions, step, store, quiz.id, mode, picks]);
 
   // 키보드: 1~4 보기 선택, Enter 정답 확인 / 다음 문제
   useEffect(() => {
-    if (result || !question) return;
+    if (result || !question || leaveOpen) return; // 확인창이 떠 있으면 키보드는 창이 쓴다
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
@@ -138,7 +141,7 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [result, question, checked, checkAnswer, nextQuestion]);
+  }, [result, question, checked, checkAnswer, nextQuestion, leaveOpen]);
 
   if (!store.ready || questions === null) return <ListSkeleton rows={4} />;
 
@@ -186,7 +189,23 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
 
   return (
     <div className="mx-auto max-w-2xl animate-fade-up">
-      <BackLink />
+      {/* 푼 문제가 있으면 나가기 전에 한 번 묻는다(중간 풀이는 저장되지 않음) */}
+      <BackLink
+        onClick={(e) => {
+          if (picks.length === 0) return;
+          e.preventDefault();
+          setLeaveOpen(true);
+        }}
+      />
+      <ConfirmDialog
+        open={leaveOpen}
+        title="퀴즈를 그만둘까요?"
+        description={`지금까지 푼 ${picks.length}문제는 저장되지 않아요.`}
+        confirmLabel="그만두기"
+        cancelLabel="계속 풀기"
+        onConfirm={() => router.push("/quiz")}
+        onCancel={() => setLeaveOpen(false)}
+      />
 
       <div className="mb-5">
         <p className="text-xs font-medium text-forest-950/50">
@@ -348,10 +367,11 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
   );
 }
 
-function BackLink() {
+function BackLink({ onClick }: { onClick?: (e: React.MouseEvent) => void }) {
   return (
     <Link
       href="/quiz"
+      onClick={onClick}
       className="btn-press mb-4 inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-forest-950/55 hover:text-forest-950"
     >
       <ChevronLeft size={16} />
@@ -394,7 +414,9 @@ function QuizResultView({
         : { label: "다른 퀴즈 풀기", icon: ArrowRight, href: "/quiz" };
   const PrimaryIcon = primary.icon;
   const primaryClass =
-    "btn-press inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-forest-900 text-base font-bold text-cream-50 transition-colors hover:bg-forest-800";
+    "btn-press inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-cream-100 text-base font-bold text-forest-950 transition-colors hover:bg-cream-50";
+  const secondaryClass =
+    "inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-cream-200/70 hover:text-cream-50";
 
   const headline =
     mode === "review"
@@ -407,11 +429,22 @@ function QuizResultView({
           ? "훌륭해요! 조금만 더 하면 만점이에요"
           : "괜찮아요, 틀린 문제부터 다시 짚어봐요";
 
+  // 반영 내용은 한 줄로만 — 결과 화면의 주인공은 점수와 다음 행동
+  const reflected = [
+    wrongNow.length > 0
+      ? `틀린 주제 ${new Set(wrongNow.map((q) => q.topic)).size}개를 취약 영역에 반영`
+      : "퀴즈 기록에 반영",
+    quizGoalDone ? "오늘의 목표 ‘퀴즈 1개’ 완료" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <div className="mx-auto max-w-2xl animate-scale-in">
       <BackLink />
       <div className="card overflow-hidden">
-        <div className="bg-forest-950 px-6 py-9 text-center text-cream-50">
+        {/* 점수 → 다음 행동을 한 화면 안에. 문항별 결과는 그 아래 */}
+        <div className="bg-forest-950 px-6 pb-7 pt-9 text-center text-cream-50 md:px-10">
           <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-forest-800">
             <Trophy size={26} className={result.score === 100 ? "text-gold-300" : "text-cream-200"} />
           </span>
@@ -423,21 +456,58 @@ function QuizResultView({
             {mode === "review" ? `${result.correct}/${result.total}` : result.score}
             {mode === "full" && <span className="text-2xl text-cream-200/50">점</span>}
           </p>
-          <p className="mt-3 text-sm text-cream-200/80">{headline}</p>
+          <p className="mt-3 text-base font-semibold text-cream-50">{headline}</p>
+          <p className="mt-1 text-sm text-cream-200/60">{reflected}</p>
+
+          <div className="mx-auto mt-6 max-w-sm">
+            {primary.href ? (
+              <Link href={primary.href} className={primaryClass}>
+                <PrimaryIcon size={18} />
+                {primary.label}
+              </Link>
+            ) : (
+              <button onClick={primary.onClick} className={primaryClass}>
+                <PrimaryIcon size={18} />
+                {primary.label}
+              </button>
+            )}
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-x-6">
+              {mode === "review" ? (
+                <Link href={`/quiz/${quiz.id}`} className={secondaryClass}>
+                  <RotateCcw size={15} />
+                  전체 문제 다시 풀기
+                </Link>
+              ) : (
+                <button onClick={onRetry} className={secondaryClass}>
+                  <RotateCcw size={15} />
+                  처음부터 다시 풀기
+                </button>
+              )}
+              <Link href="/report" className={secondaryClass}>
+                <BarChart3 size={15} />
+                리포트 보기
+              </Link>
+            </div>
+          </div>
         </div>
 
         <div className="p-5 md:p-6">
           {/* 문항별 결과 — 저장된 답안이 곧 취약 주제가 된다 */}
-          <h2 className="text-base font-bold text-forest-950">문항별 결과</h2>
+          <h2 className="text-base font-bold text-forest-950">
+            문항별 결과{" "}
+            <span className="text-sm font-medium text-forest-950/45">
+              {result.correct}/{result.total} 정답
+            </span>
+          </h2>
           <ul className="mt-2 divide-y divide-cream-100">
             {questions.map((q, i) => {
               const ok = picks[i] === q.answerIndex;
               return (
                 <li key={q.id} className="flex items-start gap-3 py-3">
                   {ok ? (
-                    <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-success" />
+                    <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-success" aria-label="정답" />
                   ) : (
-                    <XCircle size={18} className="mt-0.5 shrink-0 text-danger" />
+                    <XCircle size={18} className="mt-0.5 shrink-0 text-danger" aria-label="오답" />
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold text-forest-950/50">{q.topic}</p>
@@ -452,53 +522,6 @@ function QuizResultView({
               );
             })}
           </ul>
-
-          <div className="mt-4 rounded-xl bg-cream-100 px-4 py-3 text-sm text-forest-950/70">
-            {wrongNow.length > 0
-              ? `틀린 주제(${Array.from(new Set(wrongNow.map((q) => q.topic))).join(", ")})를 리포트의 취약 영역에 반영했어요.`
-              : "리포트의 퀴즈 기록에 반영했어요."}
-            {quizGoalDone && " 오늘의 목표 ‘퀴즈 1개 풀기’도 완료!"}
-          </div>
-
-          <div className="mt-5 space-y-3">
-            {primary.href ? (
-              <Link href={primary.href} className={primaryClass}>
-                <PrimaryIcon size={18} />
-                {primary.label}
-              </Link>
-            ) : (
-              <button onClick={primary.onClick} className={primaryClass}>
-                <PrimaryIcon size={18} />
-                {primary.label}
-              </button>
-            )}
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-              {mode === "review" ? (
-                <Link
-                  href={`/quiz/${quiz.id}`}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-forest-950/60 hover:text-forest-950"
-                >
-                  <RotateCcw size={15} />
-                  전체 문제 다시 풀기
-                </Link>
-              ) : (
-                <button
-                  onClick={onRetry}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-forest-950/60 hover:text-forest-950"
-                >
-                  <RotateCcw size={15} />
-                  처음부터 다시 풀기
-                </button>
-              )}
-              <Link
-                href="/report"
-                className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-forest-950/60 hover:text-forest-950"
-              >
-                <BarChart3 size={15} />
-                리포트에서 확인
-              </Link>
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import { ChevronLeft, ChevronRight, ClipboardList, Flame } from "lucide-react";
@@ -27,6 +27,7 @@ export default function CalendarPage() {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [selected, setSelected] = useState(todayKey);
+  const dayRef = useRef<HTMLElement>(null);
 
   // 캘린더 표시는 저장된 숫자가 아니라 실제 활동 로그와 과제 마감일에서 만든다.
   const marks = useMemo(() => {
@@ -58,6 +59,26 @@ export default function CalendarPage() {
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
+  // 모바일에서는 기록 패널이 달력 아래에 있으므로, 날짜를 누르면 패널이 보이도록 살짝 내려준다
+  const selectDay = (key: string) => {
+    setSelected(key);
+    requestAnimationFrame(() => {
+      const el = dayRef.current;
+      if (!el || window.innerWidth >= 1024) return;
+      const r = el.getBoundingClientRect();
+      if (r.top > window.innerHeight - 160) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+  const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
+  const goToday = () => {
+    setYear(today.getFullYear());
+    setMonth(today.getMonth());
+    setSelected(todayKey);
+  };
+  const current = store.currentCourse();
+  const nextL = current ? store.nextLesson(current.id) : null;
+  const studyHref = current && nextL ? `/learn/${current.id}?lesson=${nextL.id}` : "/courses";
+
   const move = (delta: number) => {
     const d = new Date(year, month + delta, 1);
     setYear(d.getFullYear());
@@ -74,7 +95,7 @@ export default function CalendarPage() {
 
   return (
     <div className="animate-fade-up">
-      <Header title="학습 활동" subtitle="날짜를 눌러 그날의 학습 기록을 확인하세요." />
+      <Header title="학습 활동" />
       <ActivityTabs
         active="calendar"
         counts={{ assignment: store.upcomingAssignments.length || undefined }}
@@ -86,7 +107,15 @@ export default function CalendarPage() {
             <h2 id="month-heading" className="font-display text-lg font-semibold text-forest-950">
               {year}년 {month + 1}월
             </h2>
-            <div className="flex gap-1.5">
+            <div className="flex items-center gap-1.5">
+              {!isCurrentMonth && (
+                <button
+                  onClick={goToday}
+                  className="btn-press min-h-[44px] rounded-full px-3.5 text-sm font-semibold text-forest-600 hover:bg-cream-100"
+                >
+                  오늘
+                </button>
+              )}
               <button
                 onClick={() => move(-1)}
                 className="btn-press flex h-11 w-11 items-center justify-center rounded-full border border-cream-300 text-forest-800"
@@ -125,7 +154,7 @@ export default function CalendarPage() {
               return (
                 <button
                   key={key}
-                  onClick={() => setSelected(key)}
+                  onClick={() => selectDay(key)}
                   aria-pressed={isSelected}
                   aria-label={`${month + 1}월 ${day}일${m?.any ? ", 학습 기록 있음" : ""}${m?.due ? ", 과제 마감" : ""}`}
                   className={clsx(
@@ -165,7 +194,7 @@ export default function CalendarPage() {
         </section>
 
         <aside className="space-y-6">
-          <section className="card p-5" aria-labelledby="day-heading">
+          <section ref={dayRef} className="card scroll-mt-4 p-5" aria-labelledby="day-heading" aria-live="polite">
             <div className="flex items-baseline justify-between gap-3">
               <h2 id="day-heading" className="text-base font-bold text-forest-950">
                 {selectedLabel}의 학습
@@ -195,10 +224,10 @@ export default function CalendarPage() {
             />
             {selected === todayKey && dayActivity.length === 0 && (
               <Link
-                href="/"
+                href={studyHref}
                 className="btn-press mt-2 inline-flex min-h-[48px] items-center rounded-full bg-forest-900 px-5 text-sm font-bold text-cream-50"
               >
-                오늘 학습하러 가기
+                {current && nextL ? "이어서 학습하기" : "강의 찾아보기"}
               </Link>
             )}
           </section>

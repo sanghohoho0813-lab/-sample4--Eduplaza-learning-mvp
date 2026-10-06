@@ -10,6 +10,7 @@ import type { CategoryId, CourseLevel } from "@/lib/types";
 import { Header } from "@/components/Header";
 import { CourseCard, CourseRow } from "@/components/CourseCard";
 import { EmptyState } from "@/components/EmptyState";
+import { CourseListSkeleton } from "@/components/Skeletons";
 
 type SortKey = "recommend" | "popular" | "newest" | "rating";
 type PriceKey = "all" | "under60" | "60to90" | "over90";
@@ -565,7 +566,7 @@ function FilterChip({
 
 export default function CoursesPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<CourseListSkeleton title="강의 찾기" />}>
       <CoursesContent />
     </Suspense>
   );

@@ -85,8 +85,13 @@ export default function NotesPage() {
           <button
             onClick={() => {
               setFormOpen(true);
-              if (!courseId && enrolledCourses.length > 0)
-                setCourseId(enrolledCourses[0].id);
+              // 기본값은 지금 듣고 있는 강의와 그 다음 레슨 — 대부분 방금 들은 내용을 적으니까
+              if (!courseId && enrolledCourses.length > 0) {
+                const cur = store.currentCourse() ?? enrolledCourses[0];
+                setCourseId(cur.id);
+                const last = store.state.enrollments.find((e) => e.courseId === cur.id)?.lastLessonId;
+                if (last) setLessonId(last);
+              }
             }}
             className="btn-press inline-flex min-h-[48px] items-center gap-2 rounded-full bg-forest-900 px-6 text-sm font-bold text-cream-50 transition-colors hover:bg-forest-800"
           >

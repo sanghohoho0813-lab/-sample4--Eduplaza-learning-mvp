@@ -11,7 +11,9 @@
 html,
 body {
   @apply bg-cream-100 text-forest-950 antialiased;
-  overflow-x: hidden;
+  /* hidden은 body를 스크롤 컨테이너로 만들어 position: sticky(영상·커리큘럼·필터)가
+     동작하지 않는다. clip은 가로 넘침만 잘라내고 sticky는 살린다. */
+  overflow-x: clip;
   word-break: keep-all;
 }
 

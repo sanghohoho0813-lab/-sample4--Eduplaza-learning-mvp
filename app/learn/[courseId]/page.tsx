@@ -68,6 +68,15 @@ function PlayerContent() {
   const [pct, setPct] = useState(0);
   const [tab, setTab] = useState<Tab>("about");
   const [noteDraft, setNoteDraft] = useState("");
+  const noteRef = useRef<HTMLTextAreaElement>(null);
+  const [focusNote, setFocusNote] = useState(false);
+  // '노트로 남기기'를 누르면 노트 탭을 열고 입력칸으로 바로 데려간다
+  useEffect(() => {
+    if (!focusNote) return;
+    noteRef.current?.focus({ preventScroll: true });
+    noteRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFocusNote(false);
+  }, [focusNote]);
   const completedFired = useRef(false);
   const lastTracked = useRef<string | null>(null);
   const [justCompleted, setJustCompleted] = useState(false);
@@ -87,6 +96,14 @@ function PlayerContent() {
   }, [lessonId]);
 
   const enrolled = courseId ? store.isEnrolled(courseId) : false;
+
+  // 주소에 레슨이 없으면 지금 고른 레슨을 주소에 고정한다.
+  // (안 그러면 완료 처리 순간 '다음 레슨'이 다시 계산돼 완료 화면 없이 넘어가 버린다)
+  useEffect(() => {
+    if (lessonParam || !courseId || !lessonId || !store.ready) return;
+    router.replace(`/learn/${courseId}?lesson=${lessonId}`, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonParam, courseId, lessonId, store.ready]);
   useEffect(() => {
     if (!courseId || !lessonId || !store.ready || !enrolled) return;
     if (lastTracked.current === lessonId) return;
@@ -111,9 +128,8 @@ function PlayerContent() {
     if (!course || !lesson || completedFired.current || isCompleted) return;
     completedFired.current = true;
     store.completeLesson(course.id, lesson);
-    setJustCompleted(true);
-    toast("레슨 완료! 진도와 주간 학습시간에 반영했어요", "celebrate");
-  }, [course, lesson, isCompleted, store, toast]);
+    setJustCompleted(true); // 결과는 바로 아래 완료 패널이 알려준다(토스트 중복 없음)
+  }, [course, lesson, isCompleted, store]);
 
   // 데모 재생 타이머
   useEffect(() => {
@@ -404,7 +420,10 @@ function PlayerContent() {
               courseId={course.id}
               lessonMinutes={lesson.durationMin}
               quizId={quiz?.id}
-              onWriteNote={() => setTab("notes")}
+              onWriteNote={() => {
+                setTab("notes");
+                setFocusNote(true);
+              }}
             />
           )}
 
@@ -450,6 +469,11 @@ function PlayerContent() {
                 <div className="space-y-4">
                   <div className="card border border-cream-200 p-4 shadow-none">
                     <textarea
+                      ref={noteRef}
+                      aria-label="레슨 노트"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) saveNote();
+                      }}
                       value={noteDraft}
                       onChange={(e) => setNoteDraft(e.target.value)}
                       placeholder="강의를 들으며 중요한 내용을 기록해보세요."

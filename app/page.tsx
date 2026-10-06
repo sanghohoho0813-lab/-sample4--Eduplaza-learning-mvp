@@ -226,7 +226,15 @@ export default function HomePage() {
               <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-forest-600/30 blur-3xl" />
               <div className="relative grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr),220px] md:items-center lg:grid-cols-[minmax(0,1fr),168px] min-[1400px]:grid-cols-[minmax(0,1fr),220px]">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gold-300">이어서 학습</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-gold-300">이어서 학습</p>
+                    <Link
+                      href={`/courses/${current.id}`}
+                      className="-my-2 inline-flex min-h-[40px] shrink-0 items-center gap-1 text-sm font-semibold text-cream-200/70 underline-offset-4 hover:text-cream-50 hover:underline md:hidden"
+                    >
+                      강의 정보 <ArrowRight size={14} />
+                    </Link>
+                  </div>
                   <h2 className="mt-2 font-display text-xl font-semibold leading-snug md:text-2xl lg:text-xl min-[1400px]:text-2xl">
                     {current.title}
                   </h2>
@@ -256,7 +264,7 @@ export default function HomePage() {
                     </Link>
                     <Link
                       href={`/courses/${current.id}`}
-                      className="inline-flex items-center gap-1 text-sm font-semibold text-cream-200/75 underline-offset-4 hover:text-cream-50 hover:underline"
+                      className="hidden items-center gap-1 text-sm font-semibold text-cream-200/75 underline-offset-4 hover:text-cream-50 hover:underline md:inline-flex"
                     >
                       강의 정보 <ArrowRight size={14} />
                     </Link>

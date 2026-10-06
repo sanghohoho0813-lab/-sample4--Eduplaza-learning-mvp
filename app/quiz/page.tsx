@@ -110,29 +110,26 @@ function QuizTab() {
               className="card group flex flex-col p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
             >
               <p className="truncate text-xs font-medium text-forest-950/50">{course?.title}</p>
-              <h3 className="mt-1.5 font-display text-lg font-semibold text-forest-950 transition-colors group-hover:text-forest-600">
+              <h3 className="mt-1.5 flex-1 font-display text-lg font-semibold text-forest-950 transition-colors group-hover:text-forest-600">
                 {quiz.title}
               </h3>
-              <p className="mt-1.5 flex-1 text-sm text-forest-950/55">{quiz.description}</p>
+              {/* 모든 카드가 같은 자리에 '점수 + 행동'을 둔다 */}
               <div className="mt-4 flex items-center justify-between gap-2 border-t border-cream-100 pt-3.5">
                 <span className="text-xs text-forest-950/50">
                   {quiz.questions.length}문항
-                  {wrong > 0 && ` · 틀린 문제 ${wrong}개`}
+                  {best !== null && (
+                    <>
+                      {" · "}
+                      <b className={clsx("font-semibold", best === 100 ? "text-gold-600" : "text-forest-700")}>
+                        최고 {best}점
+                      </b>
+                    </>
+                  )}
+                  {wrong > 0 && ` · 오답 ${wrong}`}
                 </span>
-                {best !== null ? (
-                  <span
-                    className={clsx(
-                      "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
-                      best === 100 ? "bg-gold-300/25 text-gold-600" : "bg-forest-50 text-forest-700"
-                    )}
-                  >
-                    최고 {best}점
-                  </span>
-                ) : (
-                  <span className="inline-flex shrink-0 items-center gap-0.5 text-sm font-semibold text-forest-600">
-                    도전하기 <ChevronRight size={14} />
-                  </span>
-                )}
+                <span className="inline-flex shrink-0 items-center gap-0.5 text-sm font-semibold text-forest-600">
+                  {best === null ? "도전하기" : "다시 풀기"} <ChevronRight size={14} />
+                </span>
               </div>
             </Link>
           );
@@ -141,6 +138,9 @@ function QuizTab() {
     </div>
   );
 }
+
+// 한두 글자짜리 제출을 막는 최소 분량
+const MIN_ANSWER = 20;
 
 function AssignmentTab() {
   const store = useStore();
@@ -171,7 +171,7 @@ function AssignmentTab() {
 
   const submit = (id: string) => {
     const text = (drafts[id] ?? "").trim();
-    if (!text) return;
+    if (text.length < MIN_ANSWER) return;
     store.submitAssignment(id, text);
     setOpenForm(null);
     setJustSubmitted(id);
@@ -187,6 +187,7 @@ function AssignmentTab() {
         const due = store.assignmentDue(assignment.id);
         const dLeft = daysUntil(due);
         const formOpen = openForm === assignment.id;
+        const draftLen = (drafts[assignment.id] ?? "").trim().length;
         // 제출 직후에 보여줄 다음 과제 (방금 낸 것 제외)
         const nextPending = pending.find((p) => p.assignment.id !== assignment.id);
 
@@ -286,10 +287,26 @@ function AssignmentTab() {
                   id={`draft-${assignment.id}`}
                   value={drafts[assignment.id] ?? ""}
                   onChange={(e) => setDrafts((d) => ({ ...d, [assignment.id]: e.target.value }))}
-                  rows={4}
-                  placeholder="과제 내용을 작성해주세요."
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit(assignment.id);
+                  }}
+                  rows={5}
+                  autoFocus
+                  aria-describedby={`count-${assignment.id}`}
+                  placeholder="무엇을 했고, 어떻게 생각했는지 적어주세요."
                   className="w-full resize-none rounded-xl border border-cream-200 bg-cream-50 p-3.5 text-sm outline-none placeholder:text-forest-950/35 focus:border-forest-400 focus:ring-2 focus:ring-forest-200"
                 />
+                <p
+                  id={`count-${assignment.id}`}
+                  className={clsx(
+                    "mt-1.5 text-xs",
+                    draftLen >= MIN_ANSWER ? "text-success" : "text-forest-950/45"
+                  )}
+                >
+                  {draftLen >= MIN_ANSWER
+                    ? `${draftLen}자 · 제출할 수 있어요`
+                    : `${MIN_ANSWER}자 이상 작성해주세요 (${draftLen}/${MIN_ANSWER})`}
+                </p>
                 <div className="mt-2.5 flex justify-end gap-2">
                   <button
                     onClick={() => setOpenForm(null)}
@@ -299,7 +316,7 @@ function AssignmentTab() {
                   </button>
                   <button
                     onClick={() => submit(assignment.id)}
-                    disabled={!(drafts[assignment.id] ?? "").trim()}
+                    disabled={draftLen < MIN_ANSWER}
                     className="btn-press inline-flex min-h-[48px] items-center gap-1.5 rounded-full bg-forest-900 px-5 text-sm font-bold text-cream-50 disabled:opacity-40"
                   >
                     <Send size={14} />

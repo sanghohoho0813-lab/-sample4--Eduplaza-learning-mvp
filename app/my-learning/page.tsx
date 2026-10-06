@@ -12,7 +12,8 @@ import { CourseCard, CourseRow } from "@/components/CourseCard";
 import { CourseThumbnail } from "@/components/Thumbnail";
 import { ProgressBar } from "@/components/ProgressBar";
 import { EmptyState } from "@/components/EmptyState";
-import { CourseCardSkeleton } from "@/components/Skeletons";
+import { relativeWhen } from "@/components/ActivityList";
+import { CourseListSkeleton } from "@/components/Skeletons";
 
 type Tab = "all" | "in_progress" | "completed" | "favorite";
 
@@ -25,7 +26,7 @@ const TABS: { key: Tab; label: string }[] = [
 
 export default function MyLearningPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<CourseListSkeleton title="내 학습" />}>
       <MyLearning />
     </Suspense>
   );
@@ -53,18 +54,7 @@ function MyLearning() {
     [store.state.enrollments]
   );
 
-  if (!store.ready) {
-    return (
-      <div>
-        <Header title="내 학습" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <CourseCardSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (!store.ready) return <CourseListSkeleton title="내 학습" />;
 
   const favoriteCourses = store.state.favorites
     .map((id) => COURSES.find((c) => c.id === id))
@@ -106,12 +96,9 @@ function MyLearning() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs text-cream-200/60">
-              마지막 학습{" "}
-              {continueEnrollment?.lastStudiedAt
-                ? new Date(continueEnrollment.lastStudiedAt).toLocaleDateString(
-                    "ko-KR"
-                  )
-                : "-"}
+              이어서 학습
+              {continueEnrollment?.lastStudiedAt &&
+                ` · 마지막 ${relativeWhen(continueEnrollment.lastStudiedAt)}`}
             </p>
             <h3 className="mt-0.5 line-clamp-2 font-display text-base font-semibold leading-snug sm:truncate md:text-lg">
               {continueCourse.title}
@@ -260,7 +247,7 @@ function MyLearning() {
           <ul className="space-y-3 sm:hidden">
             {filtered.map((course) => (
               <li key={course.id}>
-                <CourseRow course={course} showProgress={tab !== "favorite"} />
+                <CourseRow course={course} showProgress={tab !== "favorite"} showFav={tab === "favorite"} />
               </li>
             ))}
           </ul>
