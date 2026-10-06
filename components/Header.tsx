@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -20,6 +19,7 @@ import { dueLabel, useStore } from "@/lib/store";
 import { groupWeak } from "@/lib/insights";
 import { BRAND } from "@/lib/brand";
 import { COURSES, getCategory, getInstructor } from "@/lib/data";
+import { BrandSymbol } from "./BrandMark";
 
 const MAX_SUGGESTIONS = 5;
 const SEEN_KEY = "eduplaza-notice-seen";
@@ -202,12 +202,12 @@ export function Header({
         aria-label="EduPlaza 홈"
         className="order-1 mr-auto flex min-w-0 items-center gap-2.5 lg:hidden"
       >
-        <img src={BRAND.symbol} alt="" aria-hidden className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
+        <BrandSymbol priority className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
         <span className="min-w-0">
           <span className="block font-display text-lg font-semibold leading-tight tracking-wide text-forest-950">
             {BRAND.product}
           </span>
-          <span className="hidden truncate text-xs leading-tight text-forest-950/50 min-[400px]:block">
+          <span className="hidden truncate text-xs leading-tight text-forest-950/68 min-[400px]:block">
             by {BRAND.company}
           </span>
         </span>
@@ -225,7 +225,7 @@ export function Header({
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-1.5 text-xs text-forest-950/55 md:text-sm">
+          <p className="mt-1.5 text-xs text-forest-950/68 md:text-sm">
             {subtitle}
           </p>
         )}
@@ -237,7 +237,7 @@ export function Header({
           <form onSubmit={submit}>
             <Search
               size={16}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-forest-950/40"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-forest-950/68"
             />
             <input
               value={q}
@@ -264,7 +264,7 @@ export function Header({
                   setOpen(false);
                 }}
                 aria-label="검색어 지우기"
-                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-forest-950/40 transition-colors hover:bg-cream-100 hover:text-forest-950"
+                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-forest-950/68 transition-colors hover:bg-cream-100 hover:text-forest-950"
               >
                 <X size={15} />
               </button>
@@ -277,7 +277,7 @@ export function Header({
               id="search-suggestions"
               className="absolute right-0 top-14 z-50 w-80 overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-card-hover animate-scale-in">
               {suggestions.length === 0 ? (
-                <p className="px-4 py-5 text-sm text-forest-950/50">
+                <p className="px-4 py-5 text-sm text-forest-950/68">
                   일치하는 강의가 없어요. 다른 키워드로 찾아볼까요?
                 </p>
               ) : (
@@ -300,7 +300,7 @@ export function Header({
                           <span className="block truncate text-sm font-semibold text-forest-950">
                             {c.title}
                           </span>
-                          <span className="block truncate text-xs text-forest-950/45">
+                          <span className="block truncate text-xs text-forest-950/68">
                             {getInstructor(c.instructorId)?.name} 강사
                           </span>
                         </span>
@@ -352,7 +352,7 @@ export function Header({
                 챙겨야 할 일
               </p>
               {notices.length === 0 ? (
-                <p className="px-4 py-6 text-center text-sm text-forest-950/50">
+                <p className="px-4 py-6 text-center text-sm text-forest-950/68">
                   지금은 챙길 일이 없어요. 잘하고 있어요!
                 </p>
               ) : (
@@ -380,11 +380,11 @@ export function Header({
                             <span className="block truncate text-sm font-semibold text-forest-950">
                               {n.title}
                             </span>
-                            <span className="block truncate text-xs text-forest-950/50">
+                            <span className="block truncate text-xs text-forest-950/68">
                               {n.detail}
                             </span>
                           </span>
-                          <ChevronRight size={16} className="shrink-0 text-forest-950/30" />
+                          <ChevronRight size={16} className="shrink-0 text-forest-950/68" />
                         </Link>
                       </li>
                     );

@@ -92,10 +92,11 @@ function MyLearning() {
               title={continueCourse.title}
               courseId={continueCourse.id}
               priority
+              sizes="144px"
             />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-cream-200/60">
+            <p className="text-xs text-cream-200/70">
               이어서 학습
               {continueEnrollment?.lastStudiedAt &&
                 ` · 마지막 ${relativeWhen(continueEnrollment.lastStudiedAt)}`}
@@ -108,7 +109,7 @@ function MyLearning() {
             </p>
             <div className="mt-2.5 flex items-center gap-2.5">
               <div className="max-w-[200px] flex-1">
-                <ProgressBar
+                <ProgressBar label="이어서 학습할 강의 진도"
                   value={store.courseProgress(continueCourse.id)}
                   trackClass="bg-forest-800"
                   fillClass="bg-gradient-to-r from-cream-300 to-gold-300"
@@ -155,19 +156,19 @@ function MyLearning() {
                     <span className="block truncate text-sm font-semibold text-forest-950">
                       {u.assignment.title}
                     </span>
-                    <span className="block truncate text-xs text-forest-950/50">
+                    <span className="block truncate text-xs text-forest-950/68">
                       {getCourse(u.assignment.courseId)?.title}
                     </span>
                   </span>
                   <span
                     className={clsx(
                       "shrink-0 text-xs font-semibold",
-                      u.dLeft <= 1 ? "text-amber-600" : "text-forest-950/50"
+                      u.dLeft <= 1 ? "text-amber-600" : "text-forest-950/68"
                     )}
                   >
                     {dueLabel(u.dLeft)}
                   </span>
-                  <ChevronRight size={16} className="shrink-0 text-forest-950/30" />
+                  <ChevronRight size={16} className="shrink-0 text-forest-950/68" />
                 </Link>
               </li>
             ))}
@@ -198,14 +199,14 @@ function MyLearning() {
               onClick={() => selectTab(key)}
               className={clsx(
                 "btn-press min-h-[44px] rounded-full px-4 text-sm font-bold transition-colors sm:px-5",
-                tab === key ? "bg-forest-950 text-cream-50" : "text-forest-950/55"
+                tab === key ? "bg-forest-950 text-cream-50" : "text-forest-950/68"
               )}
             >
               {label}
               <span
                 className={clsx(
                   "ml-1.5 text-xs",
-                  tab === key ? "text-cream-200/60" : "text-forest-950/35"
+                  tab === key ? "text-cream-200/70" : "text-forest-950/68"
                 )}
               >
                 {count}

@@ -55,7 +55,7 @@ function useCourseView(course: Course) {
 
 function Byline({ category, instructor }: { category?: string; instructor?: string }) {
   return (
-    <p className="truncate text-xs text-forest-950/50">
+    <p className="truncate text-xs text-forest-950/68">
       <span className="font-semibold text-forest-700">{category}</span>
       <span aria-hidden> · </span>
       {instructor} 강사
@@ -65,7 +65,7 @@ function Byline({ category, instructor }: { category?: string; instructor?: stri
 
 function Meta({ course }: { course: Course }) {
   return (
-    <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-forest-950/55">
+    <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-forest-950/68">
       <span className="inline-flex items-center gap-1">
         <Star size={13} className="fill-gold-400 text-gold-400" aria-hidden />
         <b className="font-semibold text-forest-950/80">{course.rating.toFixed(1)}</b>
@@ -97,7 +97,7 @@ function FavButton({
         "btn-press flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors",
         overlay
           ? "bg-forest-950/45 backdrop-blur hover:bg-forest-950/70"
-          : "text-forest-950/35 hover:bg-cream-100 hover:text-forest-800"
+          : "text-forest-950/68 hover:bg-cream-100 hover:text-forest-800"
       )}
     >
       <Heart
@@ -146,6 +146,7 @@ export function CourseCard({
           title={course.title}
           courseId={course.id}
           rounded="rounded-none"
+          sizes="(min-width: 1400px) 22vw, (min-width: 640px) 40vw, 78vw"
         />
         <div className="absolute right-2.5 top-2.5">
           <FavButton fav={v.fav} onClick={v.onFav} overlay />
@@ -174,12 +175,13 @@ export function CourseCard({
         {showProgress && v.enrolled ? (
           <div className="mt-auto pt-4">
             <div className="mb-1.5 flex items-center justify-between text-xs">
-              <span className="text-forest-950/50">진도율</span>
+              <span className="text-forest-950/68">진도율</span>
               <span className={clsx("font-bold", v.pct >= 100 ? "text-success" : "text-forest-700")}>
                 {v.pct}%
               </span>
             </div>
-            <ProgressBar value={v.pct} fillClass={v.pct >= 100 ? "bg-success" : "bg-forest-600"} />
+            <ProgressBar
+              label={`${course.title} 진도`} value={v.pct} fillClass={v.pct >= 100 ? "bg-success" : "bg-forest-600"} />
             {v.pct < 100 && (
               <button
                 onClick={v.onContinue}
@@ -233,6 +235,7 @@ export function CourseRow({
           title={course.title}
           courseId={course.id}
           rounded="rounded-xl"
+          sizes="(min-width: 640px) 160px, 112px"
         />
         {v.enrolled && !progressMode && (
           <span
@@ -254,6 +257,7 @@ export function CourseRow({
         {progressMode ? (
           <div className="mt-2 flex items-center gap-2">
             <ProgressBar
+              label={`${course.title} 진도`}
               value={v.pct}
               height="h-1.5"
               animate={false}

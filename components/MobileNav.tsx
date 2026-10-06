@@ -25,7 +25,7 @@ export function MobileNav() {
               aria-current={active ? "page" : undefined}
               className={clsx(
                 "flex min-h-[64px] flex-1 flex-col items-center justify-center gap-1 rounded-lg text-xs font-medium transition-colors",
-                active ? "text-cream-50" : "text-cream-200/55"
+                active ? "text-cream-50" : "text-cream-200/65"
               )}
             >
               <span

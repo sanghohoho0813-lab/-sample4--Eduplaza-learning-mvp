@@ -166,13 +166,14 @@ function PlayerContent() {
             courseId={course.id}
             rounded="rounded-none"
             priority
+            sizes="(min-width: 640px) 512px, 100vw"
           />
           <div className="p-6 text-center md:p-8">
             <p className="text-sm font-semibold text-forest-600">아직 수강 신청 전이에요</p>
             <h1 className="mt-1.5 font-display text-xl font-semibold leading-snug text-forest-950">
               {course.title}
             </h1>
-            <p className="mt-2 text-sm text-forest-950/55">
+            <p className="mt-2 text-sm text-forest-950/68">
               수강 신청하면 &lsquo;{lesson.title}&rsquo;부터 바로 볼 수 있어요.
             </p>
             <div className="mt-6 flex flex-col gap-2.5">
@@ -188,7 +189,7 @@ function PlayerContent() {
               </button>
               <Link
                 href={`/courses/${course.id}`}
-                className="inline-flex min-h-[48px] items-center justify-center text-sm font-semibold text-forest-950/60 hover:text-forest-950"
+                className="inline-flex min-h-[48px] items-center justify-center text-sm font-semibold text-forest-950/72 hover:text-forest-950"
               >
                 강의 정보 먼저 보기
               </Link>
@@ -220,7 +221,7 @@ function PlayerContent() {
     <ul data-curriculum className="thin-scroll relative max-h-[480px] space-y-1 overflow-y-auto pr-1">
       {course.sections.map((section) => (
         <li key={section.id}>
-          <p className="px-2 pb-1.5 pt-3 text-xs font-bold uppercase tracking-wide text-forest-950/40">
+          <p className="px-2 pb-1.5 pt-3 text-xs font-bold uppercase tracking-wide text-forest-950/68">
             Section {section.order}. {section.title}
           </p>
           <ul className="space-y-1">
@@ -257,7 +258,7 @@ function PlayerContent() {
                     <span
                       className={clsx(
                         "text-xs",
-                        active ? "text-cream-200/60" : "text-forest-950/35"
+                        active ? "text-cream-200/70" : "text-forest-950/68"
                       )}
                     >
                       {l.durationMin}분
@@ -277,15 +278,15 @@ function PlayerContent() {
       <div className="mb-4 flex items-center justify-between gap-3">
         <Link
           href={`/courses/${course.id}`}
-          className="btn-press inline-flex min-h-[44px] min-w-0 items-center gap-1 text-sm font-semibold text-forest-950/55 hover:text-forest-950"
+          className="btn-press inline-flex min-h-[44px] min-w-0 items-center gap-1 text-sm font-semibold text-forest-950/68 hover:text-forest-950"
         >
           <ChevronLeft size={16} className="shrink-0" />
           <span className="truncate">{course.title}</span>
         </Link>
         <div className="flex shrink-0 items-center gap-2.5">
-          <span className="hidden text-xs text-forest-950/50 sm:inline">강의 진도</span>
+          <span className="hidden text-xs text-forest-950/68 sm:inline">강의 진도</span>
           <div className="w-16 sm:w-28">
-            <ProgressBar value={coursePct} height="h-1.5" animate={false} />
+            <ProgressBar label="강의 진도" value={coursePct} height="h-1.5" animate={false} />
           </div>
           <span className="text-sm font-bold text-forest-700">{coursePct}%</span>
         </div>
@@ -301,7 +302,7 @@ function PlayerContent() {
               <div className="absolute bottom-4 right-10 h-32 w-32 rounded-full bg-gold-500/10 blur-3xl" />
 
               <div className="absolute inset-0 flex flex-col items-center justify-center px-6 pb-8 text-center">
-                <p className="mb-4 hidden text-xs font-semibold uppercase tracking-[0.2em] text-cream-200/40 sm:block">
+                <p className="mb-4 hidden text-xs font-semibold uppercase tracking-[0.2em] text-cream-200/65 sm:block">
                   Lesson {idx + 1} / {lessons.length}
                 </p>
                 <button
@@ -334,7 +335,7 @@ function PlayerContent() {
 
               {/* 하단 컨트롤 */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-forest-950/90 to-transparent px-4 pb-3.5 pt-8 md:px-5">
-                <ProgressBar
+                <ProgressBar label="재생 위치"
                   value={pct}
                   trackClass="bg-cream-50/15"
                   fillClass="bg-gradient-to-r from-cream-300 to-gold-300"
@@ -355,7 +356,7 @@ function PlayerContent() {
 
           {/* 레슨 제목 */}
           <div className="mt-4">
-            <p className="text-xs font-semibold text-forest-950/50">
+            <p className="text-xs font-semibold text-forest-950/68">
               {sectionOf(lesson.sectionId)?.title} · 레슨 {idx + 1}/{lessons.length} · {lesson.durationMin}분
             </p>
             <h1 className="mt-1 text-lg font-bold leading-snug text-forest-950 md:text-xl">
@@ -447,7 +448,7 @@ function PlayerContent() {
                     key === "curriculum" && "lg:hidden",
                     tab === key
                       ? "border-forest-800 text-forest-950"
-                      : "border-transparent text-forest-950/45 hover:text-forest-950/70"
+                      : "border-transparent text-forest-950/68 hover:text-forest-950/70"
                   )}
                 >
                   <Icon size={15} />
@@ -500,14 +501,14 @@ function PlayerContent() {
                           <p className="whitespace-pre-wrap text-sm leading-relaxed text-forest-950/80">
                             {n.content}
                           </p>
-                          <p className="mt-2 text-xs text-forest-950/40">
+                          <p className="mt-2 text-xs text-forest-950/68">
                             {new Date(n.updatedAt).toLocaleDateString("ko-KR")}
                           </p>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-forest-950/45">
+                    <p className="text-sm text-forest-950/68">
                       이 레슨의 노트가 아직 없어요. 첫 기록을 남겨보세요.
                     </p>
                   )}
@@ -515,7 +516,7 @@ function PlayerContent() {
               )}
 
               {tab === "qna" && (
-                <div className="rounded-xl border border-cream-200 bg-cream-50 p-5 text-sm leading-relaxed text-forest-950/60">
+                <div className="rounded-xl border border-cream-200 bg-cream-50 p-5 text-sm leading-relaxed text-forest-950/72">
                   <p className="font-semibold text-forest-950/80">
                     궁금한 점이 있나요?
                   </p>
@@ -537,7 +538,7 @@ function PlayerContent() {
                       >
                         <FileText size={17} className="text-forest-500" />
                         {f}
-                        <span className="ml-auto text-xs text-forest-950/35">
+                        <span className="ml-auto text-xs text-forest-950/68">
                           데모 자료
                         </span>
                       </li>
@@ -613,14 +614,14 @@ function LessonDonePanel({
               : "이미 완료한 레슨이에요"}
           </p>
           {fresh ? (
-            <ul className="mt-2 space-y-0.5 text-sm text-forest-950/65">
+            <ul className="mt-2 space-y-0.5 text-sm text-forest-950/72">
               <li>
                 +{lessonMinutes}분 · {weeklyGoalMessage(store.weeklyTotal, WEEKLY_GOAL_MIN)}
               </li>
               {store.streak > 0 && <li>{store.streak}일 연속 학습 중</li>}
             </ul>
           ) : (
-            <p className="mt-1 text-sm text-forest-950/60">
+            <p className="mt-1 text-sm text-forest-950/72">
               {upNext ? `다음은 ‘${upNext.title}’ 차례예요.` : "이 강의의 모든 레슨을 마쳤어요."}
             </p>
           )}

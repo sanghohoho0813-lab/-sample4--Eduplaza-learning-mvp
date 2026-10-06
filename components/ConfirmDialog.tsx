@@ -91,7 +91,7 @@ export function ConfirmDialog({
           {title}
         </h2>
         {description && (
-          <p id={descId} className="mt-2 text-sm leading-relaxed text-forest-950/60">
+          <p id={descId} className="mt-2 text-sm leading-relaxed text-forest-950/72">
             {description}
           </p>
         )}

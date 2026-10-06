@@ -61,7 +61,7 @@ export function ActivityList({
   empty?: string;
 }) {
   if (items.length === 0) {
-    return <p className="py-2 text-sm text-forest-950/50">{empty}</p>;
+    return <p className="py-2 text-sm text-forest-950/68">{empty}</p>;
   }
   return (
     <ul className="divide-y divide-cream-100">
@@ -83,7 +83,7 @@ export function ActivityList({
               <p className="line-clamp-2 text-sm font-semibold leading-snug text-forest-950/85">
                 {a.label}
               </p>
-              <p className="mt-0.5 text-xs text-forest-950/45">
+              <p className="mt-0.5 text-xs text-forest-950/68">
                 {detail(a)}
                 {showTime && <> · {relativeWhen(a.at)}</>}
               </p>

@@ -70,7 +70,7 @@ function QuizTab() {
               다시 풀어볼 문제 {weakCount}개
             </h2>
           </div>
-          <p className="text-sm text-forest-950/55">
+          <p className="text-sm text-forest-950/68">
             틀린 문제만 골라 풀어요. 맞히면 취약 영역에서 사라져요.
           </p>
           <ul className="mt-3 divide-y divide-cream-100">
@@ -82,14 +82,14 @@ function QuizTab() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-forest-950">{g.quiz.title}</p>
-                    <p className="truncate text-xs text-forest-950/50">{g.topics.join(" · ")}</p>
+                    <p className="truncate text-xs text-forest-950/68">{g.topics.join(" · ")}</p>
                   </div>
                   <span className="shrink-0 rounded-full bg-forest-50 px-2.5 py-1 text-xs font-semibold text-forest-700">
                     {g.count}문제
                   </span>
                   <ChevronRight
                     size={18}
-                    className="shrink-0 text-forest-950/30 transition-transform group-hover:translate-x-0.5"
+                    className="shrink-0 text-forest-950/68 transition-transform group-hover:translate-x-0.5"
                   />
                 </Link>
               </li>
@@ -109,13 +109,13 @@ function QuizTab() {
               href={`/quiz/${quiz.id}`}
               className="card group flex flex-col p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
             >
-              <p className="truncate text-xs font-medium text-forest-950/50">{course?.title}</p>
+              <p className="truncate text-xs font-medium text-forest-950/68">{course?.title}</p>
               <h3 className="mt-1.5 flex-1 font-display text-lg font-semibold text-forest-950 transition-colors group-hover:text-forest-600">
                 {quiz.title}
               </h3>
               {/* 모든 카드가 같은 자리에 '점수 + 행동'을 둔다 */}
               <div className="mt-4 flex items-center justify-between gap-2 border-t border-cream-100 pt-3.5">
-                <span className="text-xs text-forest-950/50">
+                <span className="text-xs text-forest-950/68">
                   {quiz.questions.length}문항
                   {best !== null && (
                     <>
@@ -203,9 +203,9 @@ function AssignmentTab() {
             {/* 모바일에서는 마감 표시를 위로 올려 본문이 전체 폭을 쓰게 한다 */}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-forest-950/50">{course?.title}</p>
+                <p className="text-xs font-medium text-forest-950/68">{course?.title}</p>
                 <h3 className="mt-1 text-base font-bold text-forest-950">{assignment.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-forest-950/60">
+                <p className="mt-1.5 text-sm leading-relaxed text-forest-950/72">
                   {assignment.description}
                 </p>
               </div>
@@ -222,14 +222,14 @@ function AssignmentTab() {
                         ? "bg-danger/10 text-danger"
                         : dLeft <= 1
                           ? "bg-amber-50 text-amber-600"
-                          : "bg-cream-100 text-forest-950/60"
+                          : "bg-cream-100 text-forest-950/72"
                     )}
                   >
                     <CalendarClock size={13} />
                     {dueLabel(dLeft)}
                   </span>
                 )}
-                <span className="text-xs text-forest-950/40">마감 {due}</span>
+                <span className="text-xs text-forest-950/68">마감 {due}</span>
               </div>
             </div>
 
@@ -300,7 +300,7 @@ function AssignmentTab() {
                   id={`count-${assignment.id}`}
                   className={clsx(
                     "mt-1.5 text-xs",
-                    draftLen >= MIN_ANSWER ? "text-success" : "text-forest-950/45"
+                    draftLen >= MIN_ANSWER ? "text-success" : "text-forest-950/68"
                   )}
                 >
                   {draftLen >= MIN_ANSWER
@@ -310,7 +310,7 @@ function AssignmentTab() {
                 <div className="mt-2.5 flex justify-end gap-2">
                   <button
                     onClick={() => setOpenForm(null)}
-                    className="btn-press min-h-[48px] rounded-full border border-cream-300 px-5 text-sm font-semibold text-forest-950/60"
+                    className="btn-press min-h-[48px] rounded-full border border-cream-300 px-5 text-sm font-semibold text-forest-950/72"
                   >
                     취소
                   </button>

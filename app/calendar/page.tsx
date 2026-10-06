@@ -139,7 +139,7 @@ export default function CalendarPage() {
                 key={w}
                 className={clsx(
                   "pb-2 text-xs font-bold",
-                  i === 0 ? "text-danger/70" : i === 6 ? "text-info" : "text-forest-950/45"
+                  i === 0 ? "text-danger/70" : i === 6 ? "text-info" : "text-forest-950/68"
                 )}
               >
                 {w}
@@ -180,7 +180,7 @@ export default function CalendarPage() {
             })}
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-4 border-t border-cream-100 pt-4 text-xs text-forest-950/55">
+          <div className="mt-5 flex flex-wrap gap-4 border-t border-cream-100 pt-4 text-xs text-forest-950/68">
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-forest-600" /> 레슨
             </span>
@@ -237,7 +237,7 @@ export default function CalendarPage() {
               다가오는 과제 마감
             </h2>
             {store.upcomingAssignments.length === 0 ? (
-              <p className="text-sm text-forest-950/55">남은 과제가 없어요.</p>
+              <p className="text-sm text-forest-950/68">남은 과제가 없어요.</p>
             ) : (
               <ul className="divide-y divide-cream-100">
                 {store.upcomingAssignments.map((u) => (
@@ -250,14 +250,14 @@ export default function CalendarPage() {
                         <span className="block truncate text-sm font-semibold text-forest-950">
                           {u.assignment.title}
                         </span>
-                        <span className="block truncate text-xs text-forest-950/50">
+                        <span className="block truncate text-xs text-forest-950/68">
                           {getCourse(u.assignment.courseId)?.title}
                         </span>
                       </span>
                       <span
                         className={clsx(
                           "shrink-0 text-xs font-semibold",
-                          u.dLeft <= 1 ? "text-amber-600" : "text-forest-950/50"
+                          u.dLeft <= 1 ? "text-amber-600" : "text-forest-950/68"
                         )}
                       >
                         {dueLabel(u.dLeft)}
@@ -267,7 +267,7 @@ export default function CalendarPage() {
                 ))}
               </ul>
             )}
-            <p className="mt-3 flex items-center gap-1.5 border-t border-cream-100 pt-3 text-sm text-forest-950/65">
+            <p className="mt-3 flex items-center gap-1.5 border-t border-cream-100 pt-3 text-sm text-forest-950/72">
               <Flame size={15} className="text-gold-500" />
               {store.streak > 0 ? `${store.streak}일 연속 학습 중이에요` : "오늘 학습하면 연속 기록이 시작돼요"}
             </p>

@@ -1,12 +1,12 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { useStore } from "@/lib/store";
 import { BRAND } from "@/lib/brand";
 import { PRIMARY_NAV, isNavActive, matchPath } from "@/lib/nav";
+import { BrandLogo, BrandSymbol } from "./BrandMark";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -15,12 +15,12 @@ export function Sidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col overflow-y-auto bg-forest-950 lg:flex">
       <Link href="/" className="flex items-center gap-3 px-6 pb-7 pt-7">
-        <img src={BRAND.symbol} alt="" aria-hidden className="h-11 w-11 shrink-0" />
+        <BrandSymbol priority className="h-11 w-11 shrink-0" />
         <span className="min-w-0">
           <span className="block font-display text-xl font-semibold leading-tight tracking-wide text-cream-50">
             EduPlaza
           </span>
-          <span className="block text-xs leading-tight text-cream-200/50">
+          <span className="block text-xs leading-tight text-cream-200/65">
             by {BRAND.company}
           </span>
         </span>
@@ -69,7 +69,7 @@ export function Sidebar() {
                             "block rounded-lg px-3 py-2 text-xs font-medium transition-colors",
                             childActive
                               ? "text-cream-50"
-                              : "text-cream-200/55 hover:text-cream-100"
+                              : "text-cream-200/65 hover:text-cream-100"
                           )}
                         >
                           {child.label}
@@ -87,8 +87,8 @@ export function Sidebar() {
       <div className="space-y-3 px-3 pb-5 pt-4">
         {/* 미래에이아이랩 브랜드 크레딧 */}
         <div className="rounded-xl border border-forest-800 bg-forest-900/40 px-4 py-3.5">
-          <img src={BRAND.logoDark} alt={`${BRAND.company} 로고`} className="h-8 w-auto" />
-          <p className="mt-2.5 text-xs leading-snug text-cream-200/55">
+          <BrandLogo dark className="h-8 w-auto" />
+          <p className="mt-2.5 text-xs leading-snug text-cream-200/65">
             {BRAND.company} 레퍼런스 프로젝트
           </p>
         </div>
@@ -101,13 +101,13 @@ export function Sidebar() {
             {ready ? state.name.charAt(0) : "…"}
           </span>
           <span className="min-w-0">
-            <span className="block text-xs leading-tight text-cream-200/55">
+            <span className="block text-xs leading-tight text-cream-200/65">
               {ready ? BRAND.company : " "}
             </span>
             <span className="mt-0.5 block truncate text-sm font-semibold leading-snug text-cream-50">
               {ready ? `${state.name}님` : " "}
             </span>
-            <span className="block text-xs text-cream-200/60">
+            <span className="block text-xs text-cream-200/70">
               {ready ? (streak > 0 ? `${streak}일 연속 학습 중` : "오늘 학습을 시작해보세요") : " "}
             </span>
           </span>

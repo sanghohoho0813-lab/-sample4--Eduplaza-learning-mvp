@@ -1,6 +1,6 @@
 import { QUIZZES } from "./data";
 import type { Quiz } from "./types";
-import type { WeakQuestion } from "./store";
+import type { WeakQuestion } from "./learning";
 
 export interface WeakGroup {
   quiz: Quiz;

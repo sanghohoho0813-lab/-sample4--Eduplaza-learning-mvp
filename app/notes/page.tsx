@@ -112,7 +112,7 @@ export default function NotesPage() {
               </button>
             </div>
             {enrolledCourses.length === 0 ? (
-              <div className="rounded-xl bg-cream-100 p-4 text-sm text-forest-950/65">
+              <div className="rounded-xl bg-cream-100 p-4 text-sm text-forest-950/72">
                 노트는 수강 중인 강의에 연결해 남겨요. 먼저 강의를 시작해보세요.
                 <Link href="/courses" className="ml-1 font-semibold text-forest-700 underline underline-offset-4">
                   강의 찾기
@@ -122,7 +122,7 @@ export default function NotesPage() {
             <>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold text-forest-950/55">
+                <span className="mb-1.5 block text-xs font-semibold text-forest-950/68">
                   강의 선택
                 </span>
                 <select
@@ -141,7 +141,7 @@ export default function NotesPage() {
                 </select>
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold text-forest-950/55">
+                <span className="mb-1.5 block text-xs font-semibold text-forest-950/68">
                   레슨 연결 (선택)
                 </span>
                 <select
@@ -176,7 +176,7 @@ export default function NotesPage() {
             <div className="mt-3 flex justify-end gap-2">
               <button
                 onClick={() => setFormOpen(false)}
-                className="btn-press min-h-[48px] rounded-full border border-cream-300 px-5 text-sm font-semibold text-forest-950/60"
+                className="btn-press min-h-[48px] rounded-full border border-cream-300 px-5 text-sm font-semibold text-forest-950/72"
               >
                 취소
               </button>
@@ -222,7 +222,7 @@ export default function NotesPage() {
                     {lessonInfo && (
                       <Link
                         href={`/learn/${note.courseId}?lesson=${lessonInfo.lesson.id}`}
-                        className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-forest-950/45 hover:text-forest-800"
+                        className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-forest-950/68 hover:text-forest-800"
                       >
                         <PlayCircle size={13} className="shrink-0" />
                         <span className="truncate">{lessonInfo.lesson.title}</span>
@@ -236,14 +236,14 @@ export default function NotesPage() {
                           setEditingId(note.id);
                           setEditContent(note.content);
                         }}
-                        className="btn-press flex h-10 w-10 items-center justify-center rounded-full text-forest-950/40 transition-colors hover:bg-cream-100 hover:text-forest-800"
+                        className="btn-press flex h-10 w-10 items-center justify-center rounded-full text-forest-950/68 transition-colors hover:bg-cream-100 hover:text-forest-800"
                         aria-label="노트 수정"
                       >
                         <Pencil size={16} />
                       </button>
                       <button
                         onClick={() => setDeleteId(note.id)}
-                        className="btn-press flex h-10 w-10 items-center justify-center rounded-full text-forest-950/40 transition-colors hover:bg-danger/10 hover:text-danger"
+                        className="btn-press flex h-10 w-10 items-center justify-center rounded-full text-forest-950/68 transition-colors hover:bg-danger/10 hover:text-danger"
                         aria-label="노트 삭제"
                       >
                         <Trash2 size={16} />
@@ -269,7 +269,7 @@ export default function NotesPage() {
                     <div className="mt-2 flex justify-end gap-2">
                       <button
                         onClick={() => setEditingId(null)}
-                        className="btn-press min-h-[44px] rounded-full border border-cream-300 px-5 text-sm font-semibold text-forest-950/60"
+                        className="btn-press min-h-[44px] rounded-full border border-cream-300 px-5 text-sm font-semibold text-forest-950/72"
                       >
                         취소
                       </button>
@@ -290,7 +290,7 @@ export default function NotesPage() {
 
                 <p
                   className={clsx(
-                    "mt-3 border-t border-cream-100 pt-2.5 text-xs text-forest-950/40"
+                    "mt-3 border-t border-cream-100 pt-2.5 text-xs text-forest-950/68"
                   )}
                 >
                   {new Date(note.updatedAt).toLocaleDateString("ko-KR", {

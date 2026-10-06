@@ -17,7 +17,7 @@ import {
   Timer,
 } from "lucide-react";
 import { CATEGORIES, COURSES, formatMinutes, formatPrice } from "@/lib/data";
-import { STORAGE_KEY, useStore } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import { BRAND } from "@/lib/brand";
 import { useToast } from "@/components/Toast";
 import { Header } from "@/components/Header";
@@ -60,12 +60,11 @@ export default function MyPage() {
   };
 
   const resetDemo = () => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-    location.reload();
+    store.resetDemo();
+    setResetOpen(false);
+    setShowAllPay(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast("데모 데이터를 처음 상태로 되돌렸어요", "info");
   };
 
   const quickLinks = [
@@ -98,7 +97,7 @@ export default function MyPage() {
           </div>
           <div className="flex gap-6 text-center">
             <div>
-              <p className="flex items-center justify-center gap-1 text-xs text-cream-200/60">
+              <p className="flex items-center justify-center gap-1 text-xs text-cream-200/70">
                 <Timer size={12} /> 최근 7일
               </p>
               <p className="mt-1 font-display text-lg font-semibold">
@@ -106,7 +105,7 @@ export default function MyPage() {
               </p>
             </div>
             <div>
-              <p className="flex items-center justify-center gap-1 text-xs text-cream-200/60">
+              <p className="flex items-center justify-center gap-1 text-xs text-cream-200/70">
                 <Flame size={12} /> 연속
               </p>
               <p className="mt-1 font-display text-lg font-semibold">
@@ -114,7 +113,7 @@ export default function MyPage() {
               </p>
             </div>
             <div>
-              <p className="flex items-center justify-center gap-1 text-xs text-cream-200/60">
+              <p className="flex items-center justify-center gap-1 text-xs text-cream-200/70">
                 <GraduationCap size={12} /> 완료
               </p>
               <p className="mt-1 font-display text-lg font-semibold">
@@ -149,7 +148,7 @@ export default function MyPage() {
         {/* 관심분야 */}
         <section className="card p-5">
           <h3 className="mb-1 text-sm font-bold text-forest-950">관심분야</h3>
-          <p className="mb-3 text-xs text-forest-950/50">
+          <p className="mb-3 text-xs text-forest-950/68">
             고른 분야로 홈의 &lsquo;다음에 들어볼 강의&rsquo;를 추천해요.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -164,7 +163,7 @@ export default function MyPage() {
                     "btn-press inline-flex min-h-[40px] items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors",
                     active
                       ? "border-forest-900 bg-forest-900 text-cream-50"
-                      : "border-cream-300 bg-white text-forest-950/60 hover:border-forest-300"
+                      : "border-cream-300 bg-white text-forest-950/72 hover:border-forest-300"
                   )}
                 >
                   {active && <Check size={14} />}
@@ -180,7 +179,7 @@ export default function MyPage() {
           <h3 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-forest-950">
             <CreditCard size={15} className="text-forest-600" />
             결제내역
-            <span className="chip bg-cream-100 text-forest-950/45">Demo</span>
+            <span className="chip bg-cream-100 text-forest-950/68">Demo</span>
           </h3>
           <ul className="divide-y divide-cream-100">
             {(showAllPay ? payments : payments.slice(0, 3)).map(({ course, date }) => (
@@ -192,7 +191,7 @@ export default function MyPage() {
                   <p className="truncate text-sm font-semibold text-forest-950/85">
                     {course.title}
                   </p>
-                  <p className="text-xs text-forest-950/45">
+                  <p className="text-xs text-forest-950/68">
                     {new Date(date).toLocaleDateString("ko-KR")} · 카드 결제
                   </p>
                 </div>
@@ -234,7 +233,7 @@ export default function MyPage() {
               >
                 <div>
                   <p className="text-sm font-semibold text-forest-950">{label}</p>
-                  <p className="text-xs text-forest-950/45">{desc}</p>
+                  <p className="text-xs text-forest-950/68">{desc}</p>
                 </div>
                 <button
                   role="switch"
@@ -270,7 +269,7 @@ export default function MyPage() {
       <div className="mt-8 flex justify-center">
         <button
           onClick={() => setResetOpen(true)}
-          className="btn-press inline-flex items-center gap-1.5 rounded-full border border-cream-300 px-5 py-2.5 text-xs font-semibold text-forest-950/45 transition-colors hover:text-forest-950/70"
+          className="btn-press inline-flex items-center gap-1.5 rounded-full border border-cream-300 px-5 py-2.5 text-xs font-semibold text-forest-950/68 transition-colors hover:text-forest-950/70"
         >
           <RotateCcw size={13} />
           데모 데이터 초기화

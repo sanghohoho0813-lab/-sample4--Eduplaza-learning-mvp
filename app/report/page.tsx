@@ -51,7 +51,7 @@ export default function ReportPage() {
         <h2 id="summary-heading" className="text-base font-bold text-forest-950">
           이번 주 요약
         </h2>
-        <p className="mt-1 text-sm text-forest-950/65">{summary}</p>
+        <p className="mt-1 text-sm text-forest-950/72">{summary}</p>
         <dl className="mt-5 grid grid-cols-2 gap-y-5 md:grid-cols-4 md:divide-x md:divide-cream-200">
           {[
             ["학습 시간", formatMinutes(weeklyTotal)],
@@ -60,19 +60,19 @@ export default function ReportPage() {
             ["연속 학습", `${streak}일`],
           ].map(([label, value]) => (
             <div key={label} className="md:px-5 md:first:pl-0">
-              <dt className="text-xs text-forest-950/50">{label}</dt>
+              <dt className="text-xs text-forest-950/68">{label}</dt>
               <dd className="mt-0.5 font-display text-xl font-semibold text-forest-950">{value}</dd>
             </div>
           ))}
         </dl>
         <div className="mt-5 rounded-xl bg-cream-100 p-4">
           <div className="mb-1.5 flex justify-between text-sm">
-            <span className="text-forest-950/65">{weeklyGoalMessage(weeklyTotal, WEEKLY_GOAL_MIN)}</span>
+            <span className="text-forest-950/72">{weeklyGoalMessage(weeklyTotal, WEEKLY_GOAL_MIN)}</span>
             <span className="font-bold text-forest-800">
               {Math.min(100, Math.round((weeklyTotal / WEEKLY_GOAL_MIN) * 100))}%
             </span>
           </div>
-          <ProgressBar
+          <ProgressBar label="이번 주 목표 달성률"
             value={(weeklyTotal / WEEKLY_GOAL_MIN) * 100}
             fillClass={weeklyLeft === 0 ? "bg-success" : "bg-forest-600"}
             trackClass="bg-cream-300/60"
@@ -88,7 +88,7 @@ export default function ReportPage() {
               <h2 id="chart-heading" className="text-base font-bold text-forest-950">
                 최근 7일 학습 시간
               </h2>
-              <span className="shrink-0 text-xs text-forest-950/45">단위: 분</span>
+              <span className="shrink-0 text-xs text-forest-950/68">단위: 분</span>
             </div>
             <div className="flex h-48 items-end justify-between gap-2 md:gap-3">
               {last7.map((d) => (
@@ -99,7 +99,7 @@ export default function ReportPage() {
                   <span
                     className={clsx(
                       "text-xs font-semibold",
-                      d.isToday ? "text-forest-800" : "text-forest-950/50"
+                      d.isToday ? "text-forest-800" : "text-forest-950/68"
                     )}
                   >
                     {d.minutes > 0 ? d.minutes : ""}
@@ -110,12 +110,13 @@ export default function ReportPage() {
                       d.isToday ? "bg-forest-700" : "bg-forest-200"
                     )}
                     style={{ height: `${Math.max((d.minutes / maxDay) * 70, d.minutes > 0 ? 8 : 3)}%` }}
+                    role="img"
                     aria-label={`${d.label}요일 ${d.minutes}분`}
                   />
                   <span
                     className={clsx(
                       "text-xs",
-                      d.isToday ? "font-bold text-forest-800" : "text-forest-950/50"
+                      d.isToday ? "font-bold text-forest-800" : "text-forest-950/68"
                     )}
                   >
                     {d.isToday ? "오늘" : d.label}
@@ -131,7 +132,7 @@ export default function ReportPage() {
               <h2 id="course-heading" className="text-base font-bold text-forest-950">
                 강의별 진도
               </h2>
-              <span className="text-sm text-forest-950/50">평균 {store.overallProgress()}%</span>
+              <span className="text-sm text-forest-950/68">평균 {store.overallProgress()}%</span>
             </div>
             <ul className="space-y-4">
               {courses.map((course) => {
@@ -152,7 +153,7 @@ export default function ReportPage() {
                           {pct}%
                         </span>
                       </div>
-                      <ProgressBar
+                      <ProgressBar label={`${course.title} 진도`}
                         value={pct}
                         fillClass={pct >= 100 ? "bg-success" : "bg-forest-600"}
                         animate={false}
@@ -180,12 +181,12 @@ export default function ReportPage() {
               취약 영역
             </h2>
             {weak.length === 0 ? (
-              <p className="mt-2 text-sm text-forest-950/55">
+              <p className="mt-2 text-sm text-forest-950/68">
                 지금은 다시 풀 문제가 없어요. 잘하고 있어요!
               </p>
             ) : (
               <>
-                <p className="mt-1 text-sm text-forest-950/55">
+                <p className="mt-1 text-sm text-forest-950/68">
                   틀린 문제에서 찾은 보완 주제예요.
                 </p>
                 <ul className="mt-3 space-y-2">
@@ -200,11 +201,11 @@ export default function ReportPage() {
                           <span className="line-clamp-2 block text-sm font-semibold leading-snug text-forest-950">
                             {g.topics.join(", ")}
                           </span>
-                          <span className="block truncate text-xs text-forest-950/50">
+                          <span className="block truncate text-xs text-forest-950/68">
                             {g.quiz.title} · {g.count}문제
                           </span>
                         </span>
-                        <ChevronRight size={16} className="shrink-0 text-forest-950/30" />
+                        <ChevronRight size={16} className="shrink-0 text-forest-950/68" />
                       </Link>
                     </li>
                   ))}
@@ -219,7 +220,7 @@ export default function ReportPage() {
               퀴즈 기록
             </h2>
             {state.quizResults.length === 0 ? (
-              <p className="mt-2 text-sm text-forest-950/55">
+              <p className="mt-2 text-sm text-forest-950/68">
                 아직 퀴즈 기록이 없어요.{" "}
                 <Link href="/quiz" className="font-semibold text-forest-600">
                   첫 퀴즈에 도전해보세요.
@@ -235,7 +236,7 @@ export default function ReportPage() {
                         <p className="truncate text-sm font-semibold text-forest-950/85">
                           {quiz?.title ?? "퀴즈"}
                         </p>
-                        <p className="text-xs text-forest-950/50">
+                        <p className="text-xs text-forest-950/68">
                           {relativeWhen(r.date)} · {r.mode === "review" ? "오답 복습" : "전체 풀이"}{" "}
                           {r.correct}/{r.total}
                         </p>
@@ -261,11 +262,11 @@ export default function ReportPage() {
               <h2 id="assignment-heading" className="text-base font-bold text-forest-950">
                 과제
               </h2>
-              <span className="text-sm text-forest-950/50">
+              <span className="text-sm text-forest-950/68">
                 제출 {submitted}/{ASSIGNMENTS.length}
               </span>
             </div>
-            <ProgressBar
+            <ProgressBar label="과제 제출률"
               value={(submitted / ASSIGNMENTS.length) * 100}
               fillClass="bg-forest-600"
               height="h-1.5"
@@ -283,7 +284,7 @@ export default function ReportPage() {
                       <span
                         className={clsx(
                           "shrink-0 text-xs font-semibold",
-                          u.dLeft <= 1 ? "text-amber-600" : "text-forest-950/50"
+                          u.dLeft <= 1 ? "text-amber-600" : "text-forest-950/68"
                         )}
                       >
                         {dueLabel(u.dLeft)}
@@ -293,7 +294,7 @@ export default function ReportPage() {
                 ))}
               </ul>
             ) : (
-              <p className="mt-3 text-sm text-forest-950/55">남은 과제가 없어요.</p>
+              <p className="mt-3 text-sm text-forest-950/68">남은 과제가 없어요.</p>
             )}
           </section>
 
@@ -301,7 +302,7 @@ export default function ReportPage() {
           <section className="card p-5" aria-labelledby="ach-heading">
             <h2 id="ach-heading" className="mb-3 text-base font-bold text-forest-950">
               나의 성취{" "}
-              <span className="text-sm font-medium text-forest-950/45">
+              <span className="text-sm font-medium text-forest-950/68">
                 {state.unlockedAchievements.length}/{ACHIEVEMENTS.length}
               </span>
             </h2>
@@ -320,16 +321,16 @@ export default function ReportPage() {
                     <span
                       className={clsx(
                         "flex h-10 w-10 items-center justify-center rounded-full",
-                        unlocked ? "bg-gold-300/30 text-gold-600" : "bg-cream-200 text-forest-950/30"
+                        unlocked ? "bg-gold-300/30 text-gold-600" : "bg-cream-200 text-forest-950/68"
                       )}
                       aria-hidden
                     >
                       <Icon size={19} />
                     </span>
-                    <p className={clsx("mt-1.5 text-xs font-bold", unlocked ? "text-forest-950" : "text-forest-950/45")}>
+                    <p className={clsx("mt-1.5 text-xs font-bold", unlocked ? "text-forest-950" : "text-forest-950/68")}>
                       {a.label}
                     </p>
-                    <p className="mt-0.5 text-xs text-forest-950/45">
+                    <p className="mt-0.5 text-xs text-forest-950/68">
                       {a.description}
                       <span className="sr-only">{unlocked ? " (달성)" : " (아직 잠김)"}</span>
                     </p>

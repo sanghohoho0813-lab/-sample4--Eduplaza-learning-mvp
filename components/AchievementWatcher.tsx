@@ -15,7 +15,8 @@ export function AchievementWatcher() {
 
   useEffect(() => {
     if (!ready) return;
-    if (known.current === null) {
+    // 처음 로드했거나 데모 초기화로 성취가 줄었으면 지금 상태를 기준으로 다시 잡는다
+    if (known.current === null || state.unlockedAchievements.length < known.current.size) {
       known.current = new Set(state.unlockedAchievements);
       return;
     }

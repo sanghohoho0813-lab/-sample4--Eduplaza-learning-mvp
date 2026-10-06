@@ -157,7 +157,7 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
           <h1 className="font-display text-xl font-semibold text-forest-950">
             다시 풀 문제가 없어요
           </h1>
-          <p className="mt-2 text-sm text-forest-950/55">
+          <p className="mt-2 text-sm text-forest-950/68">
             {quiz.title}의 틀린 문제를 모두 해결했어요.
           </p>
           <Link
@@ -208,7 +208,7 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
       />
 
       <div className="mb-5">
-        <p className="text-xs font-medium text-forest-950/50">
+        <p className="text-xs font-medium text-forest-950/68">
           {course?.title}
           {mode === "review" && (
             <span className="ml-2 rounded-full bg-forest-50 px-2 py-0.5 font-semibold text-forest-700">
@@ -286,7 +286,7 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
                         ? "bg-danger text-white"
                         : isSelected
                           ? "bg-cream-100 text-forest-950"
-                          : "bg-cream-100 text-forest-950/60"
+                          : "bg-cream-100 text-forest-950/72"
                   )}
                 >
                   {showCorrect ? (
@@ -321,14 +321,14 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
                   ? "정답이에요!"
                   : `아쉬워요. 정답은 ${OPTION_LABELS[question.answerIndex]}입니다.`}
               </p>
-              <p className="mt-1 text-sm leading-relaxed text-forest-950/65">
+              <p className="mt-1 text-sm leading-relaxed text-forest-950/72">
                 {question.explanation}
               </p>
             </div>
           </div>
         )}
 
-        <p className="mt-4 hidden items-center justify-center gap-2 text-xs text-forest-950/40 md:flex">
+        <p className="mt-4 hidden items-center justify-center gap-2 text-xs text-forest-950/68 md:flex">
           <kbd className="rounded border border-cream-300 bg-cream-50 px-1.5 py-0.5 font-sans font-semibold">
             1
           </kbd>
@@ -372,7 +372,7 @@ function BackLink({ onClick }: { onClick?: (e: React.MouseEvent) => void }) {
     <Link
       href="/quiz"
       onClick={onClick}
-      className="btn-press mb-4 inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-forest-950/55 hover:text-forest-950"
+      className="btn-press mb-4 inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-forest-950/68 hover:text-forest-950"
     >
       <ChevronLeft size={16} />
       퀴즈 목록
@@ -448,16 +448,16 @@ function QuizResultView({
           <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-forest-800">
             <Trophy size={26} className={result.score === 100 ? "text-gold-300" : "text-cream-200"} />
           </span>
-          <p className="text-sm text-cream-200/60">
+          <p className="text-sm text-cream-200/70">
             {quiz.title}
             {mode === "review" && " · 틀린 문제 복습"}
           </p>
           <p className="mt-2 font-display text-5xl font-semibold">
             {mode === "review" ? `${result.correct}/${result.total}` : result.score}
-            {mode === "full" && <span className="text-2xl text-cream-200/50">점</span>}
+            {mode === "full" && <span className="text-2xl text-cream-200/65">점</span>}
           </p>
           <p className="mt-3 text-base font-semibold text-cream-50">{headline}</p>
-          <p className="mt-1 text-sm text-cream-200/60">{reflected}</p>
+          <p className="mt-1 text-sm text-cream-200/70">{reflected}</p>
 
           <div className="mx-auto mt-6 max-w-sm">
             {primary.href ? (
@@ -495,7 +495,7 @@ function QuizResultView({
           {/* 문항별 결과 — 저장된 답안이 곧 취약 주제가 된다 */}
           <h2 className="text-base font-bold text-forest-950">
             문항별 결과{" "}
-            <span className="text-sm font-medium text-forest-950/45">
+            <span className="text-sm font-medium text-forest-950/68">
               {result.correct}/{result.total} 정답
             </span>
           </h2>
@@ -510,7 +510,7 @@ function QuizResultView({
                     <XCircle size={18} className="mt-0.5 shrink-0 text-danger" aria-label="오답" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-forest-950/50">{q.topic}</p>
+                    <p className="text-xs font-semibold text-forest-950/68">{q.topic}</p>
                     <p className="text-sm text-forest-950/85">{q.question}</p>
                     {!ok && (
                       <p className="mt-1 text-xs text-forest-700">

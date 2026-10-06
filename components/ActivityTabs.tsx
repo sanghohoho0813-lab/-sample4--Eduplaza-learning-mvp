@@ -34,7 +34,7 @@ export function ActivityTabs({
               aria-current={on ? "page" : undefined}
               className={clsx(
                 "btn-press inline-flex min-h-[44px] items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-bold transition-colors sm:px-5",
-                on ? "bg-forest-950 text-cream-50" : "text-forest-950/55 hover:text-forest-950"
+                on ? "bg-forest-950 text-cream-50" : "text-forest-950/68 hover:text-forest-950"
               )}
             >
               {t.label}

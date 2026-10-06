@@ -21,6 +21,8 @@ const config: Config = {
       "6xl": ["5.6rem", { lineHeight: "1.1" }], // 89.6px
     },
     extend: {
+      // 보조 텍스트 전용 불투명도 — 흰색·크림 배경 모두에서 WCAG AA(4.5:1)를 넘기는 최소값
+      opacity: { 68: "0.68", 72: "0.72" },
       colors: {
         forest: {
           50: "#EEF3EE",
@@ -80,9 +82,9 @@ const config: Config = {
           500: "#A25742",
           600: "#7F4433",
         },
-        success: "#3E8E5A",
+        success: "#2E7047",
         info: "#2A7C8C",
-        danger: "#C25450",
+        danger: "#B4413D",
       },
       fontFamily: {
         display: ["'Noto Serif KR'", "Georgia", "serif"],

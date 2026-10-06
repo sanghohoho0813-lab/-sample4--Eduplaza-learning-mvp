@@ -70,18 +70,26 @@ function useCourseQuery() {
   const rating = pick<RatingKey>(params.get("rating"), RATINGS.map((r) => r.key), "all");
   const sort = pick<SortKey>(params.get("sort"), SORTS.map((s) => s.key), "recommend");
 
+  // router.replace는 바로 주소에 반영되지 않는다. 칩을 빠르게 연달아 누르면 두 번째 변경이
+  // 첫 번째를 모른 채 계산돼 사라질 수 있으므로, 아직 반영 중인 쿼리를 따로 들고 있는다.
+  const pending = useRef<string | null>(null);
+  useEffect(() => {
+    pending.current = null;
+  }, [params]);
+
   const update = useCallback(
     (patch: Record<string, string | null>) => {
-      const next = new URLSearchParams(params.toString());
+      const next = new URLSearchParams(pending.current ?? window.location.search);
       next.delete("focus");
       for (const [k, v] of Object.entries(patch)) {
         if (v === null || v === "" || v === "all" || (k === "sort" && v === "recommend")) next.delete(k);
         else next.set(k, v);
       }
       const qs = next.toString();
+      pending.current = qs;
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [params, router, pathname]
+    [router, pathname]
   );
 
   return { params, q, category, level, price, duration, rating, sort, update };
@@ -248,7 +256,7 @@ function CoursesContent() {
       >
         <Search
           size={18}
-          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-forest-950/40"
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-forest-950/68"
         />
         <input
           id="course-search"
@@ -266,7 +274,7 @@ function CoursesContent() {
             type="button"
             onClick={() => removeChip("q")}
             aria-label="검색어 지우기"
-            className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-forest-950/45 hover:bg-cream-100"
+            className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-forest-950/68 hover:bg-cream-100"
           >
             <X size={17} />
           </button>
@@ -290,7 +298,7 @@ function CoursesContent() {
 
       {/* 모바일·태블릿·작은 노트북: 개수 + 필터 + 정렬 한 줄 */}
       <div className="mb-3 flex items-center justify-between gap-2 xl:hidden">
-        <p className="text-sm text-forest-950/55" aria-live="polite">
+        <p className="text-sm text-forest-950/68" aria-live="polite">
           <b className="text-forest-950">{filtered.length}</b>개 강의
         </p>
         <div className="flex items-center gap-2">
@@ -322,7 +330,7 @@ function CoursesContent() {
         <div className="min-w-0">
           {/* PC 정렬 */}
           <div className="mb-4 hidden items-center justify-between gap-4 xl:flex">
-            <p className="text-sm text-forest-950/55" aria-live="polite">
+            <p className="text-sm text-forest-950/68" aria-live="polite">
               총 <b className="text-forest-950">{filtered.length}</b>개의 강의
             </p>
             <div className="flex gap-2" role="group" aria-label="정렬">
@@ -351,7 +359,7 @@ function CoursesContent() {
               {active.length > 1 && (
                 <button
                   onClick={clearAll}
-                  className="btn-press inline-flex min-h-[40px] items-center gap-1 px-2 text-sm font-semibold text-forest-950/50 hover:text-forest-950"
+                  className="btn-press inline-flex min-h-[40px] items-center gap-1 px-2 text-sm font-semibold text-forest-950/68 hover:text-forest-950"
                 >
                   <RotateCcw size={14} />
                   모두 지우기
@@ -453,7 +461,7 @@ function SortSelect({ value, onChange }: { value: SortKey; onChange: (v: SortKey
       </select>
       <ChevronDown
         size={16}
-        className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-forest-950/50"
+        className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-forest-950/68"
       />
     </label>
   );

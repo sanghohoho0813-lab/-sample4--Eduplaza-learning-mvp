@@ -87,7 +87,7 @@ export default function CourseDetailPage() {
       <div className="animate-fade-up">
       <button
         onClick={goBack}
-        className="btn-press mb-3 inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-forest-950/55 hover:text-forest-950"
+        className="btn-press mb-3 inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-forest-950/68 hover:text-forest-950"
       >
         <ChevronLeft size={16} />
         돌아가기
@@ -96,16 +96,19 @@ export default function CourseDetailPage() {
       {/* 히어로 */}
       <section className="relative overflow-hidden rounded-2xl bg-forest-950 p-6 text-cream-50 shadow-card md:p-8">
         <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-forest-600/25 blur-3xl" />
-        <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr),360px] lg:items-center">
-          <div>
-            {/* 모바일·태블릿에서는 썸네일을 맨 위에 — 어떤 강의인지 바로 알 수 있게 */}
+        <div className="relative grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr),360px] lg:items-center lg:gap-6">
+          {/* 썸네일은 하나만 — 모바일은 맨 위, PC는 오른쪽(order) */}
+          <div className="lg:order-last">
             <CourseThumbnail
               tone={course.thumbnailTone}
               title={course.title}
               courseId={course.id}
               priority
-              className="mb-5 ring-1 ring-cream-50/10 lg:hidden"
+              sizes="(min-width: 1024px) 360px, 100vw"
+              className="ring-1 ring-cream-50/10"
             />
+          </div>
+          <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="chip bg-forest-800 text-cream-100">
                 {getCategory(course.categoryId)?.name}
@@ -125,7 +128,7 @@ export default function CourseDetailPage() {
               <span className="inline-flex items-center gap-1.5">
                 <Star size={15} className="fill-gold-300 text-gold-300" />
                 <b className="text-cream-50">{course.rating.toFixed(1)}</b>
-                <span className="text-cream-200/50">
+                <span className="text-cream-200/65">
                   (수강평 {course.reviewCount})
                 </span>
               </span>
@@ -145,7 +148,7 @@ export default function CourseDetailPage() {
                   <span>내 진도율</span>
                   <span className="font-bold text-cream-50">{pct}%</span>
                 </div>
-                <ProgressBar
+                <ProgressBar label="내 진도율"
                   value={pct}
                   trackClass="bg-forest-800"
                   fillClass="bg-gradient-to-r from-cream-300 to-gold-300"
@@ -189,16 +192,6 @@ export default function CourseDetailPage() {
               </span>
             </div>
           </div>
-
-          <div className="hidden lg:block">
-            <CourseThumbnail
-              tone={course.thumbnailTone}
-              title={course.title}
-              courseId={course.id}
-              priority
-              className="ring-1 ring-cream-50/10"
-            />
-          </div>
         </div>
       </section>
 
@@ -222,7 +215,7 @@ export default function CourseDetailPage() {
           {/* 커리큘럼 */}
           <section className="card p-6">
             <h2 className="mb-1 text-lg font-bold text-forest-950">커리큘럼</h2>
-            <p className="mb-4 text-sm text-forest-950/50">
+            <p className="mb-4 text-sm text-forest-950/68">
               {course.sections.length}개 섹션 · {lessonCount}개 레슨 · 총{" "}
               {formatMinutes(course.totalMinutes)}
             </p>
@@ -244,7 +237,7 @@ export default function CourseDetailPage() {
                       <ChevronDown
                         size={17}
                         className={clsx(
-                          "shrink-0 text-forest-950/40 transition-transform duration-200",
+                          "shrink-0 text-forest-950/68 transition-transform duration-200",
                           open && "rotate-180"
                         )}
                       />
@@ -271,14 +264,14 @@ export default function CourseDetailPage() {
                                   className="shrink-0 text-cream-400"
                                 />
                               ) : (
-                                <span className="flex h-[17px] w-[17px] shrink-0 items-center justify-center text-xs font-semibold text-forest-950/35">
+                                <span className="flex h-[17px] w-[17px] shrink-0 items-center justify-center text-xs font-semibold text-forest-950/68">
                                   {lesson.order}
                                 </span>
                               )}
                               <span className="flex-1 text-sm text-forest-950/80">
                                 {lesson.title}
                               </span>
-                              <span className="text-xs text-forest-950/40">
+                              <span className="text-xs text-forest-950/68">
                                 {lesson.durationMin}분
                               </span>
                             </>
@@ -312,12 +305,12 @@ export default function CourseDetailPage() {
           <section className="card p-6">
             <h2 className="mb-4 text-lg font-bold text-forest-950">
               수강 후기{" "}
-              <span className="text-sm font-medium text-forest-950/45">
+              <span className="text-sm font-medium text-forest-950/68">
                 {reviews.length}개
               </span>
             </h2>
             {reviews.length === 0 ? (
-              <p className="text-sm text-forest-950/50">
+              <p className="text-sm text-forest-950/68">
                 아직 후기가 없어요. 첫 후기의 주인공이 되어보세요.
               </p>
             ) : (
@@ -331,7 +324,7 @@ export default function CourseDetailPage() {
                       <span className="text-sm font-bold text-forest-950">
                         {r.author}
                       </span>
-                      <span className="inline-flex items-center gap-1 text-xs text-forest-950/50">
+                      <span className="inline-flex items-center gap-1 text-xs text-forest-950/68">
                         <Star size={12} className="fill-gold-400 text-gold-400" />
                         {r.rating}.0 · {r.date}
                       </span>
@@ -357,10 +350,10 @@ export default function CourseDetailPage() {
                   <p className="font-display text-base font-semibold text-forest-950">
                     {instructor.name}
                   </p>
-                  <p className="text-xs text-forest-950/55">{instructor.title}</p>
+                  <p className="text-xs text-forest-950/68">{instructor.title}</p>
                 </div>
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-forest-950/65">
+              <p className="mt-3 text-sm leading-relaxed text-forest-950/72">
                 {instructor.bio}
               </p>
             </section>
@@ -418,9 +411,9 @@ export default function CourseDetailPage() {
           <div className="min-w-0 flex-1">
             {enrolled ? (
               <>
-                <p className="text-xs text-forest-950/50">내 진도율</p>
+                <p className="text-xs text-forest-950/68">내 진도율</p>
                 <div className="mt-1 flex items-center gap-2">
-                  <ProgressBar value={pct} height="h-1.5" animate={false} />
+                  <ProgressBar label="내 진도율" value={pct} height="h-1.5" animate={false} />
                   <span className="shrink-0 text-xs font-bold text-forest-700">
                     {pct}%
                   </span>
@@ -428,7 +421,7 @@ export default function CourseDetailPage() {
               </>
             ) : (
               <>
-                <p className="text-xs text-forest-950/50">수강료</p>
+                <p className="text-xs text-forest-950/68">수강료</p>
                 <p className="font-display text-lg font-semibold text-forest-950">
                   {formatPrice(course.price)}
                 </p>

@@ -7,8 +7,11 @@ export function ProgressBar({
   fillClass = "bg-forest-600",
   height = "h-2",
   animate = true,
+  label = "진행률",
 }: {
   value: number; // 0-100
+  /** 스크린리더가 읽는 이름 — 무엇의 진행률인지 */
+  label?: string;
   className?: string;
   trackClass?: string;
   fillClass?: string;
@@ -20,6 +23,8 @@ export function ProgressBar({
     <div
       className={clsx("w-full overflow-hidden rounded-full", height, trackClass, className)}
       role="progressbar"
+      aria-label={label}
+      aria-valuetext={`${Math.round(pct)}%`}
       aria-valuenow={pct}
       aria-valuemin={0}
       aria-valuemax={100}

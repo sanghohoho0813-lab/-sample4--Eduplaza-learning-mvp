@@ -23,7 +23,7 @@ export function EmptyState({
         <Icon size={24} />
       </span>
       <h3 className="font-display text-lg font-semibold text-forest-950">{title}</h3>
-      <p className="mt-1.5 max-w-xs text-sm text-forest-950/55">{description}</p>
+      <p className="mt-1.5 max-w-xs text-sm text-forest-950/68">{description}</p>
       {(children || (actionHref && actionLabel)) && (
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
           {children}

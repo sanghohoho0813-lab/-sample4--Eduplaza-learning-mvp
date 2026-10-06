@@ -28,6 +28,27 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ASSIGNMENTS, COURSES, QUIZZES, courseLessons, getCourse, getLesson } from "./data";
+import {
+  WEEKLY_GOAL_MIN,
+  computeLast7,
+  computeStreak,
+  computeWeakQuestions,
+  dayKey,
+  daysUntil,
+  earnedAchievements,
+} from "./learning";
+import { DEFAULT_NOTIFICATIONS, sanitizeState } from "./persist";
+import type { DayMinutes, WeakQuestion } from "./learning";
+
+// 기존 화면들이 store에서 가져다 쓰던 것들은 그대로 열어 둔다
+export {
+  WEEKLY_GOAL_MIN,
+  dayKey,
+  daysUntil,
+  dueLabel,
+  type DayMinutes,
+  type WeakQuestion,
+} from "./learning";
 import type {
   Activity,
   Assignment,
@@ -44,116 +65,12 @@ import type {
 
 export const STORAGE_KEY = "eduplaza-state-v3";
 
-export const WEEKLY_GOAL_MIN = 300; // 최근 7일 기준 5시간
-
-const DEFAULT_NOTIFICATIONS: NotificationPrefs = {
-  daily: true,
-  assignment: true,
-  marketing: false,
-};
-const STUDY_TYPES = new Set(["lesson", "quiz", "review", "assignment", "note"]);
-const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
-
-// ---------- 날짜 헬퍼 ----------
-
-export function dayKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
-}
 
 function daysAgo(n: number, hour = 21, minute = 10): Date {
   const d = new Date();
   d.setDate(d.getDate() - n);
   d.setHours(hour, minute, 0, 0);
   return d;
-}
-
-/** 오늘 기준 남은 일수. 오늘 마감이면 0, 지났으면 음수. */
-export function daysUntil(key: string): number {
-  const [y, m, d] = key.split("-").map(Number);
-  const due = new Date(y, m - 1, d).getTime();
-  const t = new Date();
-  const today = new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime();
-  return Math.round((due - today) / 86400000);
-}
-
-export function dueLabel(dLeft: number): string {
-  if (dLeft < 0) return "마감됨";
-  if (dLeft === 0) return "오늘 마감";
-  if (dLeft === 1) return "내일 마감";
-  return `D-${dLeft}`;
-}
-
-// ---------- 로그 기반 파생값 (순수 함수) ----------
-
-function computeStreak(activity: Activity[]): number {
-  const days = new Set(
-    activity.filter((a) => STUDY_TYPES.has(a.type)).map((a) => dayKey(new Date(a.at)))
-  );
-  const cursor = new Date();
-  // 오늘 아직 안 했어도 어제까지 이어졌으면 연속 기록은 살아 있다.
-  if (!days.has(dayKey(cursor))) cursor.setDate(cursor.getDate() - 1);
-  let n = 0;
-  while (days.has(dayKey(cursor))) {
-    n++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return n;
-}
-
-export interface DayMinutes {
-  key: string;
-  label: string; // 요일
-  minutes: number;
-  isToday: boolean;
-}
-
-function computeLast7(activity: Activity[]): DayMinutes[] {
-  const out: DayMinutes[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = dayKey(d);
-    const minutes = activity
-      .filter((a) => a.type === "lesson" && dayKey(new Date(a.at)) === key)
-      .reduce((sum, a) => sum + (a.minutes ?? 0), 0);
-    out.push({ key, label: WEEKDAY[d.getDay()], minutes, isToday: i === 0 });
-  }
-  return out;
-}
-
-export interface WeakQuestion {
-  quizId: string;
-  questionId: string;
-  topic: string;
-}
-
-/**
- * 퀴즈별로 시간순으로 시도를 따라가며 "지금 틀려 있는 문항"을 구한다.
- * 전체 풀이는 오답 목록을 새로 정하고, 복습 풀이는 맞힌 문항을 목록에서 지운다.
- */
-function computeWeakQuestions(results: QuizResult[]): WeakQuestion[] {
-  const out: WeakQuestion[] = [];
-  for (const quiz of QUIZZES) {
-    const attempts = results
-      .filter((r) => r.quizId === quiz.id)
-      .sort((a, b) => a.date.localeCompare(b.date));
-    let wrong = new Set<string>();
-    for (const r of attempts) {
-      if (r.mode === "full") wrong = new Set();
-      r.questionIds.forEach((qid, i) => {
-        const q = quiz.questions.find((x) => x.id === qid);
-        if (!q) return;
-        if (r.answers[i] === q.answerIndex) wrong.delete(qid);
-        else wrong.add(qid);
-      });
-    }
-    for (const q of quiz.questions) {
-      if (wrong.has(q.id)) out.push({ quizId: quiz.id, questionId: q.id, topic: q.topic });
-    }
-  }
-  return out;
 }
 
 export interface AchievementDef {
@@ -174,25 +91,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
 
 /** 상태를 보고 새로 달성한 성취를 해금하고, 해금 자체도 활동 로그에 남긴다. */
 function applyAchievements(s: UserState): UserState {
-  const has = new Set(s.unlockedAchievements);
-  const earned: string[] = [];
-  const check = (id: string, ok: boolean) => {
-    if (ok && !has.has(id)) earned.push(id);
-  };
-  const completed = Object.values(s.lessonProgress).filter((v) => v === "completed").length;
-  const streak = computeStreak(s.activity);
-  const weekly = computeLast7(s.activity).reduce((a, d) => a + d.minutes, 0);
-  const anyCourseDone = s.enrollments.some((e) => {
-    const c = getCourse(e.courseId);
-    return c ? courseLessons(c).every((l) => s.lessonProgress[l.id] === "completed") : false;
-  });
-
-  check("first-lesson", completed > 0);
-  check("first-course", anyCourseDone);
-  check("streak-3", streak >= 3);
-  check("streak-7", streak >= 7);
-  check("quiz-100", s.quizResults.some((r) => r.mode === "full" && r.score === 100));
-  check("weekly-goal", weekly >= WEEKLY_GOAL_MIN);
+  const earned = earnedAchievements(s);
   if (earned.length === 0) return s;
 
   const now = new Date().toISOString();
@@ -212,7 +111,8 @@ function applyAchievements(s: UserState): UserState {
 
 // ---------- 시드 (첫 방문 데모 유저) ----------
 
-function seedState(): UserState {
+/** 첫 방문 데모 유저 — 테스트에서도 같은 출발점으로 쓴다 */
+export function seedState(): UserState {
   const lessonProgress: Record<string, LessonStatus> = {};
   const complete = (courseId: string, count: number) => {
     const lessons = courseLessons(getCourse(courseId)!);
@@ -407,6 +307,8 @@ interface StoreApi {
   // favorites
   isFavorite: (courseId: string) => boolean;
   toggleFavorite: (courseId: string) => void;
+  /** 데모 데이터를 첫 방문 상태로 되돌린다(새로고침 없이) */
+  resetDemo: () => void;
   // settings
   /** 관심분야 토글. 마지막 하나는 지울 수 없다(false 반환) */
   toggleInterest: (categoryId: CategoryId) => boolean;
@@ -429,28 +331,77 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const skipPersist = useRef(true);
 
+  // 다른 탭에서 받아온 상태는 다시 저장하지 않는다(탭끼리 서로 덮어쓰는 핑퐁 방지)
+  const fromOtherTab = useRef(false);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as UserState;
-        if (parsed && Array.isArray(parsed.enrollments) && Array.isArray(parsed.activity)) {
-          setState(parsed);
-        }
-      }
+      // 손상·구버전 데이터는 sanitizeState가 고치거나(null이면) 시드로 시작한다
+      const restored = raw ? sanitizeState(JSON.parse(raw)) : null;
+      if (restored) setState(restored);
     } catch {
-      // 손상된 저장 데이터는 무시하고 시드로 시작
+      // JSON 자체가 깨졌으면 시드로 시작
     }
     skipPersist.current = false;
     setReady(true);
+
+    // 같은 브라우저의 다른 탭에서 학습하면 이 탭에도 바로 반영한다
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY) return;
+      try {
+        const next = e.newValue ? sanitizeState(JSON.parse(e.newValue)) : null;
+        fromOtherTab.current = true;
+        lastWritten.current = e.newValue;
+        setState(next ?? seedState());
+      } catch {
+        // 무시
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // 탭을 닫거나 다른 앱으로 넘어가는 순간에도 마지막 상태를 한 번 더 확실히 저장한다
+  // (렌더 직후 저장 effect가 돌기 전에 페이지가 사라지는 경우 대비)
+  const latest = useRef(state);
+  latest.current = state;
+  const lastWritten = useRef<string | null>(null);
+  useEffect(() => {
+    const flush = () => {
+      if (skipPersist.current) return;
+      const json = JSON.stringify(latest.current);
+      // 이미 저장된 그대로면 쓰지 않는다 — 다른 곳(다른 탭·초기화)이 바꾼 값을 덮지 않게
+      if (json === lastWritten.current) return;
+      try {
+        localStorage.setItem(STORAGE_KEY, json);
+        lastWritten.current = json;
+      } catch {
+        // 무시 — 아래 effect와 같은 이유
+      }
+    };
+    const onHidden = () => document.visibilityState === "hidden" && flush();
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onHidden);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onHidden);
+    };
   }, []);
 
   useEffect(() => {
     if (skipPersist.current) return;
+    if (fromOtherTab.current) {
+      fromOtherTab.current = false;
+      return;
+    }
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // 저장 실패는 치명적이지 않음
+      const json = JSON.stringify(state);
+      localStorage.setItem(STORAGE_KEY, json);
+      lastWritten.current = json;
+    } catch (err) {
+      // 용량 초과·사생활 보호 모드 등 — 화면은 계속 동작하고, 새로고침 시에만 유실된다
+      if (process.env.NODE_ENV !== "production") console.warn("[EduPlaza] 저장 실패", err);
     }
   }, [state]);
 
@@ -750,6 +701,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const resetDemo = useCallback(() => setState(seedState()), []);
+
   // ---- settings ----
   const toggleInterest = useCallback(
     (categoryId: CategoryId) => {
@@ -840,6 +793,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       deleteNote,
       isFavorite,
       toggleFavorite,
+      resetDemo,
       toggleInterest,
       notifications,
       setNotification,
@@ -875,6 +829,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       deleteNote,
       isFavorite,
       toggleFavorite,
+      resetDemo,
       toggleInterest,
       notifications,
       setNotification,

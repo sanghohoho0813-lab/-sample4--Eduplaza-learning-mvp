@@ -78,7 +78,7 @@ export function SampleBridgeCTA({
         >
           {COPY.headline}
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-forest-950/60 md:text-base">
+        <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-forest-950/72 md:text-base">
           {COPY.description}
         </p>
 
@@ -118,7 +118,7 @@ export function SampleBridgeCTA({
             href={homeHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-[48px] items-center justify-center gap-1.5 px-4 text-sm font-semibold text-forest-950/55 underline-offset-4 transition-colors hover:text-forest-800 hover:underline"
+            className="inline-flex min-h-[48px] items-center justify-center gap-1.5 px-4 text-sm font-semibold text-forest-950/68 underline-offset-4 transition-colors hover:text-forest-800 hover:underline"
           >
             {COPY.tertiary}
             <ExternalLink size={14} className="shrink-0 opacity-60" />

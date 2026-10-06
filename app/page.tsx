@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import {
   ArrowRight,
@@ -22,6 +21,7 @@ import { CourseThumbnail } from "@/components/Thumbnail";
 import { ProgressBar, ProgressRing } from "@/components/ProgressBar";
 import { ActivityList } from "@/components/ActivityList";
 import { HomeSkeleton } from "@/components/Skeletons";
+import { BrandLogo } from "@/components/BrandMark";
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -101,11 +101,11 @@ export default function HomePage() {
           <Target size={18} className="text-forest-600" />
           오늘의 목표
         </h2>
-        <span className="text-sm font-semibold text-forest-950/50">
+        <span className="text-sm font-semibold text-forest-950/68">
           {doneGoals}/{todayGoals.length}
         </span>
       </div>
-      <ProgressBar
+      <ProgressBar label="오늘의 목표 진행"
         value={(doneGoals / todayGoals.length) * 100}
         fillClass="bg-success"
         height="h-1.5"
@@ -116,7 +116,7 @@ export default function HomePage() {
           g.done ? (
             <li
               key={g.id}
-              className="flex min-h-[48px] items-center gap-3 rounded-xl bg-forest-50 px-3.5 text-sm text-forest-950/45"
+              className="flex min-h-[48px] items-center gap-3 rounded-xl bg-forest-50 px-3.5 text-sm text-forest-950/68"
             >
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-success text-white">
                 <Check size={13} className="animate-check-pop" />
@@ -133,14 +133,14 @@ export default function HomePage() {
                 <span className="flex-1">{g.label}</span>
                 <ChevronRight
                   size={16}
-                  className="shrink-0 text-forest-950/30 transition-transform group-hover:translate-x-0.5"
+                  className="shrink-0 text-forest-950/68 transition-transform group-hover:translate-x-0.5"
                 />
               </Link>
             </li>
           )
         )}
       </ul>
-      <p className="mt-3 text-xs text-forest-950/45">
+      <p className="mt-3 text-xs text-forest-950/68">
         {doneGoals === todayGoals.length
           ? "오늘 목표 달성! 내일도 이어가요."
           : "학습하면 자동으로 체크돼요."}
@@ -160,16 +160,16 @@ export default function HomePage() {
       </div>
       <p className="font-display text-2xl font-semibold text-forest-950">
         {formatMinutes(weeklyTotal)}
-        <span className="ml-1.5 text-sm font-medium text-forest-950/45">
+        <span className="ml-1.5 text-sm font-medium text-forest-950/68">
           / {formatMinutes(WEEKLY_GOAL_MIN)}
         </span>
       </p>
-      <ProgressBar
+      <ProgressBar label="이번 주 목표 달성률"
         value={(weeklyTotal / WEEKLY_GOAL_MIN) * 100}
         fillClass={weeklyLeft === 0 ? "bg-success" : "bg-forest-600"}
         className="mt-3"
       />
-      <p className="mt-2 text-sm text-forest-950/60">
+      <p className="mt-2 text-sm text-forest-950/72">
         {weeklyGoalMessage(weeklyTotal, WEEKLY_GOAL_MIN)}
       </p>
       <div className="mt-4 flex items-center gap-2 border-t border-cream-100 pt-4 text-sm text-forest-950/70">
@@ -202,13 +202,9 @@ export default function HomePage() {
       {/* 미래에이아이랩 브랜드 리본 */}
       <section className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-cream-300/70 bg-white px-4 py-3 shadow-card sm:px-5 sm:py-3.5 md:mb-6">
         <div className="flex min-w-0 items-center gap-3">
-          <img
-            src={BRAND.logo}
-            alt={`${BRAND.company} 로고`}
-            className="h-10 w-auto shrink-0 md:h-12"
-          />
+          <BrandLogo priority className="h-10 w-auto shrink-0 md:h-12" />
           <span className="hidden h-8 w-px bg-cream-300 sm:block" />
-          <p className="hidden text-sm font-semibold text-forest-950/60 sm:block">
+          <p className="hidden text-sm font-semibold text-forest-950/72 sm:block">
             {BRAND.company}이 만든 학습 플랫폼 레퍼런스
           </p>
         </div>
@@ -248,7 +244,7 @@ export default function HomePage() {
                         {store.courseProgress(current.id)}%
                       </span>
                     </div>
-                    <ProgressBar
+                    <ProgressBar label="이어서 학습할 강의 진도"
                       value={store.courseProgress(current.id)}
                       trackClass="bg-forest-800"
                       fillClass="bg-gradient-to-r from-cream-300 to-gold-300"
@@ -281,9 +277,10 @@ export default function HomePage() {
                     title={current.title}
                     courseId={current.id}
                     priority
+                    sizes="220px"
                     className="ring-1 ring-cream-50/10"
                   />
-                  <p className="mt-2 text-xs text-cream-200/50">
+                  <p className="mt-2 text-xs text-cream-200/65">
                     {getInstructor(current.instructorId)?.name} 강사
                   </p>
                 </div>
@@ -292,7 +289,7 @@ export default function HomePage() {
           ) : (
             <section className="card flex flex-col items-start justify-center p-8">
               <h2 className="font-display text-xl font-semibold">새로운 배움을 시작해볼까요?</h2>
-              <p className="mt-2 text-sm text-forest-950/55">
+              <p className="mt-2 text-sm text-forest-950/68">
                 관심 있는 강의를 찾아 첫 학습을 시작해보세요.
               </p>
               <Link
@@ -313,15 +310,15 @@ export default function HomePage() {
               <ProgressRing value={overall} size={56} stroke={6}>
                 <span className="text-sm font-bold text-forest-800">{overall}%</span>
               </ProgressRing>
-              <span className="text-xs text-forest-950/55">전체 진행률</span>
+              <span className="text-xs text-forest-950/68">전체 진행률</span>
             </div>
             <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
               <span className="font-display text-2xl font-semibold text-forest-950">{doneCourses}개</span>
-              <span className="text-xs text-forest-950/55">완료한 강의</span>
+              <span className="text-xs text-forest-950/68">완료한 강의</span>
             </div>
             <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
               <span className="font-display text-2xl font-semibold text-forest-950">{activeCourses}개</span>
-              <span className="text-xs text-forest-950/55">수강 중</span>
+              <span className="text-xs text-forest-950/68">수강 중</span>
             </div>
           </section>
 
@@ -352,7 +349,7 @@ export default function HomePage() {
                       <span className="hidden shrink-0 text-sm font-semibold text-forest-600 sm:block">
                         과제 제출하기
                       </span>
-                      <ChevronRight size={18} className="shrink-0 text-forest-950/30" />
+                      <ChevronRight size={18} className="shrink-0 text-forest-950/68" />
                     </Link>
                   </li>
                 )}
@@ -376,7 +373,7 @@ export default function HomePage() {
                       <span className="hidden shrink-0 text-sm font-semibold text-forest-600 sm:block">
                         복습하기
                       </span>
-                      <ChevronRight size={18} className="shrink-0 text-forest-950/30" />
+                      <ChevronRight size={18} className="shrink-0 text-forest-950/68" />
                     </Link>
                   </li>
                 )}
@@ -418,7 +415,7 @@ export default function HomePage() {
             <div className="mb-3 flex items-end justify-between gap-3">
               <div>
                 <h2 className="text-lg font-bold text-forest-950">다음에 들어볼 강의</h2>
-                <p className="text-xs text-forest-950/50">관심 분야({interestNames}) 기준 추천</p>
+                <p className="text-xs text-forest-950/68">관심 분야({interestNames}) 기준 추천</p>
               </div>
               <Link
                 href="/courses"

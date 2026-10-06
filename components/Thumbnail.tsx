@@ -1,13 +1,14 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import clsx from "clsx";
 import { GraduationCap } from "lucide-react";
 import { THUMBNAIL_TONES } from "@/lib/data";
 
-// 16:9 강의 썸네일. public/images/courses/{courseId}.jpg 를 사용하고,
-// 파일이 없거나 로딩에 실패하면 그라디언트 플레이스홀더로 대체한다.
+// 16:9 강의 썸네일. public/images/courses/{courseId}.jpg 를 next/image로 내려
+// 화면 폭에 맞는 크기·형식(AVIF/WebP)으로 받는다. 파일이 없거나 로딩에 실패하면
+// 그라디언트 플레이스홀더로 대체한다.
 export function CourseThumbnail({
   tone,
   title,
@@ -15,6 +16,7 @@ export function CourseThumbnail({
   className,
   rounded = "rounded-xl",
   priority = false,
+  sizes = "(min-width: 1024px) 360px, 100vw",
 }: {
   tone: number;
   title: string;
@@ -22,6 +24,8 @@ export function CourseThumbnail({
   className?: string;
   rounded?: string;
   priority?: boolean;
+  /** 실제로 그려지는 폭 — 브라우저가 알맞은 해상도만 내려받게 한다 */
+  sizes?: string;
 }) {
   const [failed, setFailed] = useState(false);
   const showImage = Boolean(courseId) && !failed;
@@ -36,13 +40,14 @@ export function CourseThumbnail({
       )}
     >
       {showImage ? (
-        <img
+        <Image
           src={`/images/courses/${courseId}.jpg`}
           alt={`${title} 강의 썸네일`}
-          loading={priority ? "eager" : "lazy"}
-          decoding="async"
+          fill
+          sizes={sizes}
+          priority={priority}
           onError={() => setFailed(true)}
-          className="h-full w-full object-cover"
+          className="object-cover"
         />
       ) : (
         <>
