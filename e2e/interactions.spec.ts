@@ -61,7 +61,7 @@ test("퀴즈: 도중에 나가면 확인, 결과는 맨 위에서·한 번만 �
   }
   await page.keyboard.press("Enter"); // 연타
   await expect(page.getByText(/문항별 결과/)).toBeVisible();
-  expect(await page.evaluate(() => scrollY)).toBe(0);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
   const saved = await page.evaluate(
     () => JSON.parse(localStorage.getItem("eduplaza-state-v3")!).quizResults.filter((r: { quizId: string }) => r.quizId === "q3").length
   );
@@ -147,4 +147,18 @@ test("없는 주소는 404, 홈·강의 찾기로 돌아갈 수 있다", async (
   const res = await page.goto("/nope");
   expect(res?.status()).toBe(404);
   await expect(page.getByRole("link", { name: "강의 찾기", exact: true }).last()).toBeVisible();
+});
+
+test("'/' 키로 어디서든 강의 검색", async ({ page }) => {
+  await page.goto("/report");
+  await expect(page.getByRole("heading", { name: "학습 리포트" })).toBeVisible();
+  await page.keyboard.press("/");
+  if (page.viewportSize()!.width >= 640) {
+    await expect(page.getByRole("combobox", { name: "강의 검색" })).toBeFocused();
+  }
+  // 입력칸 안에서는 '/'를 그대로 입력한다
+  await page.goto("/notes");
+  await page.getByRole("button", { name: /새 노트 작성/ }).click();
+  await page.keyboard.type("a/b");
+  await expect(page.locator("textarea").first()).toHaveValue("a/b");
 });

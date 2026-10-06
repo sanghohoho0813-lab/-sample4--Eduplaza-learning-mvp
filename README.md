@@ -12,11 +12,25 @@
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
-npm run build      # 프로덕션 빌드 (Vercel 배포 가능)
-npm run typecheck  # tsc --noEmit
-npm run lint       # next lint (eslint-config-next)
+npm run dev          # http://localhost:3000
+npm run build        # 프로덕션 빌드
+npm start            # 빌드 결과 실행
 ```
+
+### 품질 게이트
+
+| 명령 | 내용 |
+| --- | --- |
+| `npm run lint` | ESLint (`next/core-web-vitals`) — 빌드에서도 무시하지 않음 |
+| `npm run typecheck` | `tsc --noEmit` (strict) |
+| `npm test` | Vitest 단위 테스트 — 학습 도메인 로직·저장 데이터 복구 |
+| `npm run test:e2e` | Playwright E2E — PC·모바일 두 프로젝트, axe 접근성 포함 (빌드 후 실행) |
+| `npm run check` | lint + typecheck + 단위 테스트 한 번에 |
+
+CI(`.github/workflows/ci.yml`)는 push·PR마다 lint → typecheck → unit → build → E2E 순으로 돌고,
+E2E가 실패하면 Playwright 리포트(trace 포함)를 아티팩트로 남깁니다.
+
+> 브라우저를 내려받을 수 없는 환경에서는 `PW_CHROMIUM_PATH`로 Chromium 실행 파일을 지정하면 됩니다.
 
 ## 기술 스택
 
@@ -31,11 +45,43 @@ npm run lint       # next lint (eslint-config-next)
 > notes / reviews / favorites)를 그대로 반영하고 있어, 추후 `lib/store.tsx`의
 > 액션들을 Supabase 쿼리로 교체하면 됩니다.
 
+## 구조
+
+```
+app/                 라우트(App Router). 각 세그먼트의 layout.tsx가 탭 제목·설명(메타데이터)을 가진다
+  error.tsx          화면 단위 에러 경계 — 다시 시도 / 홈으로
+  global-error.tsx   루트까지 실패했을 때의 마지막 안전망
+components/          화면 공용 UI (CourseCard/CourseRow, ConfirmDialog, Header, ProgressBar …)
+lib/
+  data.ts            강의·강사·퀴즈·과제 시드 데이터 (Supabase 스키마와 같은 모양)
+  learning.ts        학습 도메인 순수 함수 — 연속 학습일, 최근 7일, 지금 틀려 있는 문항, 성취 판정
+  persist.ts         localStorage 값 검증·복구 (구버전 필드 채움, 없는 강의·중복·깨진 항목 제거)
+  store.tsx          React 상태 + 행동(수강·완료·퀴즈·노트·과제…) — 위 두 모듈을 조합
+  insights.ts        화면 문구용 계산 (취약 영역 묶기, 주간 목표 문장)
+tests/unit/          Vitest
+e2e/                 Playwright (fixtures.ts: 콘솔 에러가 나면 어떤 테스트든 실패)
+```
+
+### 설계 메모
+
+- **숫자를 저장하지 않고 계산한다.** 연속 학습일·주간 학습시간·오늘의 목표·캘린더는 전부 활동 로그에서
+  파생된다. 그래서 행동 하나가 홈·리포트·캘린더·내 학습에 동시에, 어긋남 없이 반영된다.
+  시간에 의존하는 함수는 `now`를 인자로 받아 테스트에서 날짜를 고정한다.
+- **저장 데이터는 믿지 않는다.** 읽을 때마다 `sanitizeState`로 검증하고, 복구할 수 없으면 시드로 시작한다.
+  다른 탭의 변경은 `storage` 이벤트로 받아 반영하고, 받은 상태는 다시 쓰지 않아 탭끼리 덮어쓰지 않는다.
+  페이지를 떠나는 순간(`pagehide`)엔 아직 저장되지 않은 변경만 한 번 더 저장한다.
+- **조건은 주소에 둔다.** 강의 찾기의 검색·필터·정렬, 내 학습 탭, 플레이어의 레슨은 URL 쿼리에 있다.
+  뒤로 가기·새로고침·공유가 자연스럽고, 잘못된 값은 무시한다.
+- **이미지는 쓰는 크기만큼.** `next/image`에 실제 표시 폭(`sizes`)을 알려 AVIF/WebP로 받는다
+  (모바일 목록 썸네일 144KB JPG → 약 4KB).
+- **접근성은 자동으로 지킨다.** 모든 주요 화면과 열린 대화상자·패널을 axe(WCAG 2.1 AA)로 검사하는
+  E2E가 있다. 보조 텍스트 불투명도(`/68`, `/72`)는 흰색·크림 배경 모두에서 4.5:1을 넘기는 값으로 정했다.
+
 ## 주요 화면
 
 1차 메뉴는 학생의 목적 기준 6개입니다 — **홈 · 강의 찾기 · 내 학습 · 학습 활동 · 리포트 · 마이**.
 퀴즈·과제·노트·캘린더는 "학습 활동" 아래에 묶었고 라우트는 그대로입니다
-(메뉴 정의: `lib/nav.ts`). 모바일 하단 탭은 5칸이라 마이는 헤더 프로필 버튼으로 들어갑니다.
+(메뉴 정의: `lib/nav.ts`). 모바일 하단 탭은 5칸이라 리포트는 홈의 "이번 주 학습"·마이페이지·퀴즈 결과에서 들어갑니다.
 
 | 메뉴 | 경로 | 화면 |
 | --- | --- | --- |
@@ -139,6 +185,8 @@ npm run lint       # next lint (eslint-config-next)
   레슨 완료는 화면 안 완료 패널로만 알립니다(같은 내용의 토스트를 겹쳐 띄우지 않음).
 - **입력 검증** — 과제는 20자 이상부터 제출할 수 있고 글자 수를 실시간으로 보여줍니다.
   노트·과제는 `Ctrl/⌘ + Enter`로 저장·제출합니다.
+- **키보드** — `/`로 어디서든 강의 검색, 퀴즈는 `1`~`4`·`Enter`, 대화상자는 포커스가 창 안에서만 돌고
+  `Esc`로 닫힙니다. 본문 바로가기 링크를 제공합니다.
 - **설정 저장** — 마이페이지의 관심분야(홈 추천 기준)와 알림 설정은 저장되어 새로고침 후에도 유지됩니다.
   관심분야는 최소 1개를 남깁니다.
 - **접근성** — 전역 `:focus-visible` 링, 44px 이상 터치 타겟, aria 라벨,

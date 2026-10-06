@@ -119,7 +119,6 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
       questions.map((q) => q.id),
       picks
     );
-    window.scrollTo({ top: 0 }); // 마지막 문제 위치에 머물지 않고 점수부터 보이게
     setResult(saved); // 결과 화면이 곧 피드백 — 토스트는 성취 해금 때만(AchievementWatcher)
   }, [questions, step, store, quiz.id, mode, picks]);
 
@@ -396,6 +395,10 @@ function QuizResultView({
   onRetry: () => void;
 }) {
   const store = useStore();
+  // 결과가 그려진 뒤 맨 위(점수)로 — 직전 문항의 부드러운 스크롤이 남아 있어도 즉시 끊고 이동한다
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  }, []);
   const wrongNow = questions.filter((q, i) => picks[i] !== q.answerIndex);
   // 저장 직후의 스토어 기준 — 복습까지 반영된 "아직 남은" 틀린 문제
   const remaining = store.weakQuestions.filter((w) => w.quizId === quiz.id).length;

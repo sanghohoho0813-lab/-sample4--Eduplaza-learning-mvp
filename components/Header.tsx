@@ -164,6 +164,23 @@ export function Header({
     setSeen(signature);
   };
 
+  // "/" 키로 어디서든 검색칸으로 — 입력 중일 때는 가로채지 않는다
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
+      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      const el = inputRef.current?.offsetParent ? inputRef.current : document.getElementById("course-search");
+      if (!el) return;
+      e.preventDefault();
+      (el as HTMLInputElement).focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const goSearch = (query: string) => {
     setOpen(false);
     setCursor(-1);
@@ -240,6 +257,7 @@ export function Header({
               className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-forest-950/68"
             />
             <input
+              ref={inputRef}
               value={q}
               onChange={(e) => {
                 setQ(e.target.value);
@@ -251,11 +269,20 @@ export function Header({
               placeholder="강의 검색"
               role="combobox"
               aria-label="강의 검색"
+              aria-keyshortcuts="/"
               aria-autocomplete="list"
               aria-controls="search-suggestions"
               aria-expanded={open && q.trim().length > 0}
               className="h-12 w-64 rounded-full border border-cream-300 bg-white pl-11 pr-10 text-sm text-forest-950 placeholder:text-forest-950/35 outline-none transition-all focus:w-80 focus:border-forest-400 focus:ring-2 focus:ring-forest-200"
             />
+            {!q && (
+              <kbd
+                aria-hidden
+                className="pointer-events-none absolute right-3.5 top-1/2 hidden -translate-y-1/2 rounded-md border border-cream-300 bg-cream-50 px-1.5 font-sans text-xs font-semibold text-forest-950/68 lg:block"
+              >
+                /
+              </kbd>
+            )}
             {q && (
               <button
                 type="button"
