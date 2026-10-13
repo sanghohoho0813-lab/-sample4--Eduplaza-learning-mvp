@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { CheckCircle2, Heart, PlayCircle, Star } from "lucide-react";
+import { CheckCircle2, Heart, PlayCircle, Sparkles, Star } from "lucide-react";
 import type { Course } from "@/lib/types";
 import {
   LEVEL_LABEL,
@@ -129,9 +129,12 @@ function EnrolledLine({ pct }: { pct: number }) {
 export function CourseCard({
   course,
   showProgress = false,
+  reason,
 }: {
   course: Course;
   showProgress?: boolean;
+  /** 추천 이유 — "왜 이 강의인지"를 제목 위에 한 줄로 */
+  reason?: string;
 }) {
   const v = useCourseView(course);
 
@@ -164,7 +167,14 @@ export function CourseCard({
       </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <Byline category={v.category} instructor={v.instructor} />
+        {reason ? (
+          <p className="mb-1 flex items-start gap-1 text-xs font-semibold text-forest-700">
+            <Sparkles size={13} className="mt-0.5 shrink-0" aria-hidden />
+            <span className="line-clamp-2">{reason}</span>
+          </p>
+        ) : (
+          <Byline category={v.category} instructor={v.instructor} />
+        )}
         <h3 className="mt-1 line-clamp-2 text-base font-bold leading-snug text-forest-950 transition-colors group-hover:text-forest-600">
           {course.title}
         </h3>

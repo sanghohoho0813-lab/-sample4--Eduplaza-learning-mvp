@@ -47,4 +47,22 @@ describe("저장 데이터 복원 sanitizeState", () => {
     expect(restored.unlockedAchievements).toEqual([]);
     expect(restored.name).toBe("김팀장");
   });
+
+  it("메모의 재생 위치는 0 이상의 숫자만 정수로 남기고, 메모 자체는 지킨다", () => {
+    const seed = seedState();
+    const base = seed.notes[0];
+    const dirty = {
+      ...JSON.parse(JSON.stringify(seed)),
+      notes: [
+        { ...base, id: "ok", at: 75.8 },
+        { ...base, id: "neg", at: -3 },
+        { ...base, id: "str", at: "12" },
+        { ...base, id: "none", at: undefined },
+      ],
+    };
+    const notes = sanitizeState(dirty)!.notes;
+    expect(notes.map((n) => n.id)).toEqual(["ok", "neg", "str", "none"]);
+    expect(notes.map((n) => n.at)).toEqual([75, undefined, undefined, undefined]);
+    expect(notes.every((n) => !("at" in n) || typeof n.at === "number")).toBe(true);
+  });
 });

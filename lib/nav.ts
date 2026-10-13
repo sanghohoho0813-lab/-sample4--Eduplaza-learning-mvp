@@ -57,3 +57,8 @@ export function matchPath(pathname: string, prefix: string): boolean {
 export function isNavActive(pathname: string, item: NavItem): boolean {
   return item.match.some((p) => matchPath(pathname, p));
 }
+
+/** 학습에 집중하는 화면 — 모바일 하단 탭 대신 화면 전용 조작 바를 쓴다 */
+export function isFocusRoute(pathname: string): boolean {
+  return pathname.startsWith("/learn/");
+}

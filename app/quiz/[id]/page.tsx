@@ -66,6 +66,8 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
   const [checked, setChecked] = useState(false);
   const [picks, setPicks] = useState<number[]>([]);
   const [result, setResult] = useState<QuizResult | null>(null);
+  /** 저장 직전 상태 — 결과 화면에서 "무엇이 바뀌었는지"를 전후로 보여준다 */
+  const [before, setBefore] = useState<{ weak: number; planDone: number } | null>(null);
 
   useEffect(() => {
     if (!store.ready || questions !== null) return;
@@ -113,6 +115,10 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
     }
     if (savedRef.current) return; // 빠른 두 번 클릭·Enter 연타로 결과가 두 번 저장되지 않게
     savedRef.current = true;
+    setBefore({
+      weak: store.weakQuestions.length,
+      planDone: store.todayPlan.filter((p) => p.done).length,
+    });
     const saved = store.saveQuizResult(
       quiz.id,
       mode,
@@ -178,6 +184,7 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
         questions={questions}
         picks={picks}
         result={result}
+        before={before}
         onRetry={onRetry}
       />
     );
@@ -385,6 +392,7 @@ function QuizResultView({
   questions,
   picks,
   result,
+  before,
   onRetry,
 }: {
   quiz: Quiz;
@@ -392,6 +400,7 @@ function QuizResultView({
   questions: QuizQuestion[];
   picks: number[];
   result: QuizResult;
+  before: { weak: number; planDone: number } | null;
   onRetry: () => void;
 }) {
   const store = useStore();
@@ -403,7 +412,7 @@ function QuizResultView({
   // 저장 직후의 스토어 기준 — 복습까지 반영된 "아직 남은" 틀린 문제
   const remaining = store.weakQuestions.filter((w) => w.quizId === quiz.id).length;
   const lesson = store.isEnrolled(quiz.courseId) ? store.nextLesson(quiz.courseId) : null;
-  const quizGoalDone = store.todayGoals.find((g) => g.id === "quiz")?.done;
+  const planDone = store.todayPlan.filter((p) => p.done).length;
 
   // 다음 행동은 하나만 강조한다: 틀린 게 남았으면 복습, 아니면 강의로 복귀.
   // 이미 복습 화면이면 같은 주소로 이동해도 새로 시작되지 않으므로 직접 재시작한다.
@@ -432,15 +441,11 @@ function QuizResultView({
           ? "훌륭해요! 조금만 더 하면 만점이에요"
           : "괜찮아요, 틀린 문제부터 다시 짚어봐요";
 
-  // 반영 내용은 한 줄로만 — 결과 화면의 주인공은 점수와 다음 행동
-  const reflected = [
-    wrongNow.length > 0
-      ? `틀린 주제 ${new Set(wrongNow.map((q) => q.topic)).size}개를 취약 영역에 반영`
-      : "퀴즈 기록에 반영",
-    quizGoalDone ? "오늘의 목표 ‘퀴즈 1개’ 완료" : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  // 이 풀이로 무엇이 바뀌었는지 — 틀린 문제(복습 목록)와 오늘 할 일. 점수 아래 한 줄 높이로만.
+  const weakAfter = store.weakQuestions.length;
+  const weakTopics = Array.from(
+    new Set(store.weakQuestions.filter((w) => w.quizId === quiz.id).map((w) => w.topic))
+  );
 
   return (
     <div className="mx-auto max-w-2xl animate-scale-in">
@@ -460,7 +465,30 @@ function QuizResultView({
             {mode === "full" && <span className="text-2xl text-cream-200/65">점</span>}
           </p>
           <p className="mt-3 text-base font-semibold text-cream-50">{headline}</p>
-          <p className="mt-1 text-sm text-cream-200/70">{reflected}</p>
+          <dl className="mx-auto mt-5 grid max-w-md grid-cols-2 gap-px overflow-hidden rounded-xl bg-cream-50/10 text-left">
+            <div className="bg-forest-900/80 px-4 py-3">
+              <dt className="text-xs text-cream-200/70">남은 오답</dt>
+              <dd className="mt-0.5 text-base font-semibold text-cream-50">
+                {before && before.weak !== weakAfter ? `${before.weak} → ${weakAfter}개` : `${weakAfter}개`}
+              </dd>
+              <dd className="mt-0.5 line-clamp-2 text-xs text-cream-200/70">
+                {weakTopics.length > 0
+                  ? `취약 영역 · ${weakTopics.join(", ")}`
+                  : mode === "review"
+                    ? "이 퀴즈 오답 모두 해결"
+                    : "이 퀴즈는 오답 없음"}
+              </dd>
+            </div>
+            <div className="bg-forest-900/80 px-4 py-3">
+              <dt className="text-xs text-cream-200/70">오늘 할 일</dt>
+              <dd className="mt-0.5 text-base font-semibold text-cream-50">
+                {planDone}/{store.todayPlan.length} 완료
+              </dd>
+              <dd className="mt-0.5 text-xs text-cream-200/70">
+                {before && planDone > before.planDone ? "방금 하나 더 끝냈어요" : "홈의 오늘 할 일에 반영돼요"}
+              </dd>
+            </div>
+          </dl>
 
           <div className="mx-auto mt-6 max-w-sm">
             {primary.href ? (

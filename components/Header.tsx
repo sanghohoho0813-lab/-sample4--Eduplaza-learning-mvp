@@ -60,8 +60,7 @@ function useNotices(): Notice[] {
         href: `/quiz/${weak.quiz.id}?mode=review`,
       });
     }
-    const studiedToday = store.todayGoals.some((g) => g.done);
-    if (store.streak > 0 && !studiedToday) {
+    if (store.streak > 0 && !store.studiedToday) {
       const course = store.currentCourse();
       const next = course ? store.nextLesson(course.id) : null;
       list.push({

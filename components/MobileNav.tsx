@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { MOBILE_NAV, isNavActive } from "@/lib/nav";
+import { MOBILE_NAV, isFocusRoute, isNavActive } from "@/lib/nav";
 
 export function MobileNav() {
   const pathname = usePathname();
+  // 플레이어에서는 레슨 조작 바가 이 자리를 쓴다
+  if (isFocusRoute(pathname)) return null;
 
   return (
     <nav

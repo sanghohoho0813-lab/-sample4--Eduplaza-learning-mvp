@@ -115,6 +115,7 @@ export const ACHIEVEMENT_IDS = [
   "streak-7",
   "quiz-100",
   "weekly-goal",
+  "weak-cleared",
 ] as const;
 
 /** 아직 해금되지 않았지만 지금 조건을 만족하는 성취 id 목록 */
@@ -134,6 +135,10 @@ export function earnedAchievements(s: UserState, now: Date = new Date()): string
     "streak-7": streak >= 7,
     "quiz-100": s.quizResults.some((r) => r.mode === "full" && r.score === 100),
     "weekly-goal": weekly >= WEEKLY_GOAL_MIN,
+    // 복습으로 틀린 문제를 전부 해결했을 때(처음부터 다 맞힌 경우가 아니라 '고쳐낸' 경험)
+    "weak-cleared":
+      s.quizResults.some((r) => r.mode === "review") &&
+      computeWeakQuestions(s.quizResults).length === 0,
   };
   return ACHIEVEMENT_IDS.filter((id) => met[id] && !has.has(id));
 }

@@ -129,6 +129,8 @@ export interface Note {
   courseId: string;
   lessonId: string | null;
   content: string;
+  /** 레슨 재생 중에 남긴 메모라면 그 시점(초) — 누르면 그 위치로 돌아간다 */
+  at?: number;
   createdAt: string;
   updatedAt: string;
 }

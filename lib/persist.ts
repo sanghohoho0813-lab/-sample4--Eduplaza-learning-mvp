@@ -132,11 +132,16 @@ export function sanitizeState(raw: unknown): UserState | null {
     enrollments,
     lessonProgress,
     quizResults: list(raw.quizResults, isQuizResult),
-    notes: list(raw.notes, isNote).map((n) => ({
-      ...n,
-      lessonId: isStr(n.lessonId) ? n.lessonId : null,
-      createdAt: isIsoDate(n.createdAt) ? n.createdAt : n.updatedAt,
-    })),
+    notes: list(raw.notes, isNote).map((n) => {
+      const { at, ...rest } = n;
+      return {
+        ...rest,
+        lessonId: isStr(n.lessonId) ? n.lessonId : null,
+        createdAt: isIsoDate(n.createdAt) ? n.createdAt : n.updatedAt,
+        // 재생 시점은 0 이상의 숫자일 때만 남긴다
+        ...(isNum(at) && at >= 0 ? { at: Math.floor(at) } : {}),
+      };
+    }),
     favorites: Array.from(new Set(list(raw.favorites, isStr).filter((id) => getCourse(id)))),
     assignments,
     assignmentDue,

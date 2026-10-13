@@ -1,25 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import clsx from "clsx";
 import {
   ArrowRight,
+  BookOpenCheck,
   Check,
-  ChevronRight,
   ClipboardList,
   Flame,
+  NotebookPen,
+  PenSquare,
   PlayCircle,
   RotateCcw,
-  Target,
+  type LucideIcon,
 } from "lucide-react";
 import { WEEKLY_GOAL_MIN, dueLabel, enrolledCourses, useStore } from "@/lib/store";
 import { BRAND } from "@/lib/brand";
-import { CATEGORIES, COURSES, QUIZZES, formatMinutes, getInstructor } from "@/lib/data";
+import { courseLessons, formatMinutes, getInstructor } from "@/lib/data";
 import { groupWeak, weeklyGoalMessage } from "@/lib/insights";
+import { compareWeeks, recommendCourses, type PlanItem, type PlanKind } from "@/lib/coach";
 import { Header } from "@/components/Header";
 import { CourseCard, CourseRow } from "@/components/CourseCard";
 import { CourseThumbnail } from "@/components/Thumbnail";
-import { ProgressBar, ProgressRing } from "@/components/ProgressBar";
-import { ActivityList } from "@/components/ActivityList";
+import { ProgressBar } from "@/components/ProgressBar";
 import { HomeSkeleton } from "@/components/Skeletons";
 import { BrandLogo } from "@/components/BrandMark";
 
@@ -31,167 +34,197 @@ function greeting(): string {
   return "좋은 저녁이에요";
 }
 
+const KIND: Record<PlanKind, { icon: LucideIcon; label: string }> = {
+  lesson: { icon: PlayCircle, label: "레슨" },
+  review: { icon: RotateCcw, label: "복습" },
+  quiz: { icon: PenSquare, label: "퀴즈" },
+  assignment: { icon: ClipboardList, label: "과제" },
+  note: { icon: NotebookPen, label: "메모" },
+};
+
+const clock = (iso: string) => {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
+
+/** 10분 안에 끝낸 일은 "방금"으로 — 방금 한 행동이 홈에 반영됐다는 걸 느끼게 */
+const isRecent = (iso?: string) =>
+  Boolean(iso) && Date.now() - new Date(iso!).getTime() < 10 * 60 * 1000;
+
 export default function HomePage() {
   const store = useStore();
-  const { ready, state, streak, weeklyTotal, todayGoals, weakQuestions, upcomingAssignments } =
-    store;
+  const { ready, state, streak, weeklyTotal, last7, todayPlan, studiedToday } = store;
 
   if (!ready) return <HomeSkeleton />;
 
   const current = store.currentCourse();
   const next = current ? store.nextLesson(current.id) : null;
+  const lessons = current ? courseLessons(current) : [];
+  const doneLessons = current
+    ? lessons.filter((l) => store.lessonStatus(l.id) === "completed").length
+    : 0;
   const weeklyLeft = Math.max(0, WEEKLY_GOAL_MIN - weeklyTotal);
-  const doneGoals = todayGoals.filter((g) => g.done).length;
-  const studiedToday = todayGoals.some((g) => g.done);
+  const planDone = todayPlan.filter((p) => p.done).length;
+  const allDone = planDone === todayPlan.length;
+  const week = compareWeeks(state.activity);
 
-  const subtitle =
-    doneGoals === todayGoals.length
-      ? "오늘 목표를 모두 달성했어요. 정말 멋져요!"
-      : studiedToday
-        ? "오늘도 한 걸음 성장했어요. 조금만 더 해볼까요?"
-        : streak > 0
-          ? `${streak}일 연속 학습 중이에요. 오늘도 이어가볼까요?`
-          : "오늘도 한 걸음 성장해볼까요?";
+  const subtitle = allDone
+    ? "오늘 할 일을 모두 마쳤어요. 정말 잘했어요!"
+    : studiedToday
+      ? `오늘 할 일이 ${todayPlan.length - planDone}개 남았어요.`
+      : streak > 0
+        ? `${streak}일 연속 학습 중이에요. 오늘도 이어가볼까요?`
+        : "오늘의 첫 레슨부터 시작해볼까요?";
 
-  const continueHref = current && next ? `/learn/${current.id}?lesson=${next.id}` : "/courses";
-  const firstWeak = groupWeak(weakQuestions)[0];
-  const quizForToday = firstWeak?.quiz ?? QUIZZES.find((q) => store.isEnrolled(q.courseId));
-  const goalHref: Record<string, string> = {
-    lesson: continueHref,
-    quiz: firstWeak
-      ? `/quiz/${firstWeak.quiz.id}?mode=review`
-      : quizForToday
-        ? `/quiz/${quizForToday.id}`
-        : "/quiz",
-    note: "/notes",
-  };
-
-  // 지금 처리하면 좋은 일 — 가까운 마감과 틀린 문제. 없으면 섹션 자체를 숨긴다.
-  const soonDue = upcomingAssignments.find((u) => u.dLeft >= 0 && u.dLeft <= 3);
-  const hasNextSteps = Boolean(soonDue || firstWeak);
-
-  const others = enrolledCourses(state)
-    .filter((c) => c.id !== current?.id && store.courseProgress(c.id) < 100)
-    .slice(0, 2);
-
-  const notEnrolled = COURSES.filter((c) => !store.isEnrolled(c.id));
-  const recommended = [
-    ...notEnrolled.filter((c) => state.interests.includes(c.categoryId)),
-    ...notEnrolled
-      .filter((c) => !state.interests.includes(c.categoryId))
-      .sort((a, b) => b.rating - a.rating),
-  ].slice(0, 3);
-  const interestNames = state.interests
-    .map((id) => CATEGORIES.find((c) => c.id === id)?.name)
-    .filter(Boolean)
-    .join("·");
-
-  const overall = store.overallProgress();
-  const doneCourses = store.completedCourseCount();
-  const activeCourses = enrolledCourses(state).filter((c) => store.courseProgress(c.id) < 100).length;
-
+  const enrolled = enrolledCourses(state);
+  const inProgress = enrolled.filter((c) => store.courseProgress(c.id) < 100);
+  const completedCount = enrolled.length - inProgress.length;
+  const others = inProgress.filter((c) => c.id !== current?.id).slice(0, 3);
+  const recs = recommendCourses(state, 3);
   const lessonReachesGoal = next ? weeklyLeft > 0 && next.durationMin >= weeklyLeft : false;
+  const maxDay = Math.max(1, ...last7.map((d) => d.minutes));
 
-  // ---- 블록 ----
+  // 오늘 할 일에 들어가지 못한 마감·오답 — 하나를 끝내도 다음 차례가 홈에서 사라지지 않게
+  const planHrefs = new Set(todayPlan.map((p) => p.href));
+  const later = [
+    ...store.upcomingAssignments
+      .filter((u) => u.dLeft <= 7 && !planHrefs.has(`/quiz?tab=assignment#${u.assignment.id}`))
+      .map((u) => ({
+        key: u.assignment.id,
+        kind: "마감",
+        title: u.assignment.title,
+        meta: dueLabel(u.dLeft),
+        href: `/quiz?tab=assignment#${u.assignment.id}`,
+        urgent: u.dLeft <= 1,
+      })),
+    ...groupWeak(store.weakQuestions)
+      .filter((g) => !planHrefs.has(`/quiz/${g.quiz.id}?mode=review`))
+      .map((g) => ({
+        key: g.quiz.id,
+        kind: "복습",
+        title: g.topics.join(", "),
+        meta: `틀린 문제 ${g.count}개`,
+        href: `/quiz/${g.quiz.id}?mode=review`,
+        urgent: false,
+      })),
+  ].slice(0, 2);
 
-  const todayGoalsCard = (at: string) => (
-    <section className="card p-5 md:p-6" aria-labelledby={`today-goals-${at}`}>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 id={`today-goals-${at}`} className="flex items-center gap-2 text-base font-bold text-forest-950">
-          <Target size={18} className="text-forest-600" />
-          오늘의 목표
+  // ---- 블록 (모바일·데스크톱에서 위치만 달라 두 번 그린다 — id는 접미사로 구분) ----
+
+  const planBlock = (at: string) => (
+    <section aria-labelledby={`plan-heading-${at}`} data-block="plan">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 id={`plan-heading-${at}`} className="text-lg font-bold text-forest-950">
+          오늘 할 일
         </h2>
         <span className="text-sm font-semibold text-forest-950/68">
-          {doneGoals}/{todayGoals.length}
+          {planDone}/{todayPlan.length} 완료
         </span>
       </div>
-      <ProgressBar label="오늘의 목표 진행"
-        value={(doneGoals / todayGoals.length) * 100}
-        fillClass="bg-success"
-        height="h-1.5"
-        className="mb-3"
-      />
-      <ul className="space-y-1.5">
-        {todayGoals.map((g) =>
-          g.done ? (
-            <li
-              key={g.id}
-              className="flex min-h-[48px] items-center gap-3 rounded-xl bg-forest-50 px-3.5 text-sm text-forest-950/68"
-            >
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-success text-white">
-                <Check size={13} className="animate-check-pop" />
-              </span>
-              <span className="line-through">{g.label}</span>
-            </li>
-          ) : (
-            <li key={g.id}>
+      <ol className="card divide-y divide-cream-100 overflow-hidden">
+        {todayPlan.map((item) => (
+          <PlanRow key={item.id} item={item} />
+        ))}
+      </ol>
+      {later.length > 0 && (
+        <ul className="mt-2 px-1" aria-label="이어서 챙길 일">
+          {later.map((l) => (
+            <li key={l.key}>
               <Link
-                href={goalHref[g.id]}
-                className="group flex min-h-[48px] items-center gap-3 rounded-xl border border-cream-200 bg-white px-3.5 text-sm text-forest-950 transition-colors hover:border-forest-300"
+                href={l.href}
+                className="flex min-h-[40px] items-center justify-between gap-3 text-sm text-forest-950/72 hover:text-forest-950"
               >
-                <span className="h-5 w-5 shrink-0 rounded-md border border-cream-400" />
-                <span className="flex-1">{g.label}</span>
-                <ChevronRight
-                  size={16}
-                  className="shrink-0 text-forest-950/68 transition-transform group-hover:translate-x-0.5"
-                />
+                <span className="min-w-0 truncate">
+                  <span className="font-semibold text-forest-950/68">{l.kind}</span> · {l.title}
+                </span>
+                <span className={clsx("shrink-0 text-xs font-semibold", l.urgent ? "text-amber-600" : "text-forest-950/68")}>
+                  {l.meta}
+                </span>
               </Link>
             </li>
-          )
-        )}
-      </ul>
-      <p className="mt-3 text-xs text-forest-950/68">
-        {doneGoals === todayGoals.length
-          ? "오늘 목표 달성! 내일도 이어가요."
-          : "학습하면 자동으로 체크돼요."}
-      </p>
+          ))}
+        </ul>
+      )}
+      {allDone && (
+        <p className="mt-3 flex items-center gap-1.5 text-sm text-forest-950/72">
+          <Flame size={15} className="text-gold-500" aria-hidden />
+          {streak}일 연속 학습 — 내일도 이어가요.
+        </p>
+      )}
     </section>
   );
 
-  const weekCard = (at: string) => (
-    <section className="card p-5 md:p-6" aria-labelledby={`week-card-${at}`} data-block="week">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 id={`week-card-${at}`} className="text-base font-bold text-forest-950">
-          이번 주 학습
+  const weekBlock = (at: string) => (
+    <section aria-labelledby={`week-heading-${at}`} data-block="week">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 id={`week-heading-${at}`} className="text-lg font-bold text-forest-950">
+          이번 주
         </h2>
-        <Link href="/report" className="text-sm font-semibold text-forest-600 hover:text-forest-800">
-          리포트 보기
+        <Link
+          href="/report"
+          className="inline-flex min-h-[40px] items-center gap-1 text-sm font-semibold text-forest-700 hover:text-forest-900"
+        >
+          리포트 <ArrowRight size={14} />
         </Link>
       </div>
-      <p className="font-display text-2xl font-semibold text-forest-950">
-        {formatMinutes(weeklyTotal)}
-        <span className="ml-1.5 text-sm font-medium text-forest-950/68">
-          / {formatMinutes(WEEKLY_GOAL_MIN)}
-        </span>
-      </p>
-      <ProgressBar label="이번 주 목표 달성률"
-        value={(weeklyTotal / WEEKLY_GOAL_MIN) * 100}
-        fillClass={weeklyLeft === 0 ? "bg-success" : "bg-forest-600"}
-        className="mt-3"
-      />
-      <p className="mt-2 text-sm text-forest-950/72">
-        {weeklyGoalMessage(weeklyTotal, WEEKLY_GOAL_MIN)}
-      </p>
-      <div className="mt-4 flex items-center gap-2 border-t border-cream-100 pt-4 text-sm text-forest-950/70">
-        <Flame size={16} className="shrink-0 text-gold-500" />
-        {streak > 0 ? (
-          <span>
-            <b className="text-forest-950">{streak}일</b> 연속 학습 중
-            {!studiedToday && " · 오늘 학습하면 이어져요"}
-          </span>
-        ) : (
-          <span>오늘 학습하면 연속 기록이 시작돼요</span>
-        )}
+      <div className="card p-5">
+        <div className="flex items-end justify-between gap-4">
+          <div className="min-w-0">
+            <p className="whitespace-nowrap font-display text-xl font-semibold text-forest-950 sm:text-2xl">
+              {formatMinutes(weeklyTotal)}
+              <span className="ml-1.5 text-sm font-medium text-forest-950/68">
+                / {formatMinutes(WEEKLY_GOAL_MIN)}
+              </span>
+            </p>
+            <p className="mt-1 text-sm text-forest-950/72">
+              {weeklyGoalMessage(weeklyTotal, WEEKLY_GOAL_MIN)}
+            </p>
+          </div>
+          {/* 최근 7일 막대 — 오늘이 오른쪽 끝 */}
+          <div
+            className="flex h-12 shrink-0 items-end gap-1"
+            role="img"
+            aria-label={`최근 7일 학습 시간: ${last7.map((d) => `${d.label}요일 ${d.minutes}분`).join(", ")}`}
+          >
+            {last7.map((d) => (
+              <span
+                key={d.key}
+                className={clsx("w-2.5 rounded-sm", d.isToday ? "bg-forest-700" : "bg-forest-200")}
+                style={{ height: `${Math.max(d.minutes > 0 ? 18 : 6, (d.minutes / maxDay) * 100)}%` }}
+              />
+            ))}
+          </div>
+        </div>
+        <ProgressBar
+          label="이번 주 목표 달성률"
+          value={(weeklyTotal / WEEKLY_GOAL_MIN) * 100}
+          fillClass={weeklyLeft === 0 ? "bg-success" : "bg-forest-600"}
+          height="h-1.5"
+          className="mt-4"
+        />
+        <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-forest-950/80">
+          <li className="flex items-center gap-1.5">
+            <Flame size={15} className="text-gold-500" aria-hidden />
+            {streak > 0 ? (
+              <span>
+                <b className="text-forest-950">{streak}일</b> 연속
+                {!studiedToday && <span className="text-forest-950/68"> · 오늘 하면 이어져요</span>}
+              </span>
+            ) : (
+              <span>오늘 공부하면 연속 기록 시작</span>
+            )}
+          </li>
+          {week.hasLastWeek && (
+            <li>
+              지난주보다{" "}
+              <b className={week.diff >= 0 ? "text-forest-700" : "text-forest-950"}>
+                {week.diff >= 0 ? "+" : "−"}
+                {formatMinutes(Math.abs(week.diff))}
+              </b>
+            </li>
+          )}
+        </ul>
       </div>
-    </section>
-  );
-
-  const recentCard = (at: string) => (
-    <section className="card p-5 md:p-6" aria-labelledby={`recent-card-${at}`}>
-      <h2 id={`recent-card-${at}`} className="mb-1 text-base font-bold text-forest-950">
-        최근 학습 기록
-      </h2>
-      <ActivityList items={state.activity.slice(0, 4)} />
     </section>
   );
 
@@ -199,52 +232,57 @@ export default function HomePage() {
     <div className="animate-fade-up">
       <Header title={`${greeting()}, ${state.name}님`} subtitle={subtitle} serif />
 
-      {/* 미래에이아이랩 브랜드 리본 */}
-      <section className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-cream-300/70 bg-white px-4 py-3 shadow-card sm:px-5 sm:py-3.5 md:mb-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <BrandLogo priority className="h-10 w-auto shrink-0 md:h-12" />
-          <span className="hidden h-8 w-px bg-cream-300 sm:block" />
-          <p className="hidden text-sm font-semibold text-forest-950/72 sm:block">
-            {BRAND.company}이 만든 학습 플랫폼 레퍼런스
-          </p>
-        </div>
-        <span className="chip shrink-0 whitespace-nowrap bg-forest-950 text-xs uppercase tracking-widest text-cream-100">
+      {/* 미래에이아이랩 레퍼런스 표시 — 카드가 아니라 한 줄로, 학습 정보보다 앞서지 않게 */}
+      <div className="mb-7 flex items-center gap-3 border-b border-cream-300/70 pb-4">
+        <BrandLogo priority className="h-8 w-auto shrink-0 md:h-9" />
+        <p className="hidden min-w-0 truncate text-sm font-medium text-forest-950/68 sm:block">
+          {BRAND.company}이 만든 학습 플랫폼 레퍼런스
+        </p>
+        <span className="chip ml-auto hidden shrink-0 bg-forest-950 text-xs uppercase tracking-widest text-cream-100 min-[360px]:inline-flex">
           Reference
         </span>
-      </section>
+      </div>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr),320px] lg:gap-6 min-[1400px]:grid-cols-[minmax(0,1fr),360px]">
-        {/* ---- 메인: 지금 할 공부 ---- */}
-        <div className="min-w-0 space-y-5 lg:space-y-6">
-          {/* 1. 이어서 학습 — 화면의 유일한 Primary CTA */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),340px] min-[1400px]:grid-cols-[minmax(0,1fr),380px]">
+        <div className="min-w-0 space-y-9">
+          {/* 1. 이어서 학습 — 화면의 유일한 Primary */}
           {current && next ? (
-            <section className="relative overflow-hidden rounded-2xl bg-forest-950 p-6 text-cream-50 shadow-card md:p-8">
+            <section
+              className="relative overflow-hidden rounded-3xl bg-forest-950 p-6 text-cream-50 shadow-card md:p-8"
+              aria-labelledby="continue-heading"
+            >
               <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-forest-600/30 blur-3xl" />
-              <div className="relative grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr),220px] md:items-center lg:grid-cols-[minmax(0,1fr),168px] min-[1400px]:grid-cols-[minmax(0,1fr),220px]">
+              <div className="relative grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr),200px] md:items-center min-[1400px]:grid-cols-[minmax(0,1fr),240px]">
                 <div className="min-w-0">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-gold-300">이어서 학습</p>
                     <Link
                       href={`/courses/${current.id}`}
-                      className="-my-2 inline-flex min-h-[40px] shrink-0 items-center gap-1 text-sm font-semibold text-cream-200/70 underline-offset-4 hover:text-cream-50 hover:underline md:hidden"
+                      className="-my-2 inline-flex min-h-[40px] shrink-0 items-center gap-1 text-sm font-semibold text-cream-200/70 hover:text-cream-50 md:hidden"
                     >
                       강의 정보 <ArrowRight size={14} />
                     </Link>
                   </div>
-                  <h2 className="mt-2 font-display text-xl font-semibold leading-snug md:text-2xl lg:text-xl min-[1400px]:text-2xl">
-                    {current.title}
+                  <h2
+                    id="continue-heading"
+                    className="mt-2 font-display text-xl font-semibold leading-snug md:text-2xl"
+                  >
+                    {next.title}
                   </h2>
-                  <p className="mt-2 text-sm text-cream-200/75">
-                    다음 레슨 · {next.title} ({next.durationMin}분)
+                  <p className="mt-1.5 text-sm text-cream-200/70">
+                    {current.title} · {next.durationMin}분
                   </p>
                   <div className="mt-5 max-w-sm">
                     <div className="mb-1.5 flex items-center justify-between text-xs text-cream-200/70">
-                      <span>강의 진도</span>
+                      <span>
+                        레슨 {doneLessons}/{lessons.length}
+                      </span>
                       <span className="font-bold text-cream-50">
                         {store.courseProgress(current.id)}%
                       </span>
                     </div>
-                    <ProgressBar label="이어서 학습할 강의 진도"
+                    <ProgressBar
+                      label="이어서 학습할 강의 진도"
                       value={store.courseProgress(current.id)}
                       trackClass="bg-forest-800"
                       fillClass="bg-gradient-to-r from-cream-300 to-gold-300"
@@ -252,11 +290,11 @@ export default function HomePage() {
                   </div>
                   <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
                     <Link
-                      href={continueHref}
+                      href={`/learn/${current.id}?lesson=${next.id}`}
                       className="btn-press inline-flex min-h-[52px] items-center gap-2 rounded-full bg-cream-100 px-7 text-sm font-bold text-forest-950 transition-colors hover:bg-cream-50"
                     >
                       <PlayCircle size={19} />
-                      강의 이어보기
+                      이어서 학습
                     </Link>
                     <Link
                       href={`/courses/${current.id}`}
@@ -277,7 +315,7 @@ export default function HomePage() {
                     title={current.title}
                     courseId={current.id}
                     priority
-                    sizes="220px"
+                    sizes="240px"
                     className="ring-1 ring-cream-50/10"
                   />
                   <p className="mt-2 text-xs text-cream-200/65">
@@ -287,10 +325,13 @@ export default function HomePage() {
               </div>
             </section>
           ) : (
-            <section className="card flex flex-col items-start justify-center p-8">
-              <h2 className="font-display text-xl font-semibold">새로운 배움을 시작해볼까요?</h2>
-              <p className="mt-2 text-sm text-forest-950/68">
-                관심 있는 강의를 찾아 첫 학습을 시작해보세요.
+            <section className="rounded-3xl border border-dashed border-cream-400 p-8 text-center md:p-10">
+              <BookOpenCheck size={28} className="mx-auto text-forest-600" aria-hidden />
+              <h2 className="mt-3 font-display text-xl font-semibold text-forest-950">
+                {enrolled.length > 0 ? "수강 중인 강의를 모두 마쳤어요" : "첫 강의를 골라볼까요?"}
+              </h2>
+              <p className="mt-2 text-sm text-forest-950/72">
+                아래 추천 강의나 강의 찾기에서 다음 배움을 시작해보세요.
               </p>
               <Link
                 href="/courses"
@@ -301,149 +342,124 @@ export default function HomePage() {
             </section>
           )}
 
-              {/* 학습 요약 — 할 일(이어보기) 다음에 현황을 한 줄로 */}
-          <section
-            className="card grid grid-cols-3 divide-x divide-cream-200 py-3 md:py-4"
-            aria-label="학습 요약"
-          >
-            <div className="flex flex-col items-center gap-1.5 px-2 text-center">
-              <ProgressRing value={overall} size={56} stroke={6}>
-                <span className="text-sm font-bold text-forest-800">{overall}%</span>
-              </ProgressRing>
-              <span className="text-xs text-forest-950/68">전체 진행률</span>
-            </div>
-            <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
-              <span className="font-display text-2xl font-semibold text-forest-950">{doneCourses}개</span>
-              <span className="text-xs text-forest-950/68">완료한 강의</span>
-            </div>
-            <div className="flex flex-col items-center justify-center gap-1 px-2 text-center">
-              <span className="font-display text-2xl font-semibold text-forest-950">{activeCourses}개</span>
-              <span className="text-xs text-forest-950/68">수강 중</span>
-            </div>
-          </section>
+          {/* 모바일: 오늘 할 일 → 이번 주를 이어서 학습 바로 아래에 */}
+          <div className="space-y-9 lg:hidden">
+            {planBlock("m")}
+            {weekBlock("m")}
+          </div>
 
-          {/* 모바일에서는 오늘의 목표를 이어보기 바로 아래에 */}
-          <div className="lg:hidden">{todayGoalsCard("m")}</div>
-
-          {/* 2. 지금 처리하면 좋은 일 */}
-          {hasNextSteps && (
-            <section className="card p-2" aria-label="지금 처리하면 좋은 일">
-              <ul className="divide-y divide-cream-100">
-                {soonDue && (
-                  <li>
-                    <Link
-                      href={`/quiz?tab=assignment#${soonDue.assignment.id}`}
-                      className="group flex min-h-[64px] items-center gap-3.5 rounded-xl px-3.5 py-3 transition-colors hover:bg-cream-50"
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                        <ClipboardList size={18} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-xs font-semibold text-amber-600">
-                          곧 마감 · {dueLabel(soonDue.dLeft)}
-                        </span>
-                        <span className="block truncate text-sm font-semibold text-forest-950">
-                          {soonDue.assignment.title}
-                        </span>
-                      </span>
-                      <span className="hidden shrink-0 text-sm font-semibold text-forest-600 sm:block">
-                        과제 제출하기
-                      </span>
-                      <ChevronRight size={18} className="shrink-0 text-forest-950/68" />
-                    </Link>
-                  </li>
-                )}
-                {firstWeak && (
-                  <li>
-                    <Link
-                      href={`/quiz/${firstWeak.quiz.id}?mode=review`}
-                      className="group flex min-h-[64px] items-center gap-3.5 rounded-xl px-3.5 py-3 transition-colors hover:bg-cream-50"
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest-50 text-forest-600">
-                        <RotateCcw size={18} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-xs font-semibold text-forest-600">
-                          취약 영역 · {firstWeak.topics.join(", ")}
-                        </span>
-                        <span className="block truncate text-sm font-semibold text-forest-950">
-                          틀린 문제 {firstWeak.count}개 다시 풀기
-                        </span>
-                      </span>
-                      <span className="hidden shrink-0 text-sm font-semibold text-forest-600 sm:block">
-                        복습하기
-                      </span>
-                      <ChevronRight size={18} className="shrink-0 text-forest-950/68" />
-                    </Link>
-                  </li>
-                )}
-              </ul>
-            </section>
-          )}
-
-          <div className="lg:hidden">{weekCard("m")}</div>
-
-          {/* 3. 함께 듣고 있는 강의 */}
+          {/* 2. 수강 중인 강의 */}
           {others.length > 0 && (
-            <section>
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-forest-950">함께 듣고 있는 강의</h2>
+            <section aria-labelledby="inprogress-heading">
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <h2 id="inprogress-heading" className="text-lg font-bold text-forest-950">
+                  수강 중인 강의
+                  <span className="block text-sm font-medium text-forest-950/68 sm:ml-2 sm:inline">
+                    {inProgress.length}개 진행 중 · {completedCount}개 완료
+                  </span>
+                </h2>
                 <Link
                   href="/my-learning"
-                  className="inline-flex items-center gap-1 text-sm font-semibold text-forest-600 hover:text-forest-800"
+                  className="inline-flex min-h-[40px] shrink-0 items-center gap-1 text-sm font-semibold text-forest-700 hover:text-forest-900"
                 >
-                  내 학습 <ArrowRight size={14} />
+                  전체 <ArrowRight size={14} />
                 </Link>
               </div>
-              <ul className="space-y-3 sm:hidden">
+              <ul className="space-y-3">
                 {others.map((course) => (
                   <li key={course.id}>
                     <CourseRow course={course} showProgress />
                   </li>
                 ))}
               </ul>
-              <div className="hidden grid-cols-2 gap-4 sm:grid">
-                {others.map((course) => (
-                  <CourseCard key={course.id} course={course} showProgress />
-                ))}
-              </div>
             </section>
           )}
 
-          {/* 4. 추천 */}
-          <section>
-            <div className="mb-3 flex items-end justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-bold text-forest-950">다음에 들어볼 강의</h2>
-                <p className="text-xs text-forest-950/68">관심 분야({interestNames}) 기준 추천</p>
+          {/* 3. 다음 추천 — 왜 추천하는지 함께 */}
+          {recs.length > 0 && (
+            <section aria-labelledby="rec-heading">
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <h2 id="rec-heading" className="text-lg font-bold text-forest-950">
+                  다음에 들어볼 강의
+                </h2>
+                <Link
+                  href="/courses"
+                  className="inline-flex min-h-[40px] shrink-0 items-center gap-1 text-sm font-semibold text-forest-700 hover:text-forest-900"
+                >
+                  더 찾아보기 <ArrowRight size={14} />
+                </Link>
               </div>
-              <Link
-                href="/courses"
-                className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-forest-600 hover:text-forest-800"
-              >
-                더 찾아보기 <ArrowRight size={14} />
-              </Link>
-            </div>
-            {/* 모바일: 옆으로 넘겨 보는 카드 / 태블릿 이상: 그리드 */}
-            <ul className="thin-scroll relative -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-3">
-              {recommended.map((course) => (
-                <li key={course.id} className="w-[78%] shrink-0 snap-start sm:w-auto">
-                  <CourseCard course={course} />
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <div className="lg:hidden">{recentCard("m")}</div>
+              <ul className="thin-scroll relative -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-3">
+                {recs.map(({ course, reason }) => (
+                  <li key={course.id} className="w-[78%] shrink-0 snap-start sm:w-auto">
+                    <CourseCard course={course} reason={reason} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
 
-        {/* ---- 우측: 오늘·이번 주 상황 (데스크톱) ---- */}
-        <aside className="hidden space-y-6 lg:block">
-          {todayGoalsCard("d")}
-          {weekCard("d")}
-          {recentCard("d")}
+        {/* 데스크톱 오른쪽: 오늘 할 일 · 이번 주 */}
+        <aside className="hidden space-y-9 lg:block">
+          {planBlock("d")}
+          {weekBlock("d")}
         </aside>
       </div>
     </div>
+  );
+}
+
+function PlanRow({ item }: { item: PlanItem }) {
+  const meta = KIND[item.id];
+  const Icon = meta.icon;
+  const recent = item.done && isRecent(item.doneAt);
+  return (
+    <li>
+      <Link
+        href={item.href}
+        className={clsx(
+          "group flex min-h-[72px] items-center gap-3.5 px-4 py-3 transition-colors hover:bg-cream-50",
+          recent && "bg-forest-50/70"
+        )}
+      >
+        <span
+          className={clsx(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+            item.done ? "bg-success text-white" : "bg-cream-100 text-forest-700"
+          )}
+          aria-hidden
+        >
+          {item.done ? <Check size={17} className="animate-check-pop" /> : <Icon size={17} />}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs font-semibold text-forest-950/68">
+            {meta.label}
+            {item.done && item.doneAt && (
+              <span className="text-success">
+                {" "}
+                · {recent ? "방금 완료" : `${clock(item.doneAt)} 완료`}
+              </span>
+            )}
+          </span>
+          <span
+            className={clsx(
+              "line-clamp-2 block text-sm font-semibold leading-snug",
+              item.done ? "text-forest-950/72" : "text-forest-950"
+            )}
+          >
+            {item.title}
+          </span>
+          <span className="block truncate text-xs text-forest-950/68">{item.detail}</span>
+        </span>
+        {!item.done && (
+          <ArrowRight
+            size={16}
+            className="shrink-0 text-forest-950/40 transition-transform group-hover:translate-x-0.5"
+            aria-hidden
+          />
+        )}
+      </Link>
+    </li>
   );
 }

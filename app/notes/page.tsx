@@ -221,11 +221,16 @@ export default function NotesPage() {
                     </Link>
                     {lessonInfo && (
                       <Link
-                        href={`/learn/${note.courseId}?lesson=${lessonInfo.lesson.id}`}
+                        href={`/learn/${note.courseId}?lesson=${lessonInfo.lesson.id}${typeof note.at === "number" ? `&t=${note.at}` : ""}`}
                         className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-forest-950/68 hover:text-forest-800"
                       >
                         <PlayCircle size={13} className="shrink-0" />
                         <span className="truncate">{lessonInfo.lesson.title}</span>
+                        {typeof note.at === "number" && (
+                          <span className="shrink-0 rounded bg-forest-50 px-1.5 font-mono font-semibold text-forest-700">
+                            {String(Math.floor(note.at / 60)).padStart(2, "0")}:{String(note.at % 60).padStart(2, "0")}
+                          </span>
+                        )}
                       </Link>
                     )}
                   </div>

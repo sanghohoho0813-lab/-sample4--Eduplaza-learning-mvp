@@ -22,6 +22,7 @@ import {
   CalendarCheck,
   Flame,
   GraduationCap,
+  ShieldCheck,
   Sprout,
   Target,
   Trophy,
@@ -38,6 +39,7 @@ import {
   earnedAchievements,
 } from "./learning";
 import { DEFAULT_NOTIFICATIONS, sanitizeState } from "./persist";
+import { planToday, studiedOn, type PlanItem } from "./coach";
 import type { DayMinutes, WeakQuestion } from "./learning";
 
 // 기존 화면들이 store에서 가져다 쓰던 것들은 그대로 열어 둔다
@@ -87,6 +89,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "streak-7", label: "일주일의 힘", description: "7일 연속 학습", icon: CalendarCheck },
   { id: "quiz-100", label: "퍼펙트 스코어", description: "퀴즈 100점 달성", icon: Trophy },
   { id: "weekly-goal", label: "주간 목표 달성", description: "최근 7일 5시간 학습", icon: Target },
+  { id: "weak-cleared", label: "오답 정복", description: "틀린 문제를 모두 해결", icon: ShieldCheck },
 ];
 
 /** 상태를 보고 새로 달성한 성취를 해금하고, 해금 자체도 활동 로그에 남긴다. */
@@ -225,6 +228,7 @@ export function seedState(): UserState {
         id: "n1",
         courseId: "c1",
         lessonId: "c1-s3-l3",
+        at: 742,
         content:
           "EDA 체크리스트: ① 데이터 크기와 타입 확인 ② 결측치 비율 확인 ③ 수치형 분포 확인(히스토그램) ④ 범주형 빈도 확인 ⑤ 변수 간 상관관계. 실무에서는 결측치 처리 기준을 팀과 먼저 합의할 것!",
         createdAt: iso(2, 21, 50),
@@ -234,6 +238,7 @@ export function seedState(): UserState {
         id: "n2",
         courseId: "c9",
         lessonId: "c9-s2-l2",
+        at: 315,
         content:
           "JOIN 정리 — INNER: 양쪽 모두 있는 것만 / LEFT: 왼쪽 기준 전부 + 오른쪽 매칭. 실무에서는 LEFT JOIN 후 NULL 체크하는 패턴을 자주 사용한다.",
         createdAt: iso(4, 21, 50),
@@ -256,11 +261,6 @@ export function seedState(): UserState {
 
 // ---------- API ----------
 
-export interface TodayGoal {
-  id: "lesson" | "quiz" | "note";
-  label: string;
-  done: boolean;
-}
 
 export interface UpcomingAssignment {
   assignment: Assignment;
@@ -275,7 +275,10 @@ interface StoreApi {
   streak: number;
   last7: DayMinutes[];
   weeklyTotal: number;
-  todayGoals: TodayGoal[];
+  /** 오늘 할 일 3가지 — 지금 상태에서 가장 효과가 큰 것(lib/coach.ts) */
+  todayPlan: PlanItem[];
+  /** 오늘 공부 기록(레슨·퀴즈·과제·노트)이 하나라도 있는지 */
+  studiedToday: boolean;
   weakQuestions: WeakQuestion[];
   upcomingAssignments: UpcomingAssignment[];
   // enrollment
@@ -301,7 +304,8 @@ interface StoreApi {
   ) => QuizResult;
   bestScore: (quizId: string) => number | null;
   // notes
-  addNote: (courseId: string, lessonId: string | null, content: string) => void;
+  /** at: 레슨 재생 중에 남긴 메모의 재생 시점(초) */
+  addNote: (courseId: string, lessonId: string | null, content: string, at?: number) => void;
   updateNote: (id: string, content: string) => void;
   deleteNote: (id: string) => void;
   // favorites
@@ -421,16 +425,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     () => computeWeakQuestions(state.quizResults),
     [state.quizResults]
   );
-  const todayGoals = useMemo<TodayGoal[]>(() => {
-    const today = dayKey(new Date());
-    const doneToday = (types: string[]) =>
-      state.activity.some((a) => types.includes(a.type) && dayKey(new Date(a.at)) === today);
-    return [
-      { id: "lesson", label: "레슨 1개 완료하기", done: doneToday(["lesson"]) },
-      { id: "quiz", label: "퀴즈 1개 풀기", done: doneToday(["quiz", "review"]) },
-      { id: "note", label: "학습노트 남기기", done: doneToday(["note"]) },
-    ];
-  }, [state.activity]);
+  // 오늘의 플랜은 '지금' 기준으로 계산 — 상태가 바뀔 때마다 다시 고른다
+  const todayPlan = useMemo<PlanItem[]>(() => planToday(state), [state]);
+  const studiedToday = useMemo(() => studiedOn(state.activity, new Date()), [state.activity]);
   const upcomingAssignments = useMemo<UpcomingAssignment[]>(
     () =>
       ASSIGNMENTS.filter(
@@ -643,7 +640,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // ---- notes ----
   const addNote = useCallback(
-    (courseId: string, lessonId: string | null, content: string) => {
+    (courseId: string, lessonId: string | null, content: string, at?: number) => {
       const now = new Date().toISOString();
       const note: Note = {
         id: `n-${Date.now()}`,
@@ -652,6 +649,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         content,
         createdAt: now,
         updatedAt: now,
+        ...(typeof at === "number" && at >= 0 ? { at: Math.floor(at) } : {}),
       };
       const lessonTitle = lessonId ? getLesson(lessonId)?.lesson.title : undefined;
       commit((s) => ({
@@ -771,7 +769,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       streak,
       last7,
       weeklyTotal,
-      todayGoals,
+      todayPlan,
+      studiedToday,
       weakQuestions,
       upcomingAssignments,
       isEnrolled,
@@ -807,7 +806,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       streak,
       last7,
       weeklyTotal,
-      todayGoals,
+      todayPlan,
+      studiedToday,
       weakQuestions,
       upcomingAssignments,
       isEnrolled,

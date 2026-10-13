@@ -6,17 +6,17 @@ test.describe("학습 루프 (PC)", () => {
 
   test("수강 → 레슨 완료 → 복습 → 만점 → 과제 → 주간 목표 → 새로고침 후 유지", async ({ page }) => {
     const week = page.locator('aside [data-block="week"]');
-    const goals = page.locator('aside section[aria-labelledby="today-goals-d"]');
-    const nextSteps = page.locator('section[aria-label="지금 처리하면 좋은 일"]');
+    const plan = page.locator('aside section[aria-labelledby="plan-heading-d"]');
 
     await test.step("첫 방문 기준선", async () => {
       await page.goto("/");
       await expect(page.getByText(/12일 연속 학습 중/).first()).toBeVisible();
       await expect(week).toContainText("4시간 35분");
       await expect(week).toContainText("25분 남았어요");
-      await expect(goals).toContainText("0/3");
-      await expect(nextSteps).toContainText("내일 마감");
-      await expect(nextSteps).toContainText("틀린 문제 2개");
+      await expect(plan).toContainText("0/3 완료");
+      await expect(plan).toContainText("내일 마감");
+      await expect(plan).toContainText("틀린 문제 2개");
+      await expect(plan).toContainText("D-2"); // 오늘 할 일 밖의 다음 마감도 보인다
     });
 
     await test.step("강의 찾기 → 상세 → 수강 시작 → 바로 첫 레슨", async () => {
@@ -26,22 +26,24 @@ test.describe("학습 루프 (PC)", () => {
       await expect(page).toHaveURL(/\/learn\/c7\?lesson=c7-s1-l1/);
     });
 
-    await test.step("레슨 완료 → 진도·주간 시간·연속 학습이 패널에 반영", async () => {
+    await test.step("레슨 완료 → 진도·주간 시간·오늘 할 일·연속 학습이 패널에 반영", async () => {
       await page.getByRole("button", { name: /학습 완료/ }).click();
       const panel = page.locator('section[aria-live="polite"]');
       await expect(panel).toContainText("진도가 13%로 올랐어요");
-      await expect(panel).toContainText("+10분");
+      await expect(panel).toContainText("0% → 13%");
+      await expect(panel).toContainText("+10분 · 4시간 45분");
+      await expect(panel).toContainText("1/3 완료");
+      await expect(panel).toContainText("13일");
       await expect(panel).toContainText("15분 남았어요");
-      await expect(panel).toContainText("13일 연속");
-      await expect(panel.getByRole("link", { name: "다음 강의 이어보기" })).toBeVisible();
+      await expect(panel.getByRole("link", { name: /^다음 레슨 · / })).toBeVisible();
     });
 
     await test.step("홈에 반영", async () => {
       await page.goto("/");
       await expect(week).toContainText("4시간 45분");
-      await expect(goals).toContainText("1/3");
-      await expect(page.locator("section.bg-forest-950").first()).toContainText("초보자를 위한 Python");
-      await expect(page.locator('aside section[aria-labelledby="recent-card-d"]')).toContainText("레슨 완료 · 10분");
+      await expect(plan).toContainText("1/3 완료");
+      await expect(plan).toContainText("레슨 완료 · 10분");
+      await expect(page.locator('section[aria-labelledby="continue-heading"]')).toContainText("초보자를 위한 Python");
     });
 
     await test.step("틀린 문제만 다시 풀기 → 취약 영역 해소", async () => {
@@ -53,6 +55,8 @@ test.describe("학습 루프 (PC)", () => {
         await page.keyboard.press("Enter");
       }
       await expect(page.getByText("틀린 문제를 모두 해결했어요!")).toBeVisible();
+      await expect(page.locator("main dl")).toContainText("3 → 1개");
+      await expect(page.locator("main dl")).toContainText("2/3 완료");
       await expect(page.getByRole("link", { name: "다음 강의 이어보기" })).toBeVisible();
     });
 
@@ -67,15 +71,26 @@ test.describe("학습 루프 (PC)", () => {
       }
       await expect(page.getByText("완벽해요! 모든 문제를 맞혔어요")).toBeVisible();
       await expect(page.getByRole("status").filter({ hasText: "퍼펙트 스코어" })).toBeVisible();
+      // 전체 풀이로 남은 오답까지 사라지면 '틀린 문제를 모두 해결'도 함께 달성
+      await expect(page.locator("main dl")).toContainText("1 → 0개");
+      await expect(page.getByRole("status").filter({ hasText: "오답 정복" })).toBeVisible();
     });
 
     await test.step("리포트에 반영", async () => {
       await page.goto("/report");
-      await expect(page.locator('section[aria-labelledby="weak-heading"]')).toContainText("다시 풀 문제가 없어요");
+      const improve = page.locator('section[aria-labelledby="improve-heading"]');
+      await expect(improve).not.toContainText("가장 취약한 영역");
+      await expect(improve).toContainText("분석 쿼리 작성 연습");
+      await expect(page.locator('section[aria-labelledby="good-heading"]')).toContainText(
+        "틀린 문제 2개를 복습으로 바로잡았어요"
+      );
+      await expect(page.locator('section[aria-labelledby="actions-heading"]')).toContainText(
+        "‘분석 쿼리 작성 연습’ 제출"
+      );
       const quiz = page.locator('section[aria-labelledby="quiz-heading"]');
       await expect(quiz).toContainText("전체 풀이 7/7");
       await expect(quiz).toContainText("오답 복습 2/2");
-      await expect(page.locator('section[aria-labelledby="ach-heading"]')).toContainText("5/6");
+      await expect(page.locator('section[aria-labelledby="ach-heading"]')).toContainText("6/7 달성");
     });
 
     await test.step("가장 급한 과제 제출 → 내 학습·캘린더·홈 반영", async () => {
@@ -97,8 +112,9 @@ test.describe("학습 루프 (PC)", () => {
       await expect(day).toContainText("과제 제출");
 
       await page.goto("/");
-      await expect(nextSteps).toContainText("D-2");
-      await expect(nextSteps).not.toContainText("분석 쿼리");
+      await expect(plan).toContainText("3/3 완료");
+      await expect(plan).toContainText("과제 제출 완료");
+      await expect(plan).toContainText("D-2"); // 다음 마감은 계속 보인다
     });
 
     await test.step("주간 목표 달성 → 새로고침해도 유지", async () => {
@@ -111,7 +127,7 @@ test.describe("학습 루프 (PC)", () => {
       await page.goto("/");
       await expect(week).toContainText("5시간 12분");
       await expect(week).toContainText("목표를 달성했어요");
-      await expect(goals).toContainText("2/3");
+      await expect(plan).toContainText("3/3 완료");
     });
   });
 });
