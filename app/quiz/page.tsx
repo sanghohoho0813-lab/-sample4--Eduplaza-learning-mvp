@@ -20,6 +20,8 @@ import { useToast } from "@/components/Toast";
 import { Header } from "@/components/Header";
 import { ActivityTabs } from "@/components/ActivityTabs";
 import { ListSkeleton } from "@/components/Skeletons";
+import { CourseThumbnail } from "@/components/Thumbnail";
+import { ProgressRing } from "@/components/ProgressBar";
 
 export default function QuizListPage() {
   return (
@@ -107,25 +109,59 @@ function QuizTab() {
             <Link
               key={quiz.id}
               href={`/quiz/${quiz.id}`}
-              className="card group flex flex-col p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+              className="card group flex flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
             >
-              <p className="truncate text-xs font-medium text-forest-950/68">{course?.title}</p>
-              <h3 className="mt-1.5 flex-1 font-display text-lg font-semibold text-forest-950 transition-colors group-hover:text-forest-600">
-                {quiz.title}
-              </h3>
+              {/* 어떤 강의의 퀴즈인지 썸네일로 먼저 알아보게 */}
+              <div className="flex items-center gap-3 border-b border-cream-100 bg-cream-50/70 px-5 py-3">
+                <div className="w-16 shrink-0">
+                  <CourseThumbnail
+                    tone={course?.thumbnailTone ?? 0}
+                    title={course?.title ?? quiz.title}
+                    courseId={course?.id}
+                    rounded="rounded-lg"
+                    sizes="64px"
+                  />
+                </div>
+                <p className="min-w-0 truncate text-xs font-medium text-forest-950/72">{course?.title}</p>
+              </div>
+              <div className="flex flex-1 items-center gap-4 px-5 py-4">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-semibold leading-snug text-forest-950 transition-colors group-hover:text-forest-600">
+                    {quiz.title}
+                  </h3>
+                  <p className="mt-1 text-xs text-forest-950/68">
+                    {quiz.questions.length}문항
+                    {wrong > 0 && <span className="text-clay-600"> · 오답 {wrong}</span>}
+                  </p>
+                </div>
+                <span aria-hidden>
+                  <ProgressRing
+                    value={best ?? 0}
+                    size={56}
+                    stroke={5}
+                    color={best === 100 ? "#B6996A" : "#345441"}
+                  >
+                    <span
+                      className={clsx(
+                        "text-sm font-bold",
+                        best === null ? "text-forest-950/40" : best === 100 ? "text-gold-600" : "text-forest-800"
+                      )}
+                    >
+                      {best ?? "–"}
+                    </span>
+                  </ProgressRing>
+                </span>
+              </div>
               {/* 모든 카드가 같은 자리에 '점수 + 행동'을 둔다 */}
-              <div className="mt-4 flex items-center justify-between gap-2 border-t border-cream-100 pt-3.5">
+              <div className="flex items-center justify-between gap-2 border-t border-cream-100 px-5 py-3.5">
                 <span className="text-xs text-forest-950/68">
-                  {quiz.questions.length}문항
-                  {best !== null && (
-                    <>
-                      {" · "}
-                      <b className={clsx("font-semibold", best === 100 ? "text-gold-600" : "text-forest-700")}>
-                        최고 {best}점
-                      </b>
-                    </>
+                  {best === null ? (
+                    "아직 풀지 않았어요"
+                  ) : (
+                    <b className={clsx("font-semibold", best === 100 ? "text-gold-600" : "text-forest-700")}>
+                      최고 {best}점
+                    </b>
                   )}
-                  {wrong > 0 && ` · 오답 ${wrong}`}
                 </span>
                 <span className="inline-flex shrink-0 items-center gap-0.5 text-sm font-semibold text-forest-600">
                   {best === null ? "도전하기" : "다시 풀기"} <ChevronRight size={14} />

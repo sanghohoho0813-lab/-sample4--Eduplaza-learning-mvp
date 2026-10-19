@@ -9,6 +9,7 @@ import { CATEGORIES, COURSES, LEVEL_LABEL, getCategory, getInstructor } from "@/
 import type { CategoryId, CourseLevel } from "@/lib/types";
 import { Header } from "@/components/Header";
 import { CourseCard, CourseRow } from "@/components/CourseCard";
+import { BrowseRails, CategoryTiles } from "@/components/Explore";
 import { EmptyState } from "@/components/EmptyState";
 import { CourseListSkeleton } from "@/components/Skeletons";
 
@@ -174,6 +175,13 @@ function CoursesContent() {
       : []),
     ...(rating !== "all" ? [{ key: "rating", label: `평점 ${rating} 이상` }] : []),
   ];
+  // 검색·필터가 없으면 '둘러보기' — 분야 아이콘과 큐레이션을 먼저, 전체 목록은 그 아래
+  const browsing = active.length === 0;
+  const scrollToAll = () =>
+    requestAnimationFrame(() =>
+      document.getElementById("all-courses")?.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
+
   // 모바일 '필터' 버튼 숫자는 시트 안에 있는 조건만 센다(카테고리는 위 칩 줄에서 바로 보임)
   const sheetFilterCount = active.filter((a) => !["q", "category"].includes(a.key)).length;
 
@@ -281,9 +289,29 @@ function CoursesContent() {
         )}
       </form>
 
-      {/* 카테고리 — 가장 많이 쓰는 조건이라 사이드 패널이 없는 폭에서는 바로 보이게 */}
+      {browsing && (
+        <>
+          <CategoryTiles onPick={(id) => update({ category: id })} />
+          <BrowseRails
+            onPopular={() => {
+              update({ sort: "popular" });
+              scrollToAll();
+            }}
+            onBeginner={() => update({ level: "beginner" })}
+          />
+          <h2 id="all-courses" className="mb-3 scroll-mt-6 text-lg font-bold text-forest-950">
+            전체 강의
+          </h2>
+        </>
+      )}
+
+      {/* 카테고리 — 가장 많이 쓰는 조건이라 사이드 패널이 없는 폭에서는 바로 보이게
+          (둘러보기 화면에서는 위의 분야 아이콘이 같은 역할) */}
       <div
-        className="thin-scroll -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:hidden"
+        className={clsx(
+          "thin-scroll -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:hidden",
+          browsing && "hidden"
+        )}
         aria-label="카테고리"
       >
         <FilterChip active={category === "all"} onClick={() => update({ category: null })}>
@@ -403,10 +431,10 @@ function CoursesContent() {
           ) : (
             <>
               {/* 모바일: 한 화면에 여러 강의를 훑어보는 목록형 */}
-              <ul className="space-y-3 sm:hidden">
+              <ul data-list="courses" className="divide-y divide-cream-300/70 sm:hidden">
                 {filtered.map((course) => (
                   <li key={course.id}>
-                    <CourseRow course={course} />
+                    <CourseRow course={course} plain />
                   </li>
                 ))}
               </ul>

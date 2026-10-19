@@ -263,14 +263,32 @@ export default function HomePage() {
                       강의 정보 <ArrowRight size={14} />
                     </Link>
                   </div>
+                  {/* 모바일: 지금 듣는 강의를 썸네일과 함께 한 줄로 — 넓은 화면은 오른쪽 큰 썸네일 */}
+                  <div className="mt-3 flex items-center gap-3 md:hidden">
+                    <div className="w-[72px] shrink-0">
+                      <CourseThumbnail
+                        tone={current.thumbnailTone}
+                        title={current.title}
+                        courseId={current.id}
+                        priority
+                        rounded="rounded-lg"
+                        sizes="72px"
+                        className="ring-1 ring-cream-50/15"
+                      />
+                    </div>
+                    <p className="line-clamp-2 min-w-0 text-sm leading-snug text-cream-200/80">
+                      {current.title}
+                    </p>
+                  </div>
                   <h2
                     id="continue-heading"
-                    className="mt-2 font-display text-xl font-semibold leading-snug md:text-2xl"
+                    className="mt-3 font-display text-xl font-semibold leading-snug md:mt-2 md:text-2xl"
                   >
                     {next.title}
                   </h2>
                   <p className="mt-1.5 text-sm text-cream-200/70">
-                    {current.title} · {next.durationMin}분
+                    <span className="hidden md:inline">{current.title} · </span>
+                    {next.durationMin}분
                   </p>
                   <div className="mt-5 max-w-sm">
                     <div className="mb-1.5 flex items-center justify-between text-xs text-cream-200/70">
@@ -389,7 +407,7 @@ export default function HomePage() {
                   더 찾아보기 <ArrowRight size={14} />
                 </Link>
               </div>
-              <ul className="thin-scroll relative -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-3">
+              <ul className="thin-scroll relative -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-3">
                 {recs.map(({ course, reason }) => (
                   <li key={course.id} className="w-[78%] shrink-0 snap-start sm:w-auto">
                     <CourseCard course={course} reason={reason} />

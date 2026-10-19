@@ -10,7 +10,7 @@ test("모바일: 헤더 검색 → 검색창 포커스 → 실시간 결과 → 
 
   await page.locator("#course-search").fill("SQL");
   await expect(page).toHaveURL(/q=SQL/);
-  const rows = page.locator("ul.space-y-3 > li");
+  const rows = page.locator('ul[data-list="courses"] > li');
   await expect(rows).toHaveCount(1);
 
   await rows.first().locator("a").click();
@@ -69,4 +69,20 @@ test("상세: 미수강 강의는 레슨 번호, 완주한 강의는 '다시 보
   await expect(page.locator("section").filter({ hasText: "커리큘럼" }).getByText("1", { exact: true }).first()).toBeVisible();
   await page.goto("/courses/c11"); // 시드에서 완주한 강의
   await expect(page.getByRole("button", { name: /다시 보기/ }).first()).toBeVisible();
+});
+
+test("둘러보기: 분야 아이콘·큐레이션에서 바로 목록으로, 조건을 걸면 큐레이션은 접힌다", async ({ page }) => {
+  await page.goto("/courses");
+  const popular = page.locator('section[aria-labelledby="popular-heading"]');
+  await expect(popular.locator("li")).toHaveCount(5);
+  await expect(popular.locator("li").first()).toContainText("초보자를 위한 Python"); // 수강생 수 1위
+
+  await page.getByRole("button", { name: "인기순으로 전체 강의 보기" }).click();
+  await expect(page).toHaveURL(/sort=popular/);
+  await expect(popular).toBeVisible(); // 정렬만 바꾸면 둘러보기는 그대로
+
+  await page.getByRole("button", { name: /^데이터 강의 \d+개 보기$/ }).click();
+  await expect(page).toHaveURL(/category=data/);
+  await expect(popular).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "데이터 조건 해제" })).toBeVisible();
 });

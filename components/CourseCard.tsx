@@ -175,7 +175,7 @@ export function CourseCard({
         ) : (
           <Byline category={v.category} instructor={v.instructor} />
         )}
-        <h3 className="mt-1 line-clamp-2 text-base font-bold leading-snug text-forest-950 transition-colors group-hover:text-forest-600">
+        <h3 className="mt-1 line-clamp-2 text-base font-semibold leading-snug text-forest-950 transition-colors group-hover:text-forest-600">
           {course.title}
         </h3>
         <div className="mt-2">
@@ -225,11 +225,14 @@ export function CourseRow({
   course,
   showProgress = false,
   showFav = false,
+  plain = false,
 }: {
   course: Course;
   showProgress?: boolean;
   /** 찜 목록처럼 바로 해제할 수 있어야 하는 곳에서만 */
   showFav?: boolean;
+  /** 카드 상자 없이 목록 안의 한 줄로(탐색 목록) — 썸네일과 글이 화면을 이끈다 */
+  plain?: boolean;
 }) {
   const v = useCourseView(course);
   const progressMode = showProgress && v.enrolled;
@@ -237,9 +240,12 @@ export function CourseRow({
   return (
     <Link
       href={`/courses/${course.id}`}
-      className="card group relative flex items-center gap-3 p-3 transition-colors hover:bg-cream-50"
+      className={clsx(
+        "group relative flex items-center gap-3.5 transition-colors",
+        plain ? "py-3.5" : "card p-3 hover:bg-cream-50"
+      )}
     >
-      <div className="relative w-28 shrink-0 sm:w-40">
+      <div className={clsx("relative shrink-0", plain ? "w-32 sm:w-40" : "w-28 sm:w-40")}>
         <CourseThumbnail
           tone={course.thumbnailTone}
           title={course.title}
@@ -261,7 +267,7 @@ export function CourseRow({
 
       <div className="min-w-0 flex-1 py-0.5">
         <Byline category={v.category} instructor={v.instructor} />
-        <h3 className="mt-0.5 line-clamp-2 text-sm font-bold leading-snug text-forest-950">
+        <h3 className="mt-0.5 line-clamp-2 text-sm font-semibold leading-snug text-forest-950 group-hover:text-forest-600">
           {course.title}
         </h3>
         {progressMode ? (
