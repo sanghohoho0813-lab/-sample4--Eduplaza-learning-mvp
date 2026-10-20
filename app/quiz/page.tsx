@@ -20,6 +20,7 @@ import { useToast } from "@/components/Toast";
 import { Header } from "@/components/Header";
 import { ActivityTabs } from "@/components/ActivityTabs";
 import { ListSkeleton } from "@/components/Skeletons";
+import { readDrafts, writeDrafts, type Draft } from "@/lib/drafts";
 import { CourseThumbnail } from "@/components/Thumbnail";
 import { ProgressRing } from "@/components/ProgressBar";
 
@@ -177,12 +178,28 @@ function QuizTab() {
 
 // 한두 글자짜리 제출을 막는 최소 분량
 const MIN_ANSWER = 20;
+const hhmm = (iso: string) => {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
 
 function AssignmentTab() {
   const store = useStore();
   const { toast } = useToast();
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [openForm, setOpenForm] = useState<string | null>(null);
+
+  // 저장해 둔 초안 불러오기(첫 렌더 이후 — 서버 렌더와 어긋나지 않게)
+  useEffect(() => setDrafts(readDrafts()), []);
+
+  // 입력하는 즉시 저장 — 쓰자마자 다른 화면으로 가도 마지막 글자까지 남는다(초안은 작아서 부담이 없다)
+  const editDraft = (id: string, text: string) => {
+    const next = { ...drafts };
+    if (text.trim()) next[id] = { text, savedAt: new Date().toISOString() };
+    else delete next[id];
+    setDrafts(next);
+    writeDrafts(next);
+  };
   const [justSubmitted, setJustSubmitted] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
 
@@ -206,9 +223,13 @@ function AssignmentTab() {
   const next = current ? store.nextLesson(current.id) : null;
 
   const submit = (id: string) => {
-    const text = (drafts[id] ?? "").trim();
+    const text = (drafts[id]?.text ?? "").trim();
     if (text.length < MIN_ANSWER) return;
     store.submitAssignment(id, text);
+    const rest = { ...drafts };
+    delete rest[id];
+    setDrafts(rest);
+    writeDrafts(rest);
     setOpenForm(null);
     setJustSubmitted(id);
     toast("과제를 제출했어요. 캘린더와 리포트에 반영했어요.", "celebrate");
@@ -223,7 +244,8 @@ function AssignmentTab() {
         const due = store.assignmentDue(assignment.id);
         const dLeft = daysUntil(due);
         const formOpen = openForm === assignment.id;
-        const draftLen = (drafts[assignment.id] ?? "").trim().length;
+        const draft = status === "pending" ? drafts[assignment.id] : undefined;
+        const draftLen = (draft?.text ?? "").trim().length;
         // 제출 직후에 보여줄 다음 과제 (방금 낸 것 제외)
         const nextPending = pending.find((p) => p.assignment.id !== assignment.id);
 
@@ -239,8 +261,21 @@ function AssignmentTab() {
             {/* 모바일에서는 마감 표시를 위로 올려 본문이 전체 폭을 쓰게 한다 */}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-forest-950/68">{course?.title}</p>
-                <h3 className="mt-1 text-base font-bold text-forest-950">{assignment.title}</h3>
+                <div className="flex items-center gap-2.5">
+                  {course && (
+                    <div className="w-12 shrink-0">
+                      <CourseThumbnail
+                        tone={course.thumbnailTone}
+                        title={course.title}
+                        courseId={course.id}
+                        rounded="rounded-md"
+                        sizes="48px"
+                      />
+                    </div>
+                  )}
+                  <p className="min-w-0 truncate text-xs font-medium text-forest-950/68">{course?.title}</p>
+                </div>
+                <h3 className="mt-2 text-base font-semibold text-forest-950">{assignment.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-forest-950/72">
                   {assignment.description}
                 </p>
@@ -263,6 +298,11 @@ function AssignmentTab() {
                   >
                     <CalendarClock size={13} />
                     {dueLabel(dLeft)}
+                  </span>
+                )}
+                {draft && !formOpen && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700">
+                    <PenSquare size={12} /> 작성 중
                   </span>
                 )}
                 <span className="text-xs text-forest-950/68">마감 {due}</span>
@@ -321,8 +361,8 @@ function AssignmentTab() {
                 </label>
                 <textarea
                   id={`draft-${assignment.id}`}
-                  value={drafts[assignment.id] ?? ""}
-                  onChange={(e) => setDrafts((d) => ({ ...d, [assignment.id]: e.target.value }))}
+                  value={draft?.text ?? ""}
+                  onChange={(e) => editDraft(assignment.id, e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit(assignment.id);
                   }}
@@ -332,17 +372,21 @@ function AssignmentTab() {
                   placeholder="무엇을 했고, 어떻게 생각했는지 적어주세요."
                   className="w-full resize-none rounded-xl border border-cream-200 bg-cream-50 p-3.5 text-sm outline-none placeholder:text-forest-950/35 focus:border-forest-400 focus:ring-2 focus:ring-forest-200"
                 />
-                <p
-                  id={`count-${assignment.id}`}
-                  className={clsx(
-                    "mt-1.5 text-xs",
-                    draftLen >= MIN_ANSWER ? "text-success" : "text-forest-950/68"
+                <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
+                  <p
+                    id={`count-${assignment.id}`}
+                    className={draftLen >= MIN_ANSWER ? "text-success" : "text-forest-950/68"}
+                  >
+                    {draftLen >= MIN_ANSWER
+                      ? `${draftLen}자 · 제출할 수 있어요`
+                      : `${MIN_ANSWER}자 이상 작성해주세요 (${draftLen}/${MIN_ANSWER})`}
+                  </p>
+                  {draft && (
+                    <p className="text-forest-950/68" aria-live="polite">
+                      임시 저장됨 · {hhmm(draft.savedAt)}
+                    </p>
                   )}
-                >
-                  {draftLen >= MIN_ANSWER
-                    ? `${draftLen}자 · 제출할 수 있어요`
-                    : `${MIN_ANSWER}자 이상 작성해주세요 (${draftLen}/${MIN_ANSWER})`}
-                </p>
+                </div>
                 <div className="mt-2.5 flex justify-end gap-2">
                   <button
                     onClick={() => setOpenForm(null)}
@@ -366,7 +410,7 @@ function AssignmentTab() {
                 className="btn-press mt-4 inline-flex min-h-[48px] items-center gap-1.5 rounded-full border border-forest-200 px-5 text-sm font-semibold text-forest-800 transition-colors hover:border-forest-400 hover:bg-forest-50"
               >
                 <PenSquare size={15} />
-                과제 작성하기
+                {draft ? "이어서 작성하기" : "과제 작성하기"}
               </button>
             )}
           </article>

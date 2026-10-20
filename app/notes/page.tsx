@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import {
-  BookOpen,
   NotebookPen,
   Pencil,
   PlayCircle,
@@ -20,6 +19,20 @@ import { ActivityTabs } from "@/components/ActivityTabs";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ListSkeleton } from "@/components/Skeletons";
+import { CourseThumbnail } from "@/components/Thumbnail";
+
+/** 올해 노트는 "10월 18일", 지난해 것은 연도까지 */
+const noteDate = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleDateString("ko-KR", {
+    ...(d.getFullYear() !== new Date().getFullYear() && { year: "numeric" }),
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const mmss = (sec: number) =>
+  `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
 export default function NotesPage() {
   const store = useStore();
@@ -31,6 +44,8 @@ export default function NotesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  /** 노트를 강의별로 모아 보기 — 비어 있으면 전체 */
+  const [filter, setFilter] = useState("");
 
   if (!store.ready) {
     return (
@@ -46,6 +61,15 @@ export default function NotesPage() {
     .filter((c): c is NonNullable<typeof c> => Boolean(c));
 
   const selectedCourse = courseId ? getCourse(courseId) : undefined;
+
+  const noteCourses = Array.from(new Set(store.state.notes.map((n) => n.courseId)))
+    .map((id) => ({ course: getCourse(id), count: store.state.notes.filter((n) => n.courseId === id).length }))
+    .filter((x): x is { course: NonNullable<ReturnType<typeof getCourse>>; count: number } => Boolean(x.course));
+  // 고른 강의의 노트가 모두 지워지면 전체로 돌아간다
+  const activeFilter = noteCourses.some((x) => x.course.id === filter) ? filter : "";
+  const visibleNotes = activeFilter
+    ? store.state.notes.filter((n) => n.courseId === activeFilter)
+    : store.state.notes;
 
   const save = () => {
     const text = content.trim();
@@ -194,6 +218,20 @@ export default function NotesPage() {
         )}
       </div>
 
+      {/* 여러 강의에 걸쳐 노트가 있으면 강의별로 골라 보기 */}
+      {noteCourses.length > 1 && (
+        <div className="thin-scroll -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="강의별 노트">
+          <FilterPill active={!activeFilter} onClick={() => setFilter("")}>
+            전체 <span className="opacity-70">{store.state.notes.length}</span>
+          </FilterPill>
+          {noteCourses.map(({ course, count }) => (
+            <FilterPill key={course.id} active={activeFilter === course.id} onClick={() => setFilter(course.id)}>
+              <span className="max-w-[12rem] truncate">{course.title}</span> <span className="opacity-70">{count}</span>
+            </FilterPill>
+          ))}
+        </div>
+      )}
+
       {store.state.notes.length === 0 ? (
         <EmptyState
           icon={NotebookPen}
@@ -204,34 +242,38 @@ export default function NotesPage() {
         />
       ) : (
         <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {store.state.notes.map((note) => {
+          {visibleNotes.map((note) => {
             const course = getCourse(note.courseId);
             const lessonInfo = note.lessonId ? getLesson(note.lessonId) : undefined;
             const isEditing = editingId === note.id;
             return (
               <li key={note.id} className="card flex flex-col p-5">
-                <div className="mb-2.5 flex items-start justify-between gap-2">
+                <div className="mb-3 flex items-start gap-3">
+                  {course && (
+                    <Link href={`/courses/${note.courseId}`} className="w-14 shrink-0" tabIndex={-1} aria-hidden>
+                      <CourseThumbnail
+                        tone={course.thumbnailTone}
+                        title={course.title}
+                        courseId={course.id}
+                        rounded="rounded-md"
+                        sizes="56px"
+                      />
+                    </Link>
+                  )}
                   <div className="min-w-0 flex-1">
                     <Link
                       href={`/courses/${note.courseId}`}
-                      className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-forest-600 hover:text-forest-800"
+                      className="block truncate text-sm font-semibold text-forest-950 hover:text-forest-600"
                     >
-                      <BookOpen size={13} className="shrink-0" />
-                      <span className="truncate">{course?.title}</span>
+                      {course?.title}
                     </Link>
-                    {lessonInfo && (
-                      <Link
-                        href={`/learn/${note.courseId}?lesson=${lessonInfo.lesson.id}${typeof note.at === "number" ? `&t=${note.at}` : ""}`}
-                        className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-forest-950/68 hover:text-forest-800"
-                      >
-                        <PlayCircle size={13} className="shrink-0" />
+                    {lessonInfo ? (
+                      <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-forest-950/68">
+                        <PlayCircle size={13} className="shrink-0" aria-hidden />
                         <span className="truncate">{lessonInfo.lesson.title}</span>
-                        {typeof note.at === "number" && (
-                          <span className="shrink-0 rounded bg-forest-50 px-1.5 font-mono font-semibold text-forest-700">
-                            {String(Math.floor(note.at / 60)).padStart(2, "0")}:{String(note.at % 60).padStart(2, "0")}
-                          </span>
-                        )}
-                      </Link>
+                      </p>
+                    ) : (
+                      <p className="mt-0.5 text-xs text-forest-950/68">강의 전체 메모</p>
                     )}
                   </div>
                   {!isEditing && (
@@ -293,17 +335,18 @@ export default function NotesPage() {
                   </p>
                 )}
 
-                <p
-                  className={clsx(
-                    "mt-3 border-t border-cream-100 pt-2.5 text-xs text-forest-950/68"
+                <div className="mt-3 flex min-h-[40px] flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-t border-cream-100 pt-2.5">
+                  <p className="whitespace-nowrap text-xs text-forest-950/68">{noteDate(note.updatedAt)}</p>
+                  {lessonInfo && !isEditing && (
+                    <Link
+                      href={`/learn/${note.courseId}?lesson=${lessonInfo.lesson.id}${typeof note.at === "number" ? `&t=${note.at}` : ""}`}
+                      className="btn-press inline-flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full bg-forest-50 px-3.5 text-xs font-semibold text-forest-800 transition-colors hover:bg-forest-100"
+                    >
+                      <PlayCircle size={14} aria-hidden />
+                      {typeof note.at === "number" ? `${mmss(note.at)}부터 다시 보기` : "레슨 다시 보기"}
+                    </Link>
                   )}
-                >
-                  {new Date(note.updatedAt).toLocaleDateString("ko-KR", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
+                </div>
               </li>
             );
           })}
@@ -320,5 +363,30 @@ export default function NotesPage() {
         onCancel={() => setDeleteId(null)}
       />
     </div>
+  );
+}
+
+function FilterPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      className={clsx(
+        "btn-press inline-flex min-h-[40px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-sm font-medium transition-colors",
+        active
+          ? "border-forest-900 bg-forest-900 text-cream-50"
+          : "border-cream-300 bg-white text-forest-950/72 hover:border-forest-300"
+      )}
+    >
+      {children}
+    </button>
   );
 }

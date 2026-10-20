@@ -67,11 +67,36 @@ export default function MyPage() {
     toast("데모 데이터를 처음 상태로 되돌렸어요", "info");
   };
 
+  // 바로가기는 숫자와 함께 — 들어가기 전에 무엇이 있는지 보이게
   const quickLinks = [
-    { href: "/my-learning", label: "내 강의", icon: BookOpen },
-    { href: "/my-learning?tab=favorite", label: "찜한 강의", icon: Heart },
-    { href: "/notes", label: "학습노트", icon: NotebookPen },
-    { href: "/report", label: "학습 리포트", icon: GraduationCap },
+    {
+      href: "/my-learning",
+      label: "내 강의",
+      meta: `${state.enrollments.length}개 수강`,
+      icon: BookOpen,
+      tint: "bg-forest-50 text-forest-700",
+    },
+    {
+      href: "/my-learning?tab=favorite",
+      label: "찜한 강의",
+      meta: `${state.favorites.length}개`,
+      icon: Heart,
+      tint: "bg-clay-50 text-clay-600",
+    },
+    {
+      href: "/notes",
+      label: "학습노트",
+      meta: `${state.notes.length}개`,
+      icon: NotebookPen,
+      tint: "bg-teal-50 text-teal-700",
+    },
+    {
+      href: "/report",
+      label: "학습 리포트",
+      meta: "이번 주 요약",
+      icon: GraduationCap,
+      tint: "bg-amber-50 text-amber-600",
+    },
   ];
 
   return (
@@ -129,16 +154,25 @@ export default function MyPage() {
         <section className="card p-5">
           <h3 className="mb-3 text-sm font-bold text-forest-950">바로가기</h3>
           <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-2">
-            {quickLinks.map(({ href, label, icon: Icon }) => (
+            {quickLinks.map(({ href, label, meta, icon: Icon, tint }) => (
               <li key={label}>
                 <Link
                   href={href}
-                  className="btn-press flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-xl border border-cream-200 px-2 text-center transition-colors hover:border-forest-300 hover:bg-cream-50"
+                  className="btn-press group flex min-h-[112px] flex-col items-start justify-between gap-3 rounded-2xl bg-cream-50 p-4 transition-colors hover:bg-cream-100"
                 >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-forest-50 text-forest-600">
-                    <Icon size={19} />
+                  <span
+                    className={clsx(
+                      "flex h-11 w-11 items-center justify-center rounded-xl transition-transform group-hover:-translate-y-0.5",
+                      tint
+                    )}
+                    aria-hidden
+                  >
+                    <Icon size={20} strokeWidth={1.9} />
                   </span>
-                  <span className="text-sm font-semibold text-forest-950">{label}</span>
+                  <span>
+                    <span className="block text-sm font-semibold text-forest-950">{label}</span>
+                    <span className="block text-xs text-forest-950/68">{meta}</span>
+                  </span>
                 </Link>
               </li>
             ))}

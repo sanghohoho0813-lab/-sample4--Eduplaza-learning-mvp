@@ -33,6 +33,8 @@ test.describe("모바일 학습 흐름", () => {
 
     await test.step("퀴즈: 틀린 문제만 터치로 다시 풀기", async () => {
       await page.goto("/quiz/q1?mode=review");
+      // 풀이 중에는 하단 탭 대신 정답 확인 바만
+      await expect(page.getByRole("navigation", { name: "하단 메뉴" })).toHaveCount(0);
       for (const [i, option] of [2, 0].entries()) {
         await expect(page.getByText(`${i + 1}/2`)).toBeVisible();
         await page.locator("button[aria-pressed]").nth(option).click();

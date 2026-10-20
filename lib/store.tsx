@@ -40,6 +40,7 @@ import {
 } from "./learning";
 import { DEFAULT_NOTIFICATIONS, sanitizeState } from "./persist";
 import { planToday, studiedOn, type PlanItem } from "./coach";
+import { clearDrafts } from "./drafts";
 import type { DayMinutes, WeakQuestion } from "./learning";
 
 // 기존 화면들이 store에서 가져다 쓰던 것들은 그대로 열어 둔다
@@ -699,7 +700,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  const resetDemo = useCallback(() => setState(seedState()), []);
+  const resetDemo = useCallback(() => {
+    clearDrafts(); // 작성 중이던 과제 초안도 첫 방문 상태로
+    setState(seedState());
+  }, []);
 
   // ---- settings ----
   const toggleInterest = useCallback(

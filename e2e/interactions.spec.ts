@@ -41,6 +41,25 @@ test("과제: 20자 미만은 제출 불가, 글자 수 안내", async ({ page }
   await expect(art.getByRole("button", { name: "제출하기" })).toBeEnabled();
 });
 
+test("과제: 쓰던 초안은 화면을 떠나도 남고, 제출하면 지워진다", async ({ page }) => {
+  await page.goto("/quiz?tab=assignment");
+  const art = page.locator("article#a5"); // 마감이 가장 급한 과제 — 제출하면 목록 아래로 내려간다
+  await art.getByRole("button", { name: "과제 작성하기" }).click();
+  await art.locator("textarea").fill("월별 신규 가입자 수를 구하는 쿼리 초안");
+  await expect(art).toContainText("임시 저장됨");
+
+  await page.goto("/");
+  await page.goto("/quiz?tab=assignment");
+  await expect(art).toContainText("작성 중");
+  await art.getByRole("button", { name: "이어서 작성하기" }).click();
+  await expect(art.locator("textarea")).toHaveValue("월별 신규 가입자 수를 구하는 쿼리 초안");
+
+  await art.locator("textarea").fill("월별 신규 가입자 수를 COUNT와 GROUP BY로 구했습니다.");
+  await art.getByRole("button", { name: "제출하기" }).click();
+  await expect(art).toContainText("제출 완료");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("eduplaza-assignment-drafts"))).toBeNull();
+});
+
 test("퀴즈: 도중에 나가면 확인, 결과는 맨 위에서·한 번만 저장", async ({ page }) => {
   await page.goto("/quiz/q3");
   await expect(page.getByText("1/7")).toBeVisible(); // 문제가 준비된 뒤 키보드 입력

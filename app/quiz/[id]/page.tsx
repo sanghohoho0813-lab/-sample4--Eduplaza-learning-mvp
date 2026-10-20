@@ -20,6 +20,8 @@ import { QUIZZES, getCourse } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import type { Quiz, QuizQuestion, QuizResult } from "@/lib/types";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Portal } from "@/components/Portal";
+import { CourseThumbnail } from "@/components/Thumbnail";
 import { ListSkeleton } from "@/components/Skeletons";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
@@ -192,9 +194,37 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
 
   if (!question) return null;
   const answered = picks.map((p, i) => p === questions[i].answerIndex);
+  const isRight = checked && selected === question.answerIndex;
+  const isLast = step + 1 >= questions.length;
+
+  // 행동 버튼 하나 — 모바일은 엄지가 닿는 하단 고정 바, 넓은 화면은 카드 안
+  const primaryAction = (className: string) =>
+    !checked ? (
+      <button
+        onClick={checkAnswer}
+        disabled={selected === null}
+        className={clsx(
+          "btn-press min-h-[52px] w-full rounded-full bg-forest-900 text-base font-bold text-cream-50 transition-colors hover:bg-forest-800 disabled:opacity-40",
+          className
+        )}
+      >
+        정답 확인
+      </button>
+    ) : (
+      <button
+        onClick={nextQuestion}
+        className={clsx(
+          "btn-press inline-flex min-h-[52px] w-full items-center justify-center gap-1.5 rounded-full bg-forest-900 text-base font-bold text-cream-50 transition-colors hover:bg-forest-800",
+          className
+        )}
+      >
+        {isLast ? "결과 보기" : "다음 문제"}
+        <ArrowRight size={17} />
+      </button>
+    );
 
   return (
-    <div className="mx-auto max-w-2xl animate-fade-up">
+    <div className="mx-auto max-w-5xl animate-fade-up pb-24 lg:pb-0">
       {/* 푼 문제가 있으면 나가기 전에 한 번 묻는다(중간 풀이는 저장되지 않음) */}
       <BackLink
         onClick={(e) => {
@@ -213,162 +243,219 @@ function QuizRunner({ quiz, mode, onRetry }: { quiz: Quiz; mode: Mode; onRetry: 
         onCancel={() => setLeaveOpen(false)}
       />
 
-      <div className="mb-5">
-        <p className="text-xs font-medium text-forest-950/68">
-          {course?.title}
-          {mode === "review" && (
-            <span className="ml-2 rounded-full bg-forest-50 px-2 py-0.5 font-semibold text-forest-700">
-              틀린 문제 복습
-            </span>
-          )}
-        </p>
-        <h1 className="mt-1 font-display text-xl font-semibold text-forest-950 md:text-2xl">
-          {quiz.title}
-        </h1>
-        {/* 진행 표시는 한 가지로 — 점 하나가 한 문제, 맞힘/틀림까지 보여준다 */}
-        <div className="mt-4 flex items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5" aria-hidden>
-          {questions.map((qq, i) => (
-            <span
-              key={qq.id}
-              className={clsx(
-                "h-2.5 rounded-full transition-all duration-300",
-                i < answered.length
-                  ? answered[i]
-                    ? "w-2.5 bg-success"
-                    : "w-2.5 bg-danger"
-                  : i === step
-                    ? "w-6 bg-forest-800"
-                    : "w-2.5 bg-cream-300"
-              )}
-            />
-          ))}
-        </div>
-          <span className="shrink-0 text-sm font-bold text-forest-700">
-            <span className="sr-only">전체 {questions.length}문제 중 </span>
-            {step + 1}/{questions.length}
-          </span>
-        </div>
-      </div>
-
-      <div ref={cardRef} className="card p-5 md:p-7">
-        <p className="text-xs font-bold uppercase tracking-widest text-forest-500">
-          Question {step + 1} · {question.topic}
-        </p>
-        <h2 className="mt-2 text-lg font-bold leading-relaxed text-forest-950">
-          {question.question}
-        </h2>
-
-        <div className="mt-5 space-y-2.5">
-          {question.options.map((opt, i) => {
-            const isSelected = selected === i;
-            const isAnswer = i === question.answerIndex;
-            const showCorrect = checked && isAnswer;
-            const showWrong = checked && isSelected && !isAnswer;
-            return (
-              <button
-                key={i}
-                onClick={() => !checked && setSelected(i)}
-                disabled={checked}
-                aria-pressed={isSelected}
-                className={clsx(
-                  "flex min-h-[56px] w-full items-center gap-3.5 rounded-2xl border-2 px-4 py-3 text-left text-sm transition-all duration-200 md:text-base",
-                  showCorrect
-                    ? "border-success bg-forest-50 text-forest-950"
-                    : showWrong
-                      ? "border-danger bg-danger/5 text-forest-950"
-                      : isSelected
-                        ? "border-forest-800 bg-forest-950 text-cream-50"
-                        : "border-cream-200 bg-white text-forest-950/85 hover:border-forest-300",
-                  !checked && "btn-press"
-                )}
-              >
-                <span
-                  className={clsx(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors",
-                    showCorrect
-                      ? "bg-success text-white"
-                      : showWrong
-                        ? "bg-danger text-white"
-                        : isSelected
-                          ? "bg-cream-100 text-forest-950"
-                          : "bg-cream-100 text-forest-950/72"
-                  )}
-                >
-                  {showCorrect ? (
-                    <Check size={16} className="animate-check-pop" />
-                  ) : showWrong ? (
-                    <X size={16} className="animate-check-pop" />
-                  ) : (
-                    OPTION_LABELS[i]
-                  )}
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr),300px] lg:items-start lg:gap-8">
+        <div className="min-w-0">
+          <div className="mb-5">
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-forest-950/68">
+              {course?.title}
+              {mode === "review" && (
+                <span className="rounded-full bg-clay-50 px-2 py-0.5 font-semibold text-clay-600">
+                  틀린 문제 복습
                 </span>
-                <span className="leading-snug">{opt}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {checked && (
-          <div
-            className={clsx(
-              "mt-5 flex gap-3 rounded-2xl p-4 animate-scale-in",
-              selected === question.answerIndex ? "bg-forest-50" : "bg-cream-100"
-            )}
-          >
-            {selected === question.answerIndex ? (
-              <CheckCircle2 size={19} className="mt-0.5 shrink-0 text-success" />
-            ) : (
-              <XCircle size={19} className="mt-0.5 shrink-0 text-danger" />
-            )}
-            <div>
-              <p className="text-sm font-bold text-forest-950">
-                {selected === question.answerIndex
-                  ? "정답이에요!"
-                  : `아쉬워요. 정답은 ${OPTION_LABELS[question.answerIndex]}입니다.`}
-              </p>
-              <p className="mt-1 text-sm leading-relaxed text-forest-950/72">
-                {question.explanation}
-              </p>
+              )}
+            </p>
+            <h1 className="mt-1 font-display text-xl font-semibold text-forest-950 md:text-2xl">
+              {quiz.title}
+            </h1>
+            {/* 진행 표시는 한 가지로 — 칸 하나가 한 문제, 맞힘/틀림까지 보여준다 */}
+            <div className="mt-4 flex items-center gap-3">
+              <div className="flex flex-1 gap-1" aria-hidden>
+                {questions.map((qq, i) => (
+                  <span
+                    key={qq.id}
+                    className={clsx(
+                      "h-1.5 flex-1 rounded-full transition-colors duration-300",
+                      i < answered.length
+                        ? answered[i]
+                          ? "bg-success"
+                          : "bg-danger"
+                        : i === step
+                          ? "bg-forest-800"
+                          : "bg-cream-300"
+                    )}
+                  />
+                ))}
+              </div>
+              <span className="shrink-0 text-sm font-bold tabular-nums text-forest-700">
+                <span className="sr-only">전체 {questions.length}문제 중 </span>
+                {step + 1}/{questions.length}
+              </span>
             </div>
           </div>
-        )}
 
-        <p className="mt-4 hidden items-center justify-center gap-2 text-xs text-forest-950/68 md:flex">
-          <kbd className="rounded border border-cream-300 bg-cream-50 px-1.5 py-0.5 font-sans font-semibold">
-            1
-          </kbd>
-          ~
-          <kbd className="rounded border border-cream-300 bg-cream-50 px-1.5 py-0.5 font-sans font-semibold">
-            {question.options.length}
-          </kbd>
-          보기 선택 ·
-          <kbd className="rounded border border-cream-300 bg-cream-50 px-1.5 py-0.5 font-sans font-semibold">
-            Enter
-          </kbd>
-          {checked ? "다음 문제" : "정답 확인"}
-        </p>
+          <div ref={cardRef} className="card scroll-mt-4 p-5 md:p-8">
+            <p className="text-xs font-semibold text-forest-600">
+              문제 {step + 1} · {question.topic}
+            </p>
+            <h2 className="mt-2 text-lg font-bold leading-relaxed text-forest-950 md:text-xl">
+              {question.question}
+            </h2>
 
-        <div ref={actionRef} className="mt-4 scroll-mb-32">
-          {!checked ? (
-            <button
-              onClick={checkAnswer}
-              disabled={selected === null}
-              className="btn-press min-h-[52px] w-full rounded-full bg-forest-900 text-base font-bold text-cream-50 transition-colors hover:bg-forest-800 disabled:opacity-40"
-            >
-              정답 확인
-            </button>
-          ) : (
-            <button
-              onClick={nextQuestion}
-              className="btn-press inline-flex min-h-[52px] w-full items-center justify-center gap-1.5 rounded-full bg-forest-900 text-base font-bold text-cream-50 transition-colors hover:bg-forest-800"
-            >
-              {step + 1 >= questions.length ? "결과 보기" : "다음 문제"}
-              <ArrowRight size={17} />
-            </button>
-          )}
+            <div className="mt-6 space-y-2.5">
+              {question.options.map((opt, i) => {
+                const isSelected = selected === i;
+                const isAnswer = i === question.answerIndex;
+                const showCorrect = checked && isAnswer;
+                const showWrong = checked && isSelected && !isAnswer;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => !checked && setSelected(i)}
+                    disabled={checked}
+                    aria-pressed={isSelected}
+                    className={clsx(
+                      "flex min-h-[60px] w-full items-center gap-3.5 rounded-2xl border-2 px-4 py-3 text-left text-sm transition-all duration-200 md:text-base",
+                      showCorrect
+                        ? "border-success bg-forest-50 text-forest-950"
+                        : showWrong
+                          ? "border-danger bg-danger/5 text-forest-950"
+                          : checked
+                            ? "border-cream-200 bg-white text-forest-950/60"
+                            : isSelected
+                              ? "border-forest-800 bg-forest-950 text-cream-50 shadow-card"
+                              : "border-cream-200 bg-white text-forest-950/85 hover:border-forest-300 hover:bg-cream-50",
+                      !checked && "btn-press"
+                    )}
+                  >
+                    <span
+                      className={clsx(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors",
+                        showCorrect
+                          ? "bg-success text-white"
+                          : showWrong
+                            ? "bg-danger text-white"
+                            : isSelected && !checked
+                              ? "bg-cream-100 text-forest-950"
+                              : "bg-cream-100 text-forest-950/72"
+                      )}
+                    >
+                      {showCorrect ? (
+                        <Check size={16} className="animate-check-pop" />
+                      ) : showWrong ? (
+                        <X size={16} className="animate-check-pop" />
+                      ) : (
+                        OPTION_LABELS[i]
+                      )}
+                    </span>
+                    <span className="leading-snug">{opt}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {checked && (
+              <div
+                ref={actionRef}
+                role="status"
+                className={clsx(
+                  "mt-5 scroll-mb-32 rounded-2xl border p-4 animate-scale-in md:p-5",
+                  isRight ? "border-success/25 bg-forest-50" : "border-clay-200 bg-clay-50"
+                )}
+              >
+                <p className="flex items-center gap-2 text-base font-bold text-forest-950">
+                  {isRight ? (
+                    <CheckCircle2 size={19} className="shrink-0 text-success" aria-hidden />
+                  ) : (
+                    <XCircle size={19} className="shrink-0 text-danger" aria-hidden />
+                  )}
+                  {isRight ? "정답이에요!" : `아쉬워요. 정답은 ${OPTION_LABELS[question.answerIndex]}입니다.`}
+                </p>
+                <p className="mt-1.5 text-sm leading-relaxed text-forest-950/75">{question.explanation}</p>
+                {!isRight && (
+                  <p className="mt-2 text-xs font-semibold text-clay-600">
+                    이 문제는 ‘틀린 문제’에 모여 나중에 다시 풀 수 있어요.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="mt-6 hidden lg:block">{primaryAction("")}</div>
+          </div>
         </div>
+
+        {/* 넓은 화면: 문항 지도 — 어디까지 왔고 무엇을 맞혔는지 */}
+        <aside className="hidden lg:block" aria-label="문항 진행">
+          <div className="card sticky top-6 overflow-hidden">
+            {course && (
+              <div className="flex items-center gap-3 border-b border-cream-100 bg-cream-50/70 px-5 py-4">
+                <div className="w-16 shrink-0">
+                  <CourseThumbnail
+                    tone={course.thumbnailTone}
+                    title={course.title}
+                    courseId={course.id}
+                    rounded="rounded-lg"
+                    sizes="64px"
+                  />
+                </div>
+                <p className="line-clamp-2 text-xs font-medium text-forest-950/72">{course.title}</p>
+              </div>
+            )}
+            <ol className="space-y-0.5 p-3">
+              {questions.map((qq, i) => {
+                const done = i < answered.length;
+                const current = i === step;
+                return (
+                  <li
+                    key={qq.id}
+                    aria-current={current ? "step" : undefined}
+                    className={clsx(
+                      "flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm",
+                      current ? "bg-forest-50 font-semibold text-forest-950" : "text-forest-950/72"
+                    )}
+                  >
+                    <span
+                      className={clsx(
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                        done
+                          ? answered[i]
+                            ? "bg-success text-white"
+                            : "bg-danger text-white"
+                          : current
+                            ? "bg-forest-900 text-cream-50"
+                            : "bg-cream-100 text-forest-950/68"
+                      )}
+                      aria-hidden
+                    >
+                      {done ? answered[i] ? <Check size={14} /> : <X size={14} /> : i + 1}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{qq.topic}</span>
+                    <span className="sr-only">
+                      {done ? (answered[i] ? "정답" : "오답") : current ? "푸는 중" : "남음"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+            <dl className="space-y-1.5 border-t border-cream-100 px-5 py-3.5 text-xs text-forest-950/68">
+              <div className="flex items-center justify-between gap-2">
+                <dt>보기 선택</dt>
+                <dd>
+                  <kbd className="rounded border border-cream-300 bg-cream-50 px-1.5 py-0.5 font-sans font-semibold">1</kbd> ~{" "}
+                  <kbd className="rounded border border-cream-300 bg-cream-50 px-1.5 py-0.5 font-sans font-semibold">
+                    {question.options.length}
+                  </kbd>
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <dt>{checked ? "다음 문제" : "정답 확인"}</dt>
+                <dd>
+                  <kbd className="rounded border border-cream-300 bg-cream-50 px-1.5 py-0.5 font-sans font-semibold">Enter</kbd>
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
       </div>
+
+      {/* 모바일·태블릿: 하단 고정 행동 바 (하단 탭 대신) */}
+      <Portal>
+        <div
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-cream-200 bg-white/95 px-4 pt-3 shadow-[0_-4px_16px_rgba(19,31,25,0.08)] backdrop-blur lg:hidden"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        >
+          <div className="mx-auto max-w-2xl">{primaryAction("")}</div>
+        </div>
+      </Portal>
     </div>
   );
 }

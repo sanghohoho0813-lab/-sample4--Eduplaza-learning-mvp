@@ -60,5 +60,6 @@ export function isNavActive(pathname: string, item: NavItem): boolean {
 
 /** 학습에 집중하는 화면 — 모바일 하단 탭 대신 화면 전용 조작 바를 쓴다 */
 export function isFocusRoute(pathname: string): boolean {
-  return pathname.startsWith("/learn/");
+  // 레슨 플레이어와 퀴즈 풀이(/quiz/[id])는 화면 하단을 학습 조작 바가 쓴다
+  return pathname.startsWith("/learn/") || /^\/quiz\/[^/]+$/.test(pathname);
 }
