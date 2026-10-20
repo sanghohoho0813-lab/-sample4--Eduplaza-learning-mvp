@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import { ChevronLeft, ChevronRight, ClipboardList, Flame } from "lucide-react";
-import { ASSIGNMENTS, getCourse } from "@/lib/data";
+import { formatMinutes, getCourse } from "@/lib/data";
 import { dayKey, dueLabel, useStore } from "@/lib/store";
 import { Header } from "@/components/Header";
 import { ActivityTabs } from "@/components/ActivityTabs";
@@ -18,7 +18,21 @@ interface DayMarks {
   quiz?: boolean;
   due?: boolean;
   any?: boolean;
+  /** 그날 끝낸 레슨 시간(분) — 칸의 색 농도 */
+  minutes?: number;
 }
+
+/** 학습 시간 → 색 농도 4단계. 기록이 없으면 칠하지 않는다 */
+const HEAT = [
+  { min: 1, cls: "bg-forest-50" },
+  { min: 21, cls: "bg-forest-100" },
+  { min: 46, cls: "bg-forest-200" },
+  { min: 71, cls: "bg-forest-300" },
+];
+const heatOf = (m?: DayMarks) =>
+  !m?.any ? "" : [...HEAT].reverse().find((h) => (m.minutes ?? 0) >= h.min)?.cls ?? "bg-forest-50";
+
+const WEEKDAY_LONG = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
 
 export default function CalendarPage() {
   const store = useStore();
@@ -35,7 +49,8 @@ export default function CalendarPage() {
     const put = (key: string, patch: DayMarks) => map.set(key, { ...map.get(key), ...patch });
     for (const a of store.state.activity) {
       const key = dayKey(new Date(a.at));
-      if (a.type === "lesson") put(key, { lesson: true, any: true });
+      if (a.type === "lesson")
+        put(key, { lesson: true, any: true, minutes: (map.get(key)?.minutes ?? 0) + (a.minutes ?? 0) });
       else if (a.type === "quiz" || a.type === "review") put(key, { quiz: true, any: true });
       else if (a.type !== "enroll" && a.type !== "achievement") put(key, { any: true });
     }
@@ -85,13 +100,29 @@ export default function CalendarPage() {
     setMonth(d.getMonth());
   };
 
-  const dayActivity = store.state.activity.filter((a) => dayKey(new Date(a.at)) === selected);
-  const dayDue = ASSIGNMENTS.filter(
-    (a) => store.assignmentDue(a.id) === selected && store.assignmentStatus(a.id) === "pending"
-  );
+  // 이번 달 요약 — 칸을 하나하나 세지 않아도 한 달의 리듬이 보이게
+  const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}-`;
+  const monthDays = Array.from(marks.entries()).filter(([k, m]) => k.startsWith(monthPrefix) && m.any);
+  const monthMinutes = monthDays.reduce((s, [, m]) => s + (m.minutes ?? 0), 0);
+  // 수강 중인 강의의 아직 내지 않은 과제만 센다
+  const monthDue = store.upcomingAssignments.filter((u) => u.due.startsWith(monthPrefix)).length;
+
+  // 하루 기록은 아침부터 밤까지 순서대로
+  const dayActivity = store.state.activity
+    .filter((a) => dayKey(new Date(a.at)) === selected && a.type !== "enroll")
+    .sort((a, b) => a.at.localeCompare(b.at));
+  const dayDue = store.upcomingAssignments.filter((u) => u.due === selected).map((u) => u.assignment);
   const dayMinutes = dayActivity.reduce((s, a) => s + (a.type === "lesson" ? a.minutes ?? 0 : 0), 0);
-  const [, sm, sd] = selected.split("-").map(Number);
+  const [sy, sm, sd] = selected.split("-").map(Number);
   const selectedLabel = selected === todayKey ? "오늘" : `${sm}월 ${sd}일`;
+  const selectedWeekday = WEEKDAY_LONG[new Date(sy, sm - 1, sd).getDay()];
+  const dayCounts = [
+    dayActivity.filter((a) => a.type === "lesson").length > 0 &&
+      `레슨 ${dayActivity.filter((a) => a.type === "lesson").length}개`,
+    dayActivity.filter((a) => a.type === "quiz" || a.type === "review").length > 0 &&
+      `퀴즈 ${dayActivity.filter((a) => a.type === "quiz" || a.type === "review").length}회`,
+    dayActivity.filter((a) => a.type === "note").length > 0 && `메모 ${dayActivity.filter((a) => a.type === "note").length}개`,
+  ].filter(Boolean);
 
   return (
     <div className="animate-fade-up">
@@ -103,8 +134,8 @@ export default function CalendarPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr),360px]">
         <section className="card p-5 md:p-6" aria-labelledby="month-heading">
-          <div className="mb-5 flex items-center justify-between">
-            <h2 id="month-heading" className="font-display text-lg font-semibold text-forest-950">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 id="month-heading" className="font-display text-lg font-semibold text-forest-950 md:text-xl">
               {year}년 {month + 1}월
             </h2>
             <div className="flex items-center gap-1.5">
@@ -133,7 +164,19 @@ export default function CalendarPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center">
+          <p className="mb-5 text-sm text-forest-950/72">
+            {monthDays.length > 0 ? (
+              <>
+                <b className="font-semibold text-forest-950">{monthDays.length}일</b> 공부했어요 · 레슨{" "}
+                <b className="font-semibold text-forest-950">{formatMinutes(monthMinutes)}</b>
+                {monthDue > 0 && <> · 과제 마감 {monthDue}건</>}
+              </>
+            ) : (
+              <>이달에는 아직 학습 기록이 없어요{monthDue > 0 && ` · 과제 마감 ${monthDue}건`}</>
+            )}
+          </p>
+
+          <div className="grid grid-cols-7 gap-1 text-center md:gap-1.5">
             {WEEKDAYS.map((w, i) => (
               <div
                 key={w}
@@ -156,23 +199,31 @@ export default function CalendarPage() {
                   key={key}
                   onClick={() => selectDay(key)}
                   aria-pressed={isSelected}
-                  aria-label={`${month + 1}월 ${day}일${m?.any ? ", 학습 기록 있음" : ""}${m?.due ? ", 과제 마감" : ""}`}
+                  aria-label={`${month + 1}월 ${day}일${m?.minutes ? `, 학습 ${m.minutes}분` : m?.any ? ", 학습 기록 있음" : ""}${m?.quiz ? ", 퀴즈" : ""}${m?.due ? ", 과제 마감" : ""}`}
                   className={clsx(
-                    "relative flex aspect-square min-h-[44px] flex-col items-center justify-center rounded-xl text-sm transition-colors md:aspect-auto md:min-h-[64px]",
+                    "relative flex aspect-square min-h-[44px] flex-col items-center justify-center rounded-xl text-sm transition-colors md:aspect-auto md:min-h-[72px] md:justify-start md:pt-2.5",
                     isSelected
                       ? "bg-forest-950 font-bold text-cream-50 shadow-glow"
                       : m?.any
-                        ? "bg-forest-50 text-forest-950 hover:bg-forest-100"
+                        ? clsx(heatOf(m), "font-semibold text-forest-950 hover:ring-2 hover:ring-forest-300")
                         : "text-forest-950/70 hover:bg-cream-100",
-                    isToday && !isSelected && "ring-2 ring-forest-400"
+                    isToday && !isSelected && "ring-2 ring-forest-500"
                   )}
                 >
                   {day}
-                  <span className="mt-1 flex h-1.5 items-center gap-0.5" aria-hidden>
-                    {m?.lesson && (
-                      <span className={clsx("h-1.5 w-1.5 rounded-full", isSelected ? "bg-cream-100" : "bg-forest-600")} />
-                    )}
-                    {m?.quiz && <span className="h-1.5 w-1.5 rounded-full bg-teal-400" />}
+                  {m?.minutes ? (
+                    <span
+                      className={clsx(
+                        "mt-0.5 hidden text-xs font-medium md:block",
+                        isSelected ? "text-cream-200/80" : "text-forest-950/68"
+                      )}
+                    >
+                      {m.minutes}분
+                    </span>
+                  ) : null}
+                  {/* 퀴즈·마감은 모서리 점으로 — 색 농도(학습 시간)와 겹치지 않게 */}
+                  <span className="absolute right-1.5 top-1.5 flex gap-0.5" aria-hidden>
+                    {m?.quiz && <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />}
                     {m?.due && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />}
                   </span>
                 </button>
@@ -180,27 +231,44 @@ export default function CalendarPage() {
             })}
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-4 border-t border-cream-100 pt-4 text-xs text-forest-950/68">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-cream-100 pt-4 text-xs text-forest-950/68">
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-forest-600" /> 레슨
+              학습 시간
+              <span className="ml-1 flex gap-1" aria-hidden>
+                {HEAT.map((h) => (
+                  <span key={h.min} className={clsx("h-3.5 w-3.5 rounded", h.cls)} />
+                ))}
+              </span>
+              <span className="sr-only">: 색이 진할수록 많이 공부한 날</span>
+              <span aria-hidden>많이</span>
             </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-teal-400" /> 퀴즈
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-amber-500" /> 과제 마감
+            <span className="flex gap-4">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-teal-500" /> 퀴즈
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-amber-500" /> 과제 마감
+              </span>
             </span>
           </div>
         </section>
 
         <aside className="space-y-6">
           <section ref={dayRef} className="card scroll-mt-4 p-5" aria-labelledby="day-heading" aria-live="polite">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 id="day-heading" className="text-base font-bold text-forest-950">
-                {selectedLabel}의 학습
-              </h2>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 id="day-heading" className="text-base font-bold text-forest-950">
+                  {selectedLabel}의 학습
+                </h2>
+                <p className="mt-0.5 text-xs text-forest-950/68">
+                  {selected === todayKey ? `${sm}월 ${sd}일 ${selectedWeekday}` : selectedWeekday}
+                  {dayCounts.length > 0 && ` · ${dayCounts.join(" · ")}`}
+                </p>
+              </div>
               {dayMinutes > 0 && (
-                <span className="text-sm font-semibold text-forest-700">{dayMinutes}분</span>
+                <span className="shrink-0 rounded-full bg-forest-50 px-3 py-1 text-sm font-bold text-forest-700">
+                  {formatMinutes(dayMinutes)}
+                </span>
               )}
             </div>
             {dayDue.map((a) => (
@@ -213,9 +281,10 @@ export default function CalendarPage() {
                 <span className="truncate">{a.title} 마감</span>
               </Link>
             ))}
+            <div className="mt-3" />
             <ActivityList
               items={dayActivity}
-              showTime={false}
+              timeline
               empty={
                 selected === todayKey
                   ? "아직 오늘 기록이 없어요. 레슨 하나로 시작해볼까요?"

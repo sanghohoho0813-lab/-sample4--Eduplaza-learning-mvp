@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  ArrowUp,
   Bell,
   ChevronRight,
   ClipboardList,
@@ -20,6 +21,9 @@ import { groupWeak } from "@/lib/insights";
 import { BRAND } from "@/lib/brand";
 import { COURSES, getCategory, getInstructor } from "@/lib/data";
 import { BrandSymbol } from "./BrandMark";
+import { SearchHints } from "./SearchHints";
+import { Portal } from "./Portal";
+import { pushRecent } from "@/lib/recentSearch";
 
 const MAX_SUGGESTIONS = 5;
 const SEEN_KEY = "eduplaza-notice-seen";
@@ -88,6 +92,14 @@ export function Header({
   const router = useRouter();
   const { state, ready } = useStore();
   const notices = useNotices();
+  // 모바일: 헤더가 화면 밖으로 나가면 제목·검색·맨 위로가 있는 얇은 바를 위에 붙인다
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setCompact(window.scrollY > 140);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const [bellOpen, setBellOpen] = useState(false);
   const [seen, setSeen] = useState<string | null>(null);
   const bellRef = useRef<HTMLDivElement>(null);
@@ -183,6 +195,7 @@ export function Header({
   const goSearch = (query: string) => {
     setOpen(false);
     setCursor(-1);
+    if (query) pushRecent(query);
     router.push(query ? `/courses?q=${encodeURIComponent(query)}` : "/courses");
   };
 
@@ -190,6 +203,7 @@ export function Header({
     e.preventDefault();
     if (cursor >= 0 && suggestions[cursor]) {
       setOpen(false);
+      pushRecent(q);
       router.push(`/courses/${suggestions[cursor].id}`);
       return;
     }
@@ -197,6 +211,11 @@ export function Header({
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape" && open) {
+      setOpen(false);
+      setCursor(-1);
+      return;
+    }
     if (!open || suggestions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -211,6 +230,31 @@ export function Header({
   };
 
   return (
+    <>
+    {compact && (
+      <Portal>
+        <div className="fixed inset-x-0 top-0 z-40 border-b border-cream-300/70 bg-cream-100/90 backdrop-blur-md animate-slide-down lg:hidden">
+          <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
+            <BrandSymbol className="h-7 w-7 shrink-0" />
+            <p className="min-w-0 flex-1 truncate text-base font-bold text-forest-950">{title}</p>
+            <Link
+              href="/courses?focus=search"
+              aria-label="강의 검색으로 이동"
+              className="btn-press flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-forest-800 hover:bg-cream-200"
+            >
+              <Search size={18} />
+            </Link>
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              aria-label="맨 위로"
+              className="btn-press flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-forest-800 hover:bg-cream-200"
+            >
+              <ArrowUp size={18} />
+            </button>
+          </div>
+        </div>
+      </Portal>
+    )}
     <header className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-4 md:mb-8">
       {/* 사이드바가 없는 화면(lg 미만)의 왼쪽 위 — 사이드바와 같은 브랜드 마크 */}
       <Link
@@ -263,7 +307,7 @@ export function Header({
                 setOpen(true);
                 setCursor(-1);
               }}
-              onFocus={() => q.trim() && setOpen(true)}
+              onFocus={() => setOpen(true)}
               onKeyDown={onKeyDown}
               placeholder="강의 검색"
               role="combobox"
@@ -271,7 +315,7 @@ export function Header({
               aria-keyshortcuts="/"
               aria-autocomplete="list"
               aria-controls="search-suggestions"
-              aria-expanded={open && q.trim().length > 0}
+              aria-expanded={open}
               className="h-12 w-64 rounded-full border border-cream-300 bg-white pl-11 pr-10 text-sm text-forest-950 placeholder:text-forest-950/35 outline-none transition-all focus:w-80 focus:border-forest-400 focus:ring-2 focus:ring-forest-200"
             />
             {!q && (
@@ -297,6 +341,19 @@ export function Header({
             )}
           </form>
 
+          {/* 아직 입력 전 — 최근 검색어 · 인기 강의 키워드 */}
+          {open && !q.trim() && (
+            <div className="absolute right-0 top-14 z-50 w-80 overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-card-hover animate-scale-in">
+              <SearchHints
+                id="search-suggestions"
+                onPick={(k) => {
+                  setQ(k);
+                  goSearch(k);
+                }}
+              />
+            </div>
+          )}
+
           {/* 자동완성 드롭다운 */}
           {open && q.trim() && (
             <div
@@ -312,7 +369,10 @@ export function Header({
                     <li key={c.id}>
                       <Link
                         href={`/courses/${c.id}`}
-                        onClick={() => setOpen(false)}
+                        onClick={() => {
+                          pushRecent(q);
+                          setOpen(false);
+                        }}
                         onMouseEnter={() => setCursor(i)}
                         className={clsx(
                           "flex items-center gap-3 px-4 py-3 transition-colors",
@@ -429,5 +489,6 @@ export function Header({
         </Link>
       </div>
     </header>
+    </>
   );
 }

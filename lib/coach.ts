@@ -151,7 +151,7 @@ export function strongTopics(state: UserState, limit = 4): string[] {
 
 // ---------- 오늘의 학습 플랜 ----------
 
-export type PlanKind = "lesson" | "review" | "quiz" | "assignment" | "note";
+export type PlanKind = "lesson" | "review" | "quiz" | "assignment" | "note" | "setup";
 
 export interface PlanItem {
   id: PlanKind;
@@ -173,6 +173,26 @@ export function planToday(state: UserState, now: Date = new Date()): PlanItem[] 
   const todays = state.activity.filter((a) => dayKey(new Date(a.at)) === today);
   const doneOf = (types: string[]) => todays.find((a) => types.includes(a.type));
   const items: PlanItem[] = [];
+
+  // 아직 수강한 강의가 없으면 '시작'에 필요한 두 가지만
+  if (state.enrollments.length === 0) {
+    return [
+      {
+        id: "lesson",
+        title: "첫 강의 고르기",
+        detail: "관심 분야의 입문 강의부터 시작해요",
+        href: "/courses",
+        done: false,
+      },
+      {
+        id: "setup",
+        title: "관심분야 확인하기",
+        detail: "고른 분야로 홈 추천이 달라져요",
+        href: "/my",
+        done: false,
+      },
+    ];
+  }
 
   // 1. 레슨
   const lessonAct = doneOf(["lesson"]);

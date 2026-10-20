@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { notFound, useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import clsx from "clsx";
@@ -52,6 +52,14 @@ const LEVEL_HINT: Record<CourseLevel, string> = {
 const OPEN_BY_DEFAULT = 2;
 const REVIEWS_PREVIEW = 3;
 
+const SECTION_NAV = [
+  { id: "intro", label: "소개" },
+  { id: "curriculum", label: "커리큘럼" },
+  { id: "instructor", label: "강사" },
+  { id: "reviews", label: "후기" },
+] as const;
+type SectionId = (typeof SECTION_NAV)[number]["id"];
+
 const daysLabel = (days: number) => (days >= 14 ? `약 ${Math.round(days / 7)}주` : `약 ${days}일`);
 
 export default function CourseDetailPage() {
@@ -72,6 +80,25 @@ export default function CourseDetailPage() {
     () => (course ? studyEstimate(store.state, course) : null),
     [course, store.state]
   );
+
+  // 목차 탭 — 스크롤하는 동안 지금 읽는 섹션을 표시한다
+  const [activeSection, setActiveSection] = useState<SectionId>("intro");
+  useEffect(() => {
+    const els = SECTION_NAV.map((x) => document.getElementById(x.id)).filter((el): el is HTMLElement => Boolean(el));
+    if (els.length === 0) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActiveSection(visible[0].target.id as SectionId);
+      },
+      // 화면 위쪽 1/3 안에 들어온 섹션을 '읽는 중'으로 본다
+      { rootMargin: "-80px 0px -60% 0px" }
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [course?.id]);
 
   if (!course || !estimate) return notFound();
 
@@ -231,8 +258,48 @@ export default function CourseDetailPage() {
               </div>
             </section>
 
+            {/* 목차 — 긴 상세에서 원하는 정보로 바로, 지금 위치도 함께 */}
+            <nav
+              aria-label="강의 정보 목차"
+              className="sticky top-0 z-30 -mx-4 bg-cream-100/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 lg:py-3"
+            >
+              <ul className="flex gap-1 rounded-full bg-white p-1 shadow-card">
+                {SECTION_NAV.filter((x) => x.id !== "instructor" || instructor).map((x) => (
+                  <li key={x.id} className="flex-1">
+                    <a
+                      href={`#${x.id}`}
+                      aria-current={activeSection === x.id ? "location" : undefined}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveSection(x.id);
+                        document.getElementById(x.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                      className={clsx(
+                        "flex min-h-[40px] items-center justify-center whitespace-nowrap rounded-full px-2 text-xs font-semibold transition-colors sm:px-3 sm:text-sm",
+                        activeSection === x.id
+                          ? "bg-forest-950 text-cream-50"
+                          : "text-forest-950/68 hover:bg-cream-100 hover:text-forest-950"
+                      )}
+                    >
+                      {x.label}
+                      {x.id === "reviews" && (
+                        <span
+                          className={clsx(
+                            "ml-1 hidden text-xs font-medium sm:inline",
+                            activeSection === x.id ? "text-cream-200/80" : "text-forest-950/68"
+                          )}
+                        >
+                          {course.reviewCount}
+                        </span>
+                      )}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
             {/* 2. 무엇을 배우나요 */}
-            <section aria-labelledby="learn-heading" className="card p-5 md:p-6">
+            <section id="intro" aria-labelledby="learn-heading" className="card scroll-mt-20 p-5 md:p-6">
               <h2 id="learn-heading" className="text-lg font-bold text-forest-950">
                 이 강의에서 배우는 것
               </h2>
@@ -278,7 +345,7 @@ export default function CourseDetailPage() {
             </section>
 
             {/* 4. 커리큘럼 */}
-            <section aria-labelledby="curriculum-heading" className="card p-5 md:p-6">
+            <section id="curriculum" aria-labelledby="curriculum-heading" className="card scroll-mt-20 p-5 md:p-6">
               <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
                 <div>
                   <h2 id="curriculum-heading" className="text-lg font-bold text-forest-950">
@@ -409,7 +476,7 @@ export default function CourseDetailPage() {
 
             {/* 5. 강사 */}
             {instructor && (
-              <section id="instructor" aria-labelledby="instructor-heading" className="card scroll-mt-24 p-5 md:p-6">
+              <section id="instructor" aria-labelledby="instructor-heading" className="card scroll-mt-20 p-5 md:p-6">
                 <h2 id="instructor-heading" className="text-lg font-bold text-forest-950">
                   강사
                 </h2>
@@ -438,7 +505,7 @@ export default function CourseDetailPage() {
             )}
 
             {/* 6. 수강생 반응 */}
-            <section id="reviews" aria-labelledby="reviews-heading" className="card scroll-mt-24 p-5 md:p-6">
+            <section id="reviews" aria-labelledby="reviews-heading" className="card scroll-mt-20 p-5 md:p-6">
               <h2 id="reviews-heading" className="text-lg font-bold text-forest-950">
                 수강생 반응
               </h2>

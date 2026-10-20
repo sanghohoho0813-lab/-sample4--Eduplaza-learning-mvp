@@ -107,6 +107,10 @@ const config: Config = {
         xl2: "1.25rem",
       },
       keyframes: {
+        "slide-down": {
+          "0%": { transform: "translateY(-100%)" },
+          "100%": { transform: "translateY(0)" },
+        },
         "fade-up": {
           "0%": { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
@@ -135,6 +139,7 @@ const config: Config = {
       },
       animation: {
         "fade-up": "fade-up 0.35s ease both",
+        "slide-down": "slide-down 0.22s ease-out both",
         "scale-in": "scale-in 0.25s ease both",
         "check-pop": "check-pop 0.3s ease both",
         "cta-sweep": "cta-sweep 5s cubic-bezier(0.4, 0, 0.2, 1) infinite",

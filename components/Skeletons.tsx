@@ -1,40 +1,84 @@
-export function CourseCardSkeleton() {
+/** 홈 로딩 — 실제 배치(이어서 학습 · 오늘 할 일 · 이번 주)와 같은 자리에 */
+export function HomeSkeleton() {
   return (
-    <div className="card overflow-hidden">
-      <div className="skeleton aspect-video rounded-none" />
-      <div className="space-y-2.5 p-4">
-        <div className="skeleton h-3 w-24" />
-        <div className="skeleton h-4 w-full" />
-        <div className="skeleton h-3 w-2/3" />
+    <div aria-busy="true" aria-label="홈 불러오는 중">
+      <div className="mb-6 space-y-2">
+        <div className="skeleton h-8 w-64" />
+        <div className="skeleton h-4 w-48" />
+      </div>
+      <div className="skeleton mb-7 h-10 w-full" />
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr),340px]">
+        <div className="space-y-9">
+          <div className="skeleton h-72 rounded-3xl" />
+          <div className="space-y-3">
+            <div className="skeleton h-6 w-40" />
+            <div className="skeleton h-24" />
+            <div className="skeleton h-24" />
+          </div>
+        </div>
+        <div className="space-y-9">
+          <div className="space-y-3">
+            <div className="skeleton h-6 w-28" />
+            <div className="skeleton h-56" />
+          </div>
+          <div className="skeleton h-44" />
+        </div>
       </div>
     </div>
   );
 }
 
-export function HomeSkeleton() {
+/** 강의 찾기 로딩 — 검색칸 · 분야 아이콘 · 큐레이션 줄 */
+export function ExploreSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <div className="skeleton h-7 w-56" />
-          <div className="skeleton h-4 w-40" />
-        </div>
-        <div className="flex gap-2">
-          <div className="skeleton h-11 w-11 rounded-full" />
-          <div className="skeleton h-11 w-11 rounded-full" />
-        </div>
+    <div aria-busy="true" aria-label="강의 찾기 불러오는 중">
+      <div className="skeleton mb-6 h-9 w-40" />
+      <div className="skeleton mb-6 h-14 w-full rounded-2xl sm:hidden" />
+      <div className="mb-9 grid grid-cols-4 gap-x-2 gap-y-4 lg:grid-cols-8 lg:gap-3">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="flex flex-col items-center gap-2">
+            <div className="skeleton h-14 w-14 rounded-2xl" />
+            <div className="skeleton h-3 w-10" />
+          </div>
+        ))}
       </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+      <div className="skeleton mb-4 h-6 w-48" />
+      <div className="flex gap-4 overflow-hidden">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="skeleton h-28" />
+          <div key={i} className="w-[72%] shrink-0 space-y-3 sm:w-[42%] xl:w-[23%]">
+            <div className="skeleton aspect-video rounded-2xl" />
+            <div className="skeleton h-4 w-4/5" />
+            <div className="skeleton h-3 w-1/2" />
+          </div>
         ))}
       </div>
-      <div className="skeleton h-56" />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {[0, 1, 2].map((i) => (
-          <CourseCardSkeleton key={i} />
-        ))}
+    </div>
+  );
+}
+
+/** 내 학습 로딩 — 이어서 학습 · 탭 · 강의 줄 */
+export function LibrarySkeleton() {
+  return (
+    <div aria-busy="true" aria-label="내 학습 불러오는 중">
+      <div className="mb-6 space-y-2">
+        <div className="skeleton h-9 w-32" />
+        <div className="skeleton h-4 w-56" />
       </div>
+      <div className="skeleton mb-6 h-32 rounded-2xl" />
+      <div className="skeleton mb-5 h-12 w-72 rounded-full" />
+      <ul className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        {[0, 1, 2, 3].map((i) => (
+          <li key={i} className="card flex gap-4 p-4 sm:p-5">
+            <div className="skeleton aspect-video w-28 shrink-0 sm:w-40" />
+            <div className="flex-1 space-y-2.5">
+              <div className="skeleton h-3 w-24" />
+              <div className="skeleton h-4 w-full" />
+              <div className="skeleton h-2 w-3/4" />
+              <div className="skeleton h-6 w-1/2 rounded-full" />
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -56,32 +100,6 @@ export function PlayerSkeleton() {
       <div className="skeleton h-6 w-2/3" />
       <div className="skeleton h-4 w-40" />
       <div className="skeleton h-40" />
-    </div>
-  );
-}
-
-/** 강의 목록 화면 로딩 — 모바일은 목록형 행, 태블릿 이상은 카드 그리드 모양 그대로 */
-export function CourseListSkeleton({ title }: { title: string }) {
-  return (
-    <div aria-busy="true" aria-label={`${title} 불러오는 중`}>
-      <div className="skeleton mb-6 h-9 w-40" />
-      <ul className="space-y-3 sm:hidden">
-        {[0, 1, 2, 3].map((i) => (
-          <li key={i} className="card flex items-center gap-3 p-3">
-            <div className="skeleton aspect-video w-28 shrink-0" />
-            <div className="flex-1 space-y-2">
-              <div className="skeleton h-3 w-20" />
-              <div className="skeleton h-4 w-full" />
-              <div className="skeleton h-3 w-2/3" />
-            </div>
-          </li>
-        ))}
-      </ul>
-      <div className="hidden grid-cols-2 gap-4 sm:grid xl:grid-cols-3">
-        {[0, 1, 2].map((i) => (
-          <CourseCardSkeleton key={i} />
-        ))}
-      </div>
     </div>
   );
 }

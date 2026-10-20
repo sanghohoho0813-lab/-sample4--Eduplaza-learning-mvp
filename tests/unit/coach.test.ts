@@ -90,6 +90,13 @@ describe("strongTopics", () => {
 });
 
 describe("planToday", () => {
+  it("수강한 강의가 없으면 시작 준비 두 가지만(메모·복습처럼 할 수 없는 일은 내지 않는다)", () => {
+    const s = seedState();
+    const plan = planToday({ ...s, enrollments: [], activity: [], quizResults: [] }, NOW);
+    expect(plan.map((p) => p.id)).toEqual(["lesson", "setup"]);
+    expect(plan[0].href).toBe("/courses");
+  });
+
   it("시드(오늘 기록 없음): 레슨 → 복습 → 급한 과제, 모두 미완료", () => {
     const plan = planToday(seedState(), NOW);
     expect(plan.map((p) => p.id)).toEqual(["lesson", "review", "assignment"]);

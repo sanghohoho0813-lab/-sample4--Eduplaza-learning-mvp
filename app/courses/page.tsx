@@ -4,14 +4,16 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { createPortal } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
-import { ChevronDown, RotateCcw, Search, SearchX, SlidersHorizontal, X } from "lucide-react";
+import { Check, ChevronDown, RotateCcw, Search, SearchX, SlidersHorizontal, X } from "lucide-react";
 import { CATEGORIES, COURSES, LEVEL_LABEL, getCategory, getInstructor } from "@/lib/data";
 import type { CategoryId, CourseLevel } from "@/lib/types";
 import { Header } from "@/components/Header";
 import { CourseCard, CourseRow } from "@/components/CourseCard";
 import { BrowseRails, CategoryTiles } from "@/components/Explore";
+import { SearchHints } from "@/components/SearchHints";
+import { pushRecent } from "@/lib/recentSearch";
 import { EmptyState } from "@/components/EmptyState";
-import { CourseListSkeleton } from "@/components/Skeletons";
+import { ExploreSkeleton } from "@/components/Skeletons";
 
 type SortKey = "recommend" | "popular" | "newest" | "rating";
 type PriceKey = "all" | "under60" | "60to90" | "over90";
@@ -99,7 +101,24 @@ function useCourseQuery() {
 function CoursesContent() {
   const { params, q, category, level, price, duration, rating, sort, update } = useCourseQuery();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  // 모바일 검색칸: 비어 있는 채로 누르면 최근 검색어·인기 키워드를 펼친다
+  const [hintsOpen, setHintsOpen] = useState(false);
+  const searchBoxRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!hintsOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) setHintsOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setHintsOpen(false);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [hintsOpen]);
 
   // 모바일 검색창: 입력은 바로 반영하고, URL은 잠깐 멈췄을 때 갱신한다.
   const [qInput, setQInput] = useState(q);
@@ -254,13 +273,16 @@ function CoursesContent() {
       <Header title="강의 찾기" />
 
       {/* 모바일 검색창 — 헤더 검색칸이 없는 폭에서만 */}
+      <div ref={searchBoxRef} className="relative mb-4 sm:hidden">
       <form
         role="search"
         onSubmit={(e) => {
           e.preventDefault();
+          if (qInput.trim()) pushRecent(qInput);
+          setHintsOpen(false);
           searchRef.current?.blur();
         }}
-        className="relative mb-4 sm:hidden"
+        className="relative"
       >
         <Search
           size={18}
@@ -273,6 +295,7 @@ function CoursesContent() {
           enterKeyHint="search"
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
+          onFocus={() => setHintsOpen(true)}
           placeholder="강의명, 강사, 주제로 검색"
           aria-label="강의 검색"
           className="h-14 w-full rounded-2xl border border-cream-300 bg-white pl-12 pr-12 text-sm text-forest-950 outline-none placeholder:text-forest-950/35 focus:border-forest-400 focus:ring-2 focus:ring-forest-200 [&::-webkit-search-cancel-button]:hidden"
@@ -288,6 +311,22 @@ function CoursesContent() {
           </button>
         )}
       </form>
+      {hintsOpen && !qInput.trim() && (
+        <div className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-40 overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-card-hover animate-scale-in">
+          <SearchHints
+            id="mobile-search-hints"
+            onPick={(k) => {
+              setQInput(k);
+              lastWritten.current = k;
+              pushRecent(k);
+              update({ q: k });
+              setHintsOpen(false);
+              searchRef.current?.blur();
+            }}
+          />
+        </div>
+      )}
+      </div>
 
       {browsing && (
         <>
@@ -343,7 +382,15 @@ function CoursesContent() {
             <SlidersHorizontal size={15} />
             필터{sheetFilterCount > 0 && ` ${sheetFilterCount}`}
           </button>
-          <SortSelect value={sort} onChange={(v) => update({ sort: v })} />
+          <button
+            onClick={() => setSortOpen(true)}
+            aria-haspopup="dialog"
+            aria-label={`정렬: ${SORTS.find((x) => x.key === sort)!.label}`}
+            className="btn-press inline-flex min-h-[44px] items-center gap-1 rounded-full border border-cream-300 bg-white pl-4 pr-3 text-sm font-semibold text-forest-950"
+          >
+            {SORTS.find((x) => x.key === sort)!.label}
+            <ChevronDown size={16} className="text-forest-950/68" aria-hidden />
+          </button>
         </div>
       </div>
 
@@ -431,7 +478,11 @@ function CoursesContent() {
           ) : (
             <>
               {/* 모바일: 한 화면에 여러 강의를 훑어보는 목록형 */}
-              <ul data-list="courses" className="divide-y divide-cream-300/70 sm:hidden">
+              <ul
+                data-list="courses"
+                className="divide-y divide-cream-300/70 sm:hidden"
+                onClickCapture={() => q && pushRecent(q)}
+              >
                 {filtered.map((course) => (
                   <li key={course.id}>
                     <CourseRow course={course} plain />
@@ -447,6 +498,17 @@ function CoursesContent() {
           )}
         </div>
       </div>
+
+      {sortOpen && (
+        <SortSheet
+          value={sort}
+          onPick={(v) => {
+            update({ sort: v });
+            setSortOpen(false);
+          }}
+          onClose={() => setSortOpen(false)}
+        />
+      )}
 
       {/* 모바일·태블릿·작은 노트북 필터 시트 */}
       {drawerOpen && (
@@ -472,26 +534,81 @@ function FilterGroup({ title, children }: { title: string; children: React.React
   );
 }
 
-function SortSelect({ value, onChange }: { value: SortKey; onChange: (v: SortKey) => void }) {
-  return (
-    <label className="relative inline-flex">
-      <span className="sr-only">정렬</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as SortKey)}
-        className="btn-press min-h-[44px] appearance-none rounded-full border border-cream-300 bg-white pl-4 pr-10 text-sm font-semibold text-forest-950 outline-none focus:border-forest-400 focus:ring-2 focus:ring-forest-200"
-      >
-        {SORTS.map((s) => (
-          <option key={s.key} value={s.key}>
-            {s.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        size={16}
-        className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-forest-950/68"
+const SORT_HINT: Record<SortKey, string> = {
+  recommend: "평점과 수강생 수를 함께 반영",
+  popular: "수강생이 많은 순",
+  newest: "최근에 열린 강의부터",
+  rating: "평점이 높은 순",
+};
+
+/** 정렬 — 필터 시트와 같은 바텀 시트. 고르면 바로 적용하고 닫는다 */
+function SortSheet({
+  value,
+  onPick,
+  onClose,
+}: {
+  value: SortKey;
+  onPick: (v: SortKey) => void;
+  onClose: () => void;
+}) {
+  const firstRef = useRef<HTMLButtonElement>(null);
+  const closeFn = useRef(onClose);
+  closeFn.current = onClose;
+  useEffect(() => {
+    firstRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeFn.current();
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[60] xl:hidden" role="dialog" aria-modal="true" aria-labelledby="sort-title">
+      <button
+        aria-label="정렬 닫기"
+        tabIndex={-1}
+        className="absolute inset-0 bg-forest-950/50 backdrop-blur-sm"
+        onClick={onClose}
       />
-    </label>
+      <div className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-cream-50 pb-[calc(1rem+env(safe-area-inset-bottom))] animate-fade-up">
+        <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-cream-300" aria-hidden />
+        <h2 id="sort-title" className="px-6 pb-2 pt-4 font-display text-lg font-semibold">
+          정렬
+        </h2>
+        <ul className="px-3" role="radiogroup" aria-labelledby="sort-title">
+          {SORTS.map((x, i) => {
+            const on = x.key === value;
+            return (
+              <li key={x.key}>
+                <button
+                  ref={i === 0 ? firstRef : undefined}
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => onPick(x.key)}
+                  className={clsx(
+                    "flex min-h-[60px] w-full items-center justify-between gap-3 rounded-2xl px-3 text-left transition-colors",
+                    on ? "bg-white shadow-card" : "hover:bg-cream-100"
+                  )}
+                >
+                  <span>
+                    <span className={clsx("block text-base", on ? "font-bold text-forest-950" : "text-forest-950/85")}>
+                      {x.label}
+                    </span>
+                    <span className="block text-xs text-forest-950/68">{SORT_HINT[x.key]}</span>
+                  </span>
+                  {on && <Check size={20} className="shrink-0 text-forest-700" aria-hidden />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -602,7 +719,7 @@ function FilterChip({
 
 export default function CoursesPage() {
   return (
-    <Suspense fallback={<CourseListSkeleton title="강의 찾기" />}>
+    <Suspense fallback={<ExploreSkeleton />}>
       <CoursesContent />
     </Suspense>
   );

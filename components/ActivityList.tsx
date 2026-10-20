@@ -50,18 +50,58 @@ function detail(a: Activity): string {
   }
 }
 
+const hhmm = (iso: string) => {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
+
 /** 활동 로그 한 묶음을 시간순 목록으로 보여준다. 홈·리포트·캘린더가 공유한다. */
 export function ActivityList({
   items,
   showTime = true,
   empty = "아직 기록이 없어요.",
+  timeline = false,
 }: {
   items: Activity[];
   showTime?: boolean;
   empty?: string;
+  /** 하루 기록용 — 왼쪽에 시각, 세로 선으로 이어 하루의 흐름을 보여준다 */
+  timeline?: boolean;
 }) {
   if (items.length === 0) {
     return <p className="py-2 text-sm text-forest-950/68">{empty}</p>;
+  }
+  if (timeline) {
+    return (
+      <ol className="relative mt-1">
+        {items.map((a, i) => {
+          const Icon = META[a.type].icon;
+          const isAchievement = a.type === "achievement";
+          return (
+            <li key={a.id} className="relative flex gap-3 pb-4 last:pb-0">
+              <span className="w-12 shrink-0 pt-2 text-right text-xs font-semibold tabular-nums text-forest-950/68">
+                {hhmm(a.at)}
+              </span>
+              <span className="relative flex flex-col items-center" aria-hidden>
+                <span
+                  className={clsx(
+                    "z-10 flex h-9 w-9 items-center justify-center rounded-full ring-4 ring-white",
+                    isAchievement ? "bg-gold-300/40 text-gold-600" : "bg-forest-50 text-forest-600"
+                  )}
+                >
+                  <Icon size={16} />
+                </span>
+                {i < items.length - 1 && <span className="absolute top-9 h-[calc(100%-1.25rem)] w-px bg-cream-300" />}
+              </span>
+              <div className="min-w-0 flex-1 pt-1">
+                <p className="line-clamp-2 text-sm font-semibold leading-snug text-forest-950/85">{a.label}</p>
+                <p className="mt-0.5 text-xs text-forest-950/68">{detail(a)}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    );
   }
   return (
     <ul className="divide-y divide-cream-100">

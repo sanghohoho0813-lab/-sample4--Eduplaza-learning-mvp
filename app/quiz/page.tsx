@@ -7,6 +7,7 @@ import clsx from "clsx";
 import {
   CalendarClock,
   CheckCircle2,
+  ClipboardList,
   ChevronRight,
   PenSquare,
   PlayCircle,
@@ -20,6 +21,7 @@ import { useToast } from "@/components/Toast";
 import { Header } from "@/components/Header";
 import { ActivityTabs } from "@/components/ActivityTabs";
 import { ListSkeleton } from "@/components/Skeletons";
+import { EmptyState } from "@/components/EmptyState";
 import { readDrafts, writeDrafts, type Draft } from "@/lib/drafts";
 import { CourseThumbnail } from "@/components/Thumbnail";
 import { ProgressRing } from "@/components/ProgressBar";
@@ -216,7 +218,11 @@ function AssignmentTab() {
   }, []);
 
   const pending = store.upcomingAssignments;
-  const rest = ASSIGNMENTS.filter((a) => !pending.some((p) => p.assignment.id === a.id));
+  // 과제는 수강 중인 강의의 것만 — 듣지 않는 강의의 마감을 보여주지 않는다
+  const enrolledIds = new Set(store.state.enrollments.map((e) => e.courseId));
+  const rest = ASSIGNMENTS.filter(
+    (a) => enrolledIds.has(a.courseId) && !pending.some((p) => p.assignment.id === a.id)
+  );
   const ordered = [...pending.map((p) => p.assignment), ...rest];
 
   const current = store.currentCourse();
@@ -234,6 +240,18 @@ function AssignmentTab() {
     setJustSubmitted(id);
     toast("과제를 제출했어요. 캘린더와 리포트에 반영했어요.", "celebrate");
   };
+
+  if (ordered.length === 0) {
+    return (
+      <EmptyState
+        icon={ClipboardList}
+        title="아직 과제가 없어요"
+        description="강의를 시작하면 그 강의의 과제와 마감일이 여기에 모여요."
+        actionHref="/courses"
+        actionLabel="강의 찾아보기"
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

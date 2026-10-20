@@ -455,8 +455,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       commit((s) => {
         if (s.enrollments.some((e) => e.courseId === courseId)) return s;
         const now = new Date().toISOString();
+        // 이 강의 과제에 마감일이 아직 없으면 수강 시작일 기준으로 정해 둔다
+        // (없으면 읽을 때마다 '오늘'로 계산돼 마감이 매일 밀린다)
+        const assignmentDue = { ...s.assignmentDue };
+        for (const a of ASSIGNMENTS.filter((x) => x.courseId === courseId)) {
+          if (assignmentDue[a.id]) continue;
+          const d = new Date();
+          d.setDate(d.getDate() + a.dueInDays);
+          assignmentDue[a.id] = dayKey(d);
+        }
         return {
           ...s,
+          assignmentDue,
           enrollments: [
             { courseId, enrolledAt: now, lastLessonId: null, lastStudiedAt: null },
             ...s.enrollments,

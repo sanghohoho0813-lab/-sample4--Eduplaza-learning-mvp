@@ -222,11 +222,12 @@ export default function NotesPage() {
       {noteCourses.length > 1 && (
         <div className="thin-scroll -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="강의별 노트">
           <FilterPill active={!activeFilter} onClick={() => setFilter("")}>
-            전체 <span className="opacity-70">{store.state.notes.length}</span>
+            전체 <span className={!activeFilter ? "text-cream-200/80" : "text-forest-950/68"}>{store.state.notes.length}</span>
           </FilterPill>
           {noteCourses.map(({ course, count }) => (
             <FilterPill key={course.id} active={activeFilter === course.id} onClick={() => setFilter(course.id)}>
-              <span className="max-w-[12rem] truncate">{course.title}</span> <span className="opacity-70">{count}</span>
+              <span className="max-w-[12rem] truncate">{course.title}</span>{" "}
+              <span className={activeFilter === course.id ? "text-cream-200/80" : "text-forest-950/68"}>{count}</span>
             </FilterPill>
           ))}
         </div>

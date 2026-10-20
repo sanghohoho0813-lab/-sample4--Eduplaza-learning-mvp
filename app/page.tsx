@@ -7,6 +7,7 @@ import {
   BookOpenCheck,
   Check,
   ClipboardList,
+  Compass,
   Flame,
   NotebookPen,
   PenSquare,
@@ -40,6 +41,7 @@ const KIND: Record<PlanKind, { icon: LucideIcon; label: string }> = {
   quiz: { icon: PenSquare, label: "퀴즈" },
   assignment: { icon: ClipboardList, label: "과제" },
   note: { icon: NotebookPen, label: "메모" },
+  setup: { icon: Compass, label: "시작 준비" },
 };
 
 const clock = (iso: string) => {
